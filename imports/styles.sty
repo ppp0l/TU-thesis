@@ -1,0 +1,81 @@
+%%%%%%%%%%						Impostazioni description/itemize/enumerate
+	\setlist[description]{style=multiline,
+					topsep=0.25cm,
+					itemsep=-0.25cm,
+					parsep=0.5cm,
+					labelwidth=2.5cm,
+					labelindent=\parindent,
+					leftmargin=3cm}
+
+	\renewcommand{\labelitemi}{$\sbullet$}
+	\setlist[itemize]{style=multiline,
+				topsep=0.25cm,
+				itemsep=-0.25cm,
+				parsep=0.5cm,
+				labelwidth=0.35cm,
+				labelindent=\parindent,
+				leftmargin=.85cm}
+
+	\setlist[enumerate]{style=multiline,
+					topsep=0.25cm,
+					itemsep=-0.25cm,
+					parsep=0.5cm,
+					labelwidth=0.35cm,
+					labelindent=\parindent,
+					leftmargin=.85cm}
+
+%%%%%%%%%%						Tabular
+\hfuzz=0.64pt
+\usepackage{makecell}
+	\renewcommand\theadalign{cc}
+	\renewcommand\theadfont{\bfseries}
+	\renewcommand\theadgape{\Gape[2pt]}
+	\renewcommand\cellgape{\Gape[2pt]}
+\usepackage{subcaption}
+
+%%%%%%%%%%						Ambienti matematici
+\usepackage{thmtools}
+	%%%%%%%%%% 			Stile Teorema, Proposizione, Lemma, Corollario, Definizione
+%\declaretheoremstyle[spaceabove=8pt,
+%				spacebelow=8pt,
+%				headpunct={},
+%				postheadspace=.5cm,
+%				within=section,]{SettingTheorem}
+%%%%%%%%%%% Teorema
+%\declaretheorem[name=Theorem, style=SettingTheorem]{thm}
+%%%%%%%%%%% Proposizione
+%\declaretheorem[name=Proposition, style=SettingTheorem, numberlike=thm]{prp}
+%%%%%%%%%%% Lemma
+%\declaretheorem[name=Lemma, style=SettingTheorem, numberlike=thm]{lem}
+%%%%%%%%%%% Corollario
+%\declaretheorem[name=Corollary, style=SettingTheorem, numberlike=thm]{cor}
+%%%%%%%%%%% Definizione
+%\declaretheorem[name=Definition, style=SettingTheorem, numberlike=thm]{dfn}
+%
+%	%%%%%%%%%			Stile Dimostrazione
+%\declaretheoremstyle[spaceabove=8pt,
+%					spacebelow=8pt,
+%					headfont=\normalfont\bfseries,
+%					bodyfont=\normalfont,
+%					postheadspace=.5cm,
+%					qed=$\square$,
+%					headpunct={}]{SettingProof}
+%			%%%%%%%%%% Dimostrazione
+%			\declaretheorem[name=Proof, style=SettingProof, unnumbered]{prf}
+%			%%%%%%%%%% Stile Esempio, Osservazione
+%\declaretheoremstyle[within=section, headpunct={}, mdframed={innertopmargin=1pt,
+%					innerbottommargin=1pt,
+%					innerleftmargin=.4cm,
+%					innerrightmargin=.4cm,
+%					roundcorner=25pt,
+%					backgroundcolor=black!4,
+%					linecolor=white,
+%					fontcolor=black}]{SettingExa}
+%			%%%%%%%%%% Esempio
+%			\declaretheorem[name=Example, style=SettingExa, numberlike=thm]{ex}
+%			%%%%%%%%%% Osservazione
+%			\declaretheorem[name=Remark, style=SettingExa, unnumbered]{obs}
+			
+%%%%%%%%%%						Box			
+\declaretheoremstyle[headpunct={}, mdframed={innertopmargin=15pt, innerbottommargin=5pt, innerleftmargin=.2cm, innerrightmargin=.2cm, roundcorner=50pt, backgroundcolor=black!5, linecolor=white, fontcolor=black, skipabove = -5pt, skipbelow=-5pt}]{SettingBox}
+\declaretheorem[name={}, numbered=no, style=SettingBox]{Boxed}
