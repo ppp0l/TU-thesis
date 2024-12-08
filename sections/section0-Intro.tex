@@ -1,22 +1,66 @@
 \section{Introduction} \label{sec:intro}
 
-
-\subsection{Motivation}\label{sec:motivation}
-
 When dealing with real-world phenomena, adopting a mathematical representation is often necessary in order to simplify complexity, obtain insight about underlying features, and produce sufficiently accurate predictions on the behaviour of the considered portion of reality. 
+
 In the present day, computer simulations and scientific computing have become essential parts of mathematical modelling, rendering it possible to adopt numerical techniques to solve analytically untractable problems.
 Moreover, as numerous and vast families of mathematical models are available to adequately represent different classes of processes, the modeller is presented with choices about model complexity and desired characteristics, and with tasks such as parameter identification, model order reduction and uncertainty quantification. 
 This work involves all three of these tasks in different manners and measures. 
 
-The problem of the calibration of parameters for a computationally expensive numerical model is considered: a bayesian perspective is adopted in formulating the inverse problem, and then the cost of model evaluation is reduced by considering a regression-based surrogate model, instead of classical model order reduction techniques such as Proper Orthogonal Decomposition or Reduced-Basis methods.
-The considered regression techniques are Gaussian Process Regression, which is commonly employed in Bayesian Inverse Problems as it provides not only a pointwise estimate but also a quantification of its confidence, and Lipschitz Regression, which is a less utilized technique that also provides a stochatic prediction but relies on different assumptions than Gaussian Process Regression. 
-The motivation for this work lies precisely in the assumptions required by the two techniques.
+The problem of the calibration of parameters for a computationally expensive numerical model is considered: a Bayesian perspective is adopted in formulating the inverse problem, and then the cost of model evaluation is reduced by considering a regression-based surrogate model, instead of classical model order reduction techniques such as Proper Orthogonal Decomposition or Reduced-Basis methods.
+The considered regression techniques are Gaussian Process Regression (GPR), which is commonly employed in Bayesian Inverse Problems as it provides not only a pointwise estimate but also a quantification of its confidence, and Lipschitz Regression (LR), which is a less utilized technique that also provides a stochastic prediction but relies on different assumptions than GPR. 
 
-We consider a model 
+To understand the motivation behind this work, it is necessary to provide a brief introduction to the setting in which it is situated.
+
+\subsection{Context}\label{sec:context}
+
+Inverse Problems (IP) involve the identification of some unidentified quantities in a model through a number of measurements.
+
+We consider a finite dimensional parameter space $\mc P$, a finite dimensional measurement space $ \mc Y$ and the parameter-to-observation map 
 \[
- y
+ y : \mc P \longrightarrow \mc Y, 
 \]
+which to each parameter value associates the corresponding measured quantity.
+
+The map implicitly depends on the associated model: in the case of complex models, only inexact evaluations $y_\tau (p) $ of $ y(p)$ up to some tolerance $\tau$ are available through a numerical procedure. 
+In this work, we assume the underlying model to be an adaptive Finite Element (FE) discretization of some Partial Differential Equation model. 
+
+In order to reduce computational costs, a surrogate model approximating $y$ is introduced.
+For a training set $\{(p_i,y_i,\tau_i)\}_{i=1,\dots,n}$, with $y_i = y_{\tau_i}(p_i)$, both GPR and LR can provide a mean prediction and some stochastic error bound. 
+
+GPR assumes a Gaussian process prior $\mc{G} \mc P (\mu, k)$ for the unknown ground truth $y$, with $\mu : \mc P \rightarrow \mc Y$ being some mean function and $k: \mc P \times \mc P \rightarrow \mc Y^* $ being a covariance kernel.
+Moreover, it assumes that the error on the numerical evaluations $y_\tau$ is a realization of some normally distributed noise, i.e. 
+\begin{equation}\label{eq:GPR-noise}
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + e_D,  \ \text{ with } \ e_D \sim \mc N (0, \Sigma_D(\tau)^2),    
+\end{equation}
+for some covariance matrix $\Sigma_D(\tau)^2$ which depends on the tolerance $\tau$, with a greater tolerance corresponding to larger variance components.
+Thanks to this assumptions, it obtains a predictive Gaussian distribution for unseen values of $y$, and computable analytical formulas for the mean and the variance are given.
+
+LR does not need any prior distributional assumptions on $y$, but instead assumes that $y$ is a Lipschitz function.
+The Lipschitz constant can be assumed or estimated from data.
+Further, the numerical evaluation error is assumed to be the effect of uniformly distributed noise,  
+\begin{equation}\label{eq:LR-noise}
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + e_D,  \ \text{ with } \ e_D \sim U(S_\tau )    
+\end{equation}
+where $S_\tau$ is an open, connected and centered subset of $\mc Y$ which depends on $\tau$.
+With these assumptions, LR provides a predictive uniform distribution for unseen values of $y$, guaranteeing a mean prediction and hard bounds.
 
 
+\subsection{Motivation}\label{sec:motivation}
+
+The motivation for this work lies precisely in the different assumptions on the evaluation noise, Assumptions~\ref{eq:GPR-noise} and~\ref{eq:LR-noise}, required by the two techniques.
+
+For an underlying FE model, the evaluation error depends mostly on the discretization error which results from the choice of a FE basis.
+For adaptive FE, the basis is refined until the prescribed tolerance $\tau$ is not met by an error indicator.
+The error indicator often guarantees an hard bound on the discretization error: while this is compatible with Assumption~\ref{eq:LR-noise}, it is incompatible with Assumption~\ref{eq:GPR-noise}, which requires an unbounded support for the evaluation error. 
+The greater fitness of Assumption~\ref{eq:LR-noise} is the motivation for considering LR, examinating different approaches to it and tayloring some of its component to an IP setting.
+
+Additionally, in Assumption~\ref{eq:GPR-noise} the covariance matrix $\Sigma_D(\tau)^2$ is often assumed to be diagonal, resulting in independent noise components. 
+This ignores any correlation between error components, while the discretization error has some structure due to the underlying FE system.
+Techniques to recover this structure are investigated and utilized to improve the prediction of GPR.
+
+It is not clear a priori if the methods whose assumptions which are closer to what is known about the target offer a considerable practical improvement.
+Consequently, in the experimental part we aim at comparing the performance of the different methods both on a fixed training set and in an Active Learning setting, where GPR is already commonly used. 
+
+%Summarizing, the scope of this thesis is to investigate the relation between the assumptions required by regression-based surrogate models, and shape and structure of the discretization error. A theoretical introduction to the context is given, then the proposed techniques are elaborated and tested.
 
 \subsection{Literature and related works}\label{sec:literature}
