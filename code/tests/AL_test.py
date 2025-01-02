@@ -19,7 +19,10 @@ from utils.metrics import experror, TVD
 
 reproducibility_seed(22)
 
-path = "/home/numerik/pvillani/Project/lipschitz/outputs/AL"
+path = "./outputs/AL"
+import os
+if not os.path.exists(path):
+    os.makedirs(path)
 
 # measurements and measurements variance
 meas = np.array( [[0.3]])
@@ -99,10 +102,10 @@ for i in range(rg) :
 GP_x = x
 GP_y = y
 # save data
-with open(path + "/tr_set/GP_x.npy", 'wb') as file :
-    np.save(file, x)
-with open(path + "/tr_set/GP_y.npy", 'wb') as file :
-    np.save(file, y)
+# with open(path + "/tr_set/GP_x.npy", 'wb') as file :
+#     np.save(file, x)
+# with open(path + "/tr_set/GP_y.npy", 'wb') as file :
+#     np.save(file, y)
 
 EELR = np.zeros((rg,n_max - n_init + 1 ) )
 L2LR = np.zeros((rg,n_max - n_init + 1 ) )
@@ -153,11 +156,11 @@ for i in range(rg) :
         EELR[i, n_pts - n_init] = experror(lips, forward, true_like.plugin )
         L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
     
-# save data
-with open(path + "/tr_set/LR_x.npy", 'wb') as file :
-    np.save(file, x)
-with open(path + "/tr_set/LR_y.npy", 'wb') as file :
-    np.save(file, y)
+# # save data
+# with open(path + "/tr_set/LR_x.npy", 'wb') as file :
+#     np.save(file, x)
+# with open(path + "/tr_set/LR_y.npy", 'wb') as file :
+#     np.save(file, y)
     
 
 test = np.linspace(0,1, 1000).reshape((-1,1))

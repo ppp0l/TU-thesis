@@ -18,7 +18,10 @@ from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
 reproducibility_seed(42)
 
-path = "/home/numerik/pvillani/Project/lipschitz/outputs"
+path = "./outputs"
+import os
+if not os.path.exists(path):
+    os.makedirs(path)
 
 # parameter space
 param_space = { 

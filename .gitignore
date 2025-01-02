@@ -2,6 +2,13 @@
 .vscode
 workspace.code-workspace
 
+# Python
+*__pycache__/
+*.ipynb_checkpoints/
+
+
+# Latex
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
