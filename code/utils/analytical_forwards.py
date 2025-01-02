@@ -31,18 +31,16 @@ def d1_model(x) :
     ret =  (1+x) * np.sin(6 * x + 1)
     return ret
 
-def d2_model(x, n = 2, dom = None) :
+def d2_model(x, dom = None) :
     
     if not dom is None :
-        x = (x - dom['min'] )/ (dom['max'] - dom['min'])-1/2
+        x = (x - dom['min'] )/ (dom['max'] - dom['min'])
     
-    ret = np.zeros( (len(x), n ))
+    ret = np.zeros( (len(x), 2 ))
     
-    diffs = x[:,0]-x[:,1]
-    sums = x[:,0]+x[:,1]
-    for i in range(n) :
-        
-        ret[:,i] = np.sin(1*i) * diffs   + np.cos(1*i) * sums 
+    ret[:,0] = np.sum(x**2, axis = 1)
+    
+    ret[:,1]= np.prod(x, axis = 1)
     
     return ret
 
