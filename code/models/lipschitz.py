@@ -12,7 +12,10 @@ class lipschitz_regressor() :
         self.train_x = train_x.reshape( (len(train_x), -1))
         self.train_y = train_y.reshape( (len(train_y), -1))
         self.noise = noise
-        
+
+        self.dim = len(self.train_x[0])
+        self.dout= len(self.train_y[0])
+
         self.L = 0
         self.estimate_constant()
         
@@ -21,13 +24,24 @@ class lipschitz_regressor() :
         
         #TODO: only works 1d
 
-        tr_y = self.train_y.transpose()
-        tr_x = self.train_x.transpose()
-        noise = self.noise.transpose()
-        x = x.reshape( (len(x), -1))
+        tr_y = self.train_y.reshape((1, -1, self.dout)  )
+        tr_x = self.train_x
+        noise = self.noise.reshape((1, -1, 1))
+        x = x.reshape( (-1, self.dim))
 
-        low_bd = np.max( tr_y - noise  - self.L * np.abs( tr_x - x) , axis = 1, keepdims=True)
-        up_bd = np.min( tr_y + noise  + self.L * np.abs( tr_x - x) , axis = 1, keepdims=True)
+        L = self.L
+
+        x2 = np.sum(x**2, axis = 1, keepdims=True)
+        tr_x2 = np.sum(tr_x**2, axis = 1, keepdims=True) 
+        xxT = x.dot(tr_x.transpose())
+        dist_x = np.sqrt( x2 + tr_x2.transpose() - 2 *xxT )
+        print(dist_x.shape)
+        shape = dist_x.shape
+        Ldist = np.outer(dist_x.reshape(-1 ), L).reshape( (shape[0],shape[1],len(L)))
+
+
+        low_bd = np.max( tr_y - noise  - Ldist , axis = 1)
+        up_bd = np.min( tr_y + noise  + Ldist , axis = 1)
 
         pred = (low_bd + up_bd)/2
         
@@ -50,7 +64,7 @@ class lipschitz_regressor() :
         
         dist_y = np.abs(y - y.transpose((0,2,1)))
         
-        eps = self.noise.reshape((len(y), -1))
+        eps = self.noise.reshape((len(y[0]), -1))
         eps2 = (eps + eps.transpose())
         
         L_mat = (dist_y )/dist_x - eps2/dist_x
