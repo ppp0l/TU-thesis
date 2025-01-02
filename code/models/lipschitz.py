@@ -35,7 +35,6 @@ class lipschitz_regressor() :
         tr_x2 = np.sum(tr_x**2, axis = 1, keepdims=True) 
         xxT = x.dot(tr_x.transpose())
         dist_x = np.sqrt( x2 + tr_x2.transpose() - 2 *xxT )
-        print(dist_x.shape)
         shape = dist_x.shape
         Ldist = np.outer(dist_x.reshape(-1 ), L).reshape( (shape[0],shape[1],len(L)))
 
