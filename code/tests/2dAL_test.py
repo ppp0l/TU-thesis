@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec  9 10:02:01 2024
+
+@author: pvillani
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+from models.forward import forward_model as fm
+from models.GP_models.MTSurrogate import MTModel
+from models.lipschitz import lipschitz_regressor
+
+from likelihoods.likelihoods import base_likelihood, lipschitz_likelihood, GP_likelihood
+
+from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
+from utils.metrics import experror, TVD
+
+reproducibility_seed(22)
+
+dim = 2
+
+path = "./outputs/AL2d"
+import os
+if not os.path.exists(path):
+    os.makedirs(path)
+
+# measurements and measurements variance
+meas = np.array( [[1, 0.3]])
+eps_l = np.array([0.1, 0.05])
+
+# ground truth
+forward = fm(2, "U")
+true_like = base_likelihood(meas, eps_l**2,forward)
+
+# initial number of training points
+n_init = 3
+# final number of training points
+n_max = 28
+
+# noise level
+noise_level = 0.05
+
+rg = 1
+
+# training points
+x_init = []
+y_init = []
+noise_init = noise_level * np.ones((n_init))
+for i in range(rg) :
+    x_init.append(lhs( np.zeros(dim), np.ones(dim), n_init).reshape((-1,dim)))
+    y_i, _ = forward.predict(x_init[i], noise_init)
+    y_init.append(y_i)
+
+# discretized domain
+grid = np.linspace(0,1, 100)
+X, Y = np.meshgrid(grid, grid)
+X = X.reshape((-1))
+Y = Y.reshape((-1))
+grid = np.transpose([X,Y])
+
+# iterate results 
+EEGP = np.zeros((rg,n_max - n_init + 1 ) )
+L2GP = np.zeros((rg,n_max - n_init + 1 ) )
+for i in range(rg) :
+    ## active learning, GP
+    x = x_init[i]
+    noise = noise_init
+    y = y_init[i]
+    n_pts = n_init
+    
+    # Gp model
+    GP = MTModel()
+    GP.fit(x, y, noise = noise**2/3)
+    # likeliood
+    GPlike = GP_likelihood(meas, eps_l**2, GP)
+    
+    # EEGP[i, n_pts - n_init] = experror(GP, forward, true_like.plugin )
+    # L2GP[i, n_pts - n_init] = TVD(GPlike.marginal, true_like.plugin)
+    
+    while n_pts < n_max :
+        # predict std
+        _, std = GP.predict(grid, return_std = True)
+        # acquisition function
+        # if n_pts %2 == 0 :
+        #     acq_fun = np.exp(1/noise_level * std.reshape(-1)) * GPlike.marginal(grid)
+        # else :
+        #     acq_fun =(std).reshape(-1)
+        acq_fun = np.exp(1/noise_level * np.mean(std, axis = 1 )) * GPlike.marginal(grid)
+        # find maximizer of acquisition
+        nx = np.array( [grid[np.argmax(acq_fun)]])
+        # evaluate model
+        nnoise = noise_level * np.ones((1))
+        ny, _ = forward.predict(nx, nnoise)
+        # update training set
+        x = np.append(x, nx, axis = 0)
+        y = np.append(y, ny, axis = 0)
+        noise = np.append(noise,nnoise, axis = 0)
+        n_pts = n_pts+1
+        # retrain model
+        GP.fit(x, y, noise = noise**2/3)
+        
+        # EEGP[i, n_pts - n_init] = experror(GP, forward, true_like.plugin )
+        # L2GP[i, n_pts - n_init] = TVD(GPlike.marginal, true_like.plugin)
+    
+
+GP_x = x
+GP_y = y
+# save data
+# with open(path + "/tr_set/GP_x.npy", 'wb') as file :
+#     np.save(file, x)
+# with open(path + "/tr_set/GP_y.npy", 'wb') as file :
+#     np.save(file, y)
+
+EELR = np.zeros((rg,n_max - n_init + 1 ) )
+L2LR = np.zeros((rg,n_max - n_init + 1 ) )
+for i in range(rg) :
+    ## active learning, LR
+    x = x_init[i]
+    noise = noise_init
+    y = y_init[i]
+    n_pts = n_init
+    
+    # LR model
+    lips = lipschitz_regressor(x, y, noise)
+    # likelihood
+    liplike = lipschitz_likelihood(meas, eps_l**2, lips)
+    
+    # EELR[i, n_pts - n_init] = experror(lips, forward, true_like.plugin )
+    # L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
+    
+    while n_pts < n_max :
+        # predict std
+        _, low_bd, up_bd = lips.predict(grid, return_bds=True)
+        # acquisition function
+        if n_pts %3 > -1 :
+            acq_fun = np.exp(np.mean(2/noise_level *(up_bd-low_bd), axis =1) ) * liplike.marginal(grid)
+        else :
+            acq_fun =np.mean(up_bd-low_bd, axis = 1)
+        # find maximizer of acquisition
+        nx = np.array( [grid[np.argmax(acq_fun)]])
+        # evaluate model
+        nnoise = noise_level * np.ones((1))
+        ny, _ = forward.predict(nx, nnoise)
+        # update training set
+        x = np.append(x, nx, axis = 0)
+        y = np.append(y, ny, axis = 0)
+        noise = np.append(noise,nnoise, axis = 0)
+        n_pts = n_pts+1
+        #print(lips.L)
+        # retrain model
+        lips.update(nx, ny, nnoise)
+        
+        # plt.figure()
+        # plt.plot(grid, acq_fun)
+        # plt.scatter(x[:-1],np.zeros_like(x[:-1]))
+        # plt.title(f'iteration {n_pts - n_init} ')
+        # plt.savefig(path+f"/acq/it{n_pts - n_init}.png", format = 'png')
+        # plt.close()
+        
+        # EELR[i, n_pts - n_init] = experror(lips, forward, true_like.plugin )
+        # L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
+    
+# # save data
+# with open(path + "/tr_set/LR_x.npy", 'wb') as file :
+#     np.save(file, x)
+# with open(path + "/tr_set/LR_y.npy", 'wb') as file :
+#     np.save(file, y)
+    
+n_test = 100
+test = np.linspace(0,1, n_test)
+X, Y = np.meshgrid(test, test)
+X = X.reshape((-1))
+Y = Y.reshape((-1))
+x_test = np.transpose([X,Y])
+
+# plot models
+fig, axs = plt.subplots(2,3,figsize = (12,6))
+
+pred = forward.predict(x_test).reshape( (n_test,n_test,-1))
+lippred = lips.predict(x_test).reshape( (n_test,n_test,-1))
+GPpred = GP.predict(x_test).reshape( (n_test,n_test,-1))
+for i in range(2):
+    axs[i,0].contourf(test, test, pred[:,:,i], 500 )
+    axs[i,1].contourf(test, test, lippred[:,:,i], 500 )
+    axs[i,2].contourf(test, test, GPpred[:,:,i], 500 )
+
+    
+fig.savefig(path + "/model_comparison.svg", format = 'svg', transparent = True)
+
+# plot posteriors
+fig, axs = plt.subplots(1,3,figsize = (12,3))
+lip_marginal = liplike.marginal(x_test)
+lip_marginal /= lip_marginal.mean()
+axs[1].contourf(test, test, lip_marginal.reshape((n_test,n_test)),70) 
+GP_marginal = GPlike.marginal(x_test)
+GP_marginal /= GP_marginal.mean()
+axs[2].contourf(test, test, GP_marginal.reshape((n_test,n_test)),70)
+truth = true_like.plugin(x_test)
+truth /= truth.mean()
+axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 70)
+
+plt.legend()
+fig.savefig(path + "/posterior_comparison.svg", format = 'svg', transparent = True)
+
+x_ran = list(range(n_init, n_max+1))
+
+
+# fig, ax = plt.subplots(figsize = (12,3))
+# for i in range(rg):
+#     ax.semilogy(  x_ran, L2GP[i], alpha = 0.2, color = 'blue')
+#     ax.semilogy( x_ran , L2LR[i], alpha = 0.2, color = 'red')
+# ax.semilogy(  x_ran, np.mean(L2GP, axis = 0 ), label = "GPR posterior", color = 'blue')
+# ax.semilogy( x_ran , np.mean(L2LR, axis = 0 ), label = "LR posterior", color = 'red')
+# plt.title("Total variation distance between posteriors")
+# plt.legend()
+# plt.xticks(x_ran)
+# fig.savefig(path + "/TV_convergence.svg", format = 'svg', transparent = True)
+
+# fig, ax = plt.subplots(figsize = (12,3))
+# for i in range(rg):
+#     ax.semilogy(  x_ran, EEGP[i], alpha = 0.2, color = 'blue')
+#     ax.semilogy( x_ran , EELR[i], alpha = 0.2, color = 'red')
+# ax.semilogy(  x_ran, np.mean(EEGP, axis = 0 ), label = "GPR model", color = 'blue')
+# ax.semilogy( x_ran , np.mean(EELR, axis = 0 ), label = "LR model", color = 'red')
+# plt.title("Expected error")
+# plt.legend()
+# plt.xticks(x_ran)
+# fig.savefig(path + "/EE_convergence.svg", format = 'svg', transparent = True)
