@@ -20,7 +20,7 @@ from gpytorch.likelihoods.noise_models import FixedGaussianNoise
 from gpytorch.lazy import ConstantDiagLazyTensor, KroneckerProductLazyTensor
 from linear_operator.operators import KroneckerProductLinearOperator, DiagLinearOperator
 
-from GP_models.transforms import TensorTransform
+from models.GP_models.transforms import TensorTransform
 
 
         
