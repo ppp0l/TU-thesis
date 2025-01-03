@@ -201,7 +201,6 @@ truth = true_like.plugin(x_test)
 truth /= truth.mean()
 axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 70)
 
-plt.legend()
 fig.savefig(path + "/posterior_comparison.svg", format = 'svg', transparent = True)
 
 x_ran = list(range(n_init, n_max+1))

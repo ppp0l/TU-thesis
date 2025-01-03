@@ -30,3 +30,9 @@ def TVD(dens1, dens2) :
     distr2 = distr2/distr2.mean()
     
     return np.mean( np.abs(distr1-distr2))
+
+def L1experr(mod1,  mod2, samples) :
+    res1 = mod1.predict(samples)
+    res2 = mod2.predict(samples)
+    
+    return np.mean(np.abs(res1 -  res2))

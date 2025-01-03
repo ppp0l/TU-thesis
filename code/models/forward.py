@@ -29,11 +29,11 @@ class forward_model() :
         else :
             self.discr_err = uniform_error
         
-    def predict(self, p, tols = 0):
+    def predict(self, p, tols = 0, **kwargs):
          
         n_pts = len(p)
         
-        val = self.forward(p)
+        val = self.forward(p, **kwargs)
         
         val = val.reshape( (n_pts, -1))
         if np.all(tols > 0):
