@@ -31,7 +31,7 @@ if not os.path.exists(path):
 
 # measurements and measurements variance
 meas = np.array( [[1, 0.3]])
-eps_l = np.array([0.1, 0.05])
+eps_l = np.array([0.02, 0.01])
 
 # ground truth
 forward = fm(2, "U")
@@ -134,12 +134,12 @@ for i in range(rg) :
     # L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
     sampler = EnsembleSampler(nwalkers = 16, ndim = 2, log_prob_fn= liplike.log_marginal)
     start = np.random.uniform(0,1, size = (16,2))
-    sampler.run_mcmc(initial_state=start, nsteps = 200)
-    start = sampler.get_last_sample()
-    sampler.reset()
     
     while n_pts < n_max :
-        sampler.run_mcmc(start, 200)
+        sampler.run_mcmc(initial_state=start, nsteps = 50)
+        start = sampler.get_last_sample()
+        sampler.reset()
+        sampler.run_mcmc(start, 100)
         samples = sampler.get_chain(flat = True)
         start = sampler.get_last_sample()
         sampler.reset()
