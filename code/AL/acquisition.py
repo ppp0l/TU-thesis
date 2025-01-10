@@ -56,6 +56,9 @@ def exp_lower(beta, eps, LB, UB) :
 
     comp[beta + eps <= LB] = c5[beta + eps <= LB]
     comp[beta - eps >= UB] = 0
+
+
+    comp = comp/(2*np.reshape(eps, (1, -1)) * (UB-LB))
     
     res = np.sum(comp, axis = 1)
 
@@ -75,5 +78,6 @@ def pos_EER(eps, p, q, lips):
     beta = LBq + L * dist + eps
 
     ELI = exp_lower(beta,eps,LB, UB)
+
 
     return EUI - ELI

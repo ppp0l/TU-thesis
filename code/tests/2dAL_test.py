@@ -30,7 +30,7 @@ if not os.path.exists(path):
     os.makedirs(path)
 
 # measurements and measurements variance
-meas = np.array( [[1.7, 1.3]])
+meas = np.array( [[-1.7, 1.3]])
 eps_l = np.array([0.2, 0.1])
 
 # ground truth
@@ -46,6 +46,21 @@ n_max = 23
 noise_level = 0.05
 
 rg = 1
+
+n_test = 100
+test = np.linspace(0,1, n_test)
+X, Y = np.meshgrid(test, test)
+X = X.reshape((-1))
+Y = Y.reshape((-1))
+x_test = np.transpose([X,Y])
+# plot posteriors
+fig, axs = plt.subplots(1,3,figsize = (12,3))
+
+truth = true_like.plugin(x_test)
+truth /= truth.mean()
+axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 40)
+
+fig.savefig(path + "/posterior_comparison.png", format = 'png', transparent = True)
 
 # training points
 x_init = []

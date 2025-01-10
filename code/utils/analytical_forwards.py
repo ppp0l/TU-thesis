@@ -38,9 +38,9 @@ def d2_model(x, dom = None) :
     
     ret = np.zeros( (len(x), 2 ))
     
-    ret[:,0] = np.sum(x**2, axis = 1)
+    ret[:,0] = -np.sum((x+1)**2, axis = 1)/4
     
-    ret[:,1]= np.prod(x, axis = 1)
+    ret[:,1]= np.prod((x+1), axis = 1)/2
     
     return ret
 
