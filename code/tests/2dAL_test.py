@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from models.forward import forward_model as fm
 from models.GP_models.MTSurrogate import MTModel
-from models.naive_lipschitz import lipschitz_regressor
+from models.lipschitz import lipschitz_regressor
 
 from likelihoods.likelihoods import base_likelihood, lipschitz_likelihood, GP_likelihood
 
@@ -30,8 +30,8 @@ if not os.path.exists(path):
     os.makedirs(path)
 
 # measurements and measurements variance
-meas = np.array( [[1, 0.3]])
-eps_l = np.array([0.02, 0.01])
+meas = np.array( [[1.7, 1.3]])
+eps_l = np.array([0.2, 0.1])
 
 # ground truth
 forward = fm(2, "U")
@@ -196,26 +196,29 @@ pred = forward.predict(x_test).reshape( (n_test,n_test,-1))
 lippred = lips.predict(x_test).reshape( (n_test,n_test,-1))
 #GPpred = GP.predict(x_test).reshape( (n_test,n_test,-1))
 for i in range(2):
-    axs[i,0].contourf(test, test, pred[:,:,i], 500 )
-    axs[i,1].contourf(test, test, lippred[:,:,i], 500 )
-    # axs[i,2].contourf(test, test, GPpred[:,:,i], 500 )
+    axs[i,0].contourf(test, test, pred[:,:,i], 40 )
+    axs[i,1].contourf(test, test, lippred[:,:,i], 40 )
+    # axs[i,2].contourf(test, test, GPpred[:,:,i], 40 )
 
     
-fig.savefig(path + "/model_comparison.svg", format = 'svg', transparent = True)
+fig.savefig(path + "/model_comparison.png", format = 'png', transparent = True)
 
 # plot posteriors
 fig, axs = plt.subplots(1,3,figsize = (12,3))
 lip_marginal = liplike.marginal(x_test)
 lip_marginal /= lip_marginal.mean()
-axs[1].contourf(test, test, lip_marginal.reshape((n_test,n_test)),70) 
+axs[1].contourf(test, test, lip_marginal.reshape((n_test,n_test)),40) 
+lip_plug = liplike.plugin(x_test)
+lip_plug /= lip_plug.mean()
+axs[2].contourf(test, test, lip_plug.reshape((n_test,n_test)),40)
 # GP_marginal = GPlike.marginal(x_test)
 # GP_marginal /= GP_marginal.mean()
-# axs[2].contourf(test, test, GP_marginal.reshape((n_test,n_test)),70)
+# axs[2].contourf(test, test, GP_marginal.reshape((n_test,n_test)),40)
 truth = true_like.plugin(x_test)
 truth /= truth.mean()
-axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 70)
+axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 40)
 
-fig.savefig(path + "/posterior_comparison.svg", format = 'svg', transparent = True)
+fig.savefig(path + "/posterior_comparison.png", format = 'png', transparent = True)
 
 x_ran = list(range(n_init, n_max+1))
 
@@ -229,7 +232,7 @@ x_ran = list(range(n_init, n_max+1))
 # plt.title("Total variation distance between posteriors")
 # plt.legend()
 # plt.xticks(x_ran)
-# fig.savefig(path + "/TV_convergence.svg", format = 'svg', transparent = True)
+# fig.savefig(path + "/TV_convergence.png", format = 'png', transparent = True)
 
 # fig, ax = plt.subplots(figsize = (12,3))
 # for i in range(rg):
@@ -240,4 +243,4 @@ x_ran = list(range(n_init, n_max+1))
 # plt.title("Expected error")
 # plt.legend()
 # plt.xticks(x_ran)
-# fig.savefig(path + "/EE_convergence.svg", format = 'svg', transparent = True)
+# fig.savefig(path + "/EE_convergence.png", format = 'png', transparent = True)

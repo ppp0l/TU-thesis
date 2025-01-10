@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from models.forward import forward_model as fm
 from models.GP_models.SOSurrogate import SOGPModel
-from models.naive_lipschitz import lipschitz_regressor
+from models.lipschitz import lipschitz_regressor
 
 from likelihoods.likelihoods import base_likelihood, lipschitz_likelihood, GP_likelihood
 
