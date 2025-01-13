@@ -31,7 +31,7 @@ if not os.path.exists(path):
 
 # measurements and measurements variance
 meas = np.array( [[-1.7, 1.3]])
-eps_l = np.array([0.2, 0.1])
+eps_l = np.array([0.05, 0.06])
 
 # ground truth
 forward = fm(2, "U")
@@ -43,7 +43,7 @@ n_init = 3
 n_max = 23
 
 # noise level
-noise_level = 0.05
+noise_level = 0.01
 
 rg = 1
 

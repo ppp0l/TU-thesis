@@ -209,7 +209,7 @@ hd = [(handler[0],), (handler[1],),
 lab = ["Ground truth", 'Lips training points','GP training points', "GP predictive mean and \n 95% confidence interval", "Lipschitz prediction and \n confidence interval", ]
 ax.legend(hd, lab, )
 #loc = 'upper right', prop={'size': 16} )
-fig.savefig(path + "/model_comparison.svg", format = 'svg', transparent = True)
+fig.savefig(path + "/model_comparison.png", format = 'png', transparent = True)
 
 
 # plot posteriors
@@ -225,7 +225,7 @@ truth /= truth.mean()
 ax.plot(test, truth, lw = 1, label = "Ground truth", color = 'black')
 
 plt.legend()
-fig.savefig(path + "/posterior_comparison.svg", format = 'svg', transparent = True)
+fig.savefig(path + "/posterior_comparison.png", format = 'png', transparent = True)
 
 x_ran = list(range(n_init, n_max+1))
 
