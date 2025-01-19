@@ -16,8 +16,11 @@ class lipschitz_regressor(Surrogate) :
 
         self.L = 0
 
-    def fit(self, train_x, train_y, noise):
+    def fit(self, train_x, train_y, noise = None):
         
+        if noise is None:
+            noise = np.zeros_like(train_y)
+
         self.train_x = train_x.reshape( (-1, self.dim))
         self.train_y = train_y.reshape( (-1, self.dout))
         self.noise = noise.reshape( (-1, self.dout))
@@ -76,11 +79,27 @@ class lipschitz_regressor(Surrogate) :
         self.L = L
         #self.L = 3
         
-    def update(self, nx, ny, nnoise, updated_y = None, updated_noise = None) :
+    def update(self, nx, ny, nnoise = None, updated_y = None, updated_noise = None) :
+        if nnoise is None:
+            nnoise = np.zeros_like(ny)
+            
+        nx = nx.reshape( (-1, self.dim))
+        ny = ny.reshape( (-1, self.dout))
+        nnoise = nnoise.reshape( (-1, self.dout))
+
+        if updated_y is not None:
+            train_y = updated_y.reshape( (-1, self.dout))
+        else:
+            train_y = self.train_y
+
+        if updated_noise is not None:
+            noise = updated_noise.reshape( (-1, self.dout))
+        else:
+            noise = self.noise        
         
         self.train_x = np.concatenate((self.train_x,nx))
-        self.train_y = np.concatenate((self.train_y,ny))
-        self.noise = np.concatenate((self.noise,nnoise))
+        self.train_y = np.concatenate((train_y,ny))
+        self.noise = np.concatenate((noise,nnoise))
         
         self.estimate_constant(self.train_x, self.train_y, self.noise)
 

@@ -17,8 +17,10 @@ class forward_model() :
         match dim :
             case 1 :
                 self.forward = af.d1_model
+                self.dout = 1
             case 2 :
                 self.forward = af.d2_model
+                self.dout = 2
             case _ :
                 raise NotImplementedError("only 1d case as for now")
             

@@ -407,7 +407,7 @@ class MTModel(Surrogate):
     
     
 
-    def update(self, new_X, new_y, new_noise=None, **kwargs):
+    def update(self, new_X, new_y, new_noise=None, updated_y = None, updated_noise = None):
 
         self.check_inputs(new_X, y=new_y)
         new_X = self.input_transform().forward(new_X)
@@ -415,10 +415,21 @@ class MTModel(Surrogate):
 
         new_X = new_X.to(self.device)
         new_y = new_y.to(self.device)
-        
+
+        if updated_y is not None:
+            updated_y = self.output_transform().forward(updated_y)
+            train_y = updated_y.to(self.device)
+        else:
+            train_y = self.train_y
+
+        if updated_noise is not None:
+            updated_noise = self.input_transform().forward(updated_noise)
+            noise = updated_noise.to(self.device)
+        else:
+            noise = self.noise        
 
         self.train_X = torch.cat([self.train_X, new_X], dim=0)
-        self.train_y = torch.cat([self.train_y, new_y], dim=0)
+        self.train_y = torch.cat([train_y, new_y], dim=0)
         
         if (new_noise is None) or (self.noise is None):
             self.noise=None
@@ -426,7 +437,7 @@ class MTModel(Surrogate):
             new_noise = self.input_transform().forward(new_noise)
             new_noise = new_noise.to(self.device)
             
-            self.noise = torch.cat([self.noise, new_noise], dim=0)
+            self.noise = torch.cat([noise, new_noise], dim=0)
 
         
         self.optimizer = None
