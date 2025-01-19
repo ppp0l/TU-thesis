@@ -21,6 +21,7 @@ from gpytorch.lazy import ConstantDiagLazyTensor, KroneckerProductLazyTensor
 from linear_operator.operators import KroneckerProductLinearOperator, DiagLinearOperator
 
 from models.GP_models.transforms import TensorTransform
+from models.surrogate import Surrogate
 
 
         
@@ -86,12 +87,7 @@ class IndipendentMultiTaskGP(gpytorch.models.ExactGP):
 
     
 
-class MTModel():
-    
-
-    is_probabilistic = True
-    is_multioutput = True
-    is_torch = True
+class MTModel(Surrogate):
 
     def __init__(
         self,
@@ -365,8 +361,6 @@ class MTModel():
             return self.output_transform().reverse(self.mean)
         
         
-        
-        
     def predict_grad(self, X_pred) :
 
         self.check_inputs(X_pred)
@@ -438,3 +432,8 @@ class MTModel():
         self.optimizer = None
         self.fit(self.train_X, self.train_y, noise = self.noise)
 
+    def state_dict(self):
+        return self.model.state_dict()
+    
+    def load_state_dict(self, state_dict):
+        return self.model.load_state_dict(state_dict)

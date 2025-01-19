@@ -6,18 +6,23 @@ Created on Mon Dec  2 09:45:56 2024
 @author: pvillani
 """
 import numpy as np
+from models.surrogate import Surrogate
 
-class lipschitz_regressor() :
-    def __init__(self, train_x, train_y, noise):
-        self.train_x = train_x.reshape( (len(train_x), -1))
-        self.train_y = train_y.reshape( (len(train_y), -1))
-        self.noise = noise
+class lipschitz_regressor(Surrogate) :
+    def __init__(self, dim, dout):
 
-        self.dim = len(self.train_x[0])
-        self.dout= len(self.train_y[0])
+        self.dim = dim
+        self.dout= dout
 
         self.L = 0
-        self.estimate_constant()
+
+    def fit(self, train_x, train_y, noise):
+        
+        self.train_x = train_x.reshape( (-1, self.dim))
+        self.train_y = train_y.reshape( (-1, self.dout))
+        self.noise = noise.reshape( (-1, self.dout))
+        
+        self.estimate_constant(self.train_x, self.train_y, self.noise)
         
         
 
@@ -50,20 +55,18 @@ class lipschitz_regressor() :
         return pred
 
     
-    def estimate_constant(self) :
-        
-        x = self.train_x
+    def estimate_constant(self, x,y, noise) :
         
         x2 = np.sum(x**2, axis = 1, keepdims=True)
         xxT = x.dot(x.transpose())
         dist_x = np.sqrt( x2 + x2.transpose() - 2 *xxT )
         
-        y = self.train_y.transpose()
-        y = y.reshape( (len(y), len(y[0]), -1 ))
+        y = y.transpose()
+        y = y.reshape( (len(y), self.dout, -1 ))
         
         dist_y = np.abs(y - y.transpose((0,2,1)))
         
-        eps = self.noise.reshape((len(y[0]), -1))
+        eps = noise.reshape((self.dout, -1))
         eps2 = (eps + eps.transpose())
         
         L_mat = (dist_y )/dist_x - eps2/dist_x
@@ -73,10 +76,17 @@ class lipschitz_regressor() :
         self.L = L
         #self.L = 3
         
-    def update(self, nx, ny, nnoise) :
+    def update(self, nx, ny, nnoise, updated_y = None, updated_noise = None) :
         
         self.train_x = np.concatenate((self.train_x,nx))
         self.train_y = np.concatenate((self.train_y,ny))
         self.noise = np.concatenate((self.noise,nnoise))
         
-        self.estimate_constant()
+        self.estimate_constant(self.train_x, self.train_y, self.noise)
+
+    def state_dict(self):
+        return {'L': self.L}
+
+    def load_state_dict(self, state_dict):
+        self.L = state_dict['L']
+
