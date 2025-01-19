@@ -20,7 +20,7 @@ from emcee import EnsembleSampler
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from utils.metrics import experror, TVD
 
-reproducibility_seed(22)
+reproducibility_seed(12)
 
 dim = 2
 
@@ -30,7 +30,7 @@ if not os.path.exists(path):
     os.makedirs(path)
 
 # measurements and measurements variance
-meas = np.array( [[-1.7, 1.3]])
+meas = np.array( [[0.5, 0.9]])
 eps_l = np.array([0.05, 0.06])
 
 # ground truth
@@ -147,14 +147,14 @@ for i in range(rg) :
     
     # EELR[i, n_pts - n_init] = experror(lips, forward, true_like.plugin )
     # L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
-    sampler = EnsembleSampler(nwalkers = 16, ndim = 2, log_prob_fn= liplike.log_marginal)
-    start = np.random.uniform(0,1, size = (16,2))
+    sampler = EnsembleSampler(nwalkers = 32, ndim = 2, log_prob_fn= liplike.log_marginal)
+    start = np.random.uniform(0,1, size = (32,2))
     
     while n_pts < n_max :
-        sampler.run_mcmc(initial_state=start, nsteps = 50)
+        sampler.run_mcmc(initial_state=start, nsteps = 100)
         start = sampler.get_last_sample()
         sampler.reset()
-        sampler.run_mcmc(start, 100)
+        sampler.run_mcmc(start, 400)
         samples = sampler.get_chain(flat = True)
         start = sampler.get_last_sample()
         sampler.reset()
@@ -188,6 +188,24 @@ for i in range(rg) :
         plt.savefig(path+f"/acq/it{n_pts - n_init}.png", format = 'png')
         plt.close()
         
+        fig, axs = plt.subplots(1,3,figsize = (12,3))
+        lip_marginal = liplike.marginal(x_test)
+        lip_marginal /= lip_marginal.mean()
+        axs[1].contourf(test, test, lip_marginal.reshape((n_test,n_test)),40) 
+        lip_plug = liplike.plugin(x_test)
+        lip_plug /= lip_plug.mean()
+        axs[2].contourf(test, test, lip_plug.reshape((n_test,n_test)),40)
+        # GP_marginal = GPlike.marginal(x_test)
+        # GP_marginal /= GP_marginal.mean()
+        # axs[2].contourf(test, test, GP_marginal.reshape((n_test,n_test)),40)
+        truth = true_like.plugin(x_test)
+        truth /= truth.mean()
+        axs[0].contourf(test, test, truth.reshape((n_test,n_test)), 40)
+
+        fig.savefig(path + "/posterior_comparison.png", format = 'png', transparent = True)
+        plt.close('all')
+
+        x_ran = list(range(n_init, n_max+1))
         # EELR[i, n_pts - n_init] = experror(lips, forward, true_like.plugin )
         # L2LR[i, n_pts - n_init] = TVD(liplike.marginal, true_like.plugin)
     
