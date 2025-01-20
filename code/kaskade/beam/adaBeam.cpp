@@ -1,0 +1,194 @@
+#include <iostream>
+
+#include "dune/grid/config.h"
+#include "dune/grid/uggrid.hh"
+#include <dune/istl/operators.hh>
+
+#include "fem/assemble.hh"
+#include "fem/spaces.hh"
+#include "fem/diffops/elasto.hh"
+#include "io/vtk.hh"
+#include "linalg/direct.hh"
+#include "linalg/apcg.hh"                   // Pcg preconditioned CG method
+#include "mg/additiveMultigrid.hh"          // makeBPX MG preconditioner
+#include "linalg/threadedMatrix.hh"
+#include "linalg/triplet.hh"
+#include "utilities/enums.hh"
+#include "utilities/gridGeneration.hh"
+#include "utilities/kaskopt.hh"
+#include "utilities/memory.hh"             // for mmoveUnique 
+#include "utilities/timing.hh"
+
+using namespace Kaskade;
+#include "adaBeam.hpp"
+
+
+int main(int argc, char *argv[])
+{
+  using namespace boost::fusion;
+
+
+  Timings& timer=Timings::instance();
+  timer.start("total computing time");
+  std::cout << "Start elastic beam tutorial program." << std::endl;
+  
+  int maxit, order, refinements, solver, verbose, materialList;
+  bool direct, vtk, linearStrain;
+  double atol, L, W;
+  std::string material, storageScheme("A");
+  
+  if (getKaskadeOptions(argc,argv,Options
+    ("L",                L,                3.,          "length of the elastic beam")
+    ("W",                W,                0.2,        "width/ of the elastic beam")
+    ("refinements",      refinements,      2,          "number of uniform grid refinements")
+    ("order",            order,            1,          "finite element ansatz order")
+    ("material",         material,         "steel",    "type of material")
+    ("linearStrain",     linearStrain,     true,       "true= linear strain tensor, false=nonlinear strain tensor")
+    ("direct",           direct,           true,       "if true, use a direct solver")
+    ("solver",           solver,           0,          "0=UMFPACK, 1=PARDISO 2=MUMPS 3=SUPERLU 4=UMFPACK32/64 5=UMFPACK64")
+    ("verbosity",        verbose,          0,          "amount of reported details")
+    ("vtk",              vtk,              true,       "write solution to VTK file")
+    ("atol",             atol,             1e-8,       "absolute energy error tolerance for iterative solver")
+    ("maxit",            maxit,            100,        "maximum number of iterations")
+    ("MaterialList",     materialList,      1,         "Report the known materials in kaskade")
+    ))
+    return 1;
+
+  if(materialList>0){
+    auto materials = Elastomechanics::ElasticModulus::materials();
+    printMaterial(materials);
+  }
+
+  std::cout << "refinements of original mesh : " << refinements << std::endl;
+  std::cout << "discretization order         : " << order << std::endl;
+
+  constexpr int DIM = 3;
+  using Grid = Dune::UGGrid<DIM>;
+
+  // set dimensions of the bar
+  Dune::FieldVector<double,DIM> x0(0.0), dx(W); dx[0] = L; 
+  Dune::FieldVector<double,DIM> dh(0.2); dh[0] = 0.6;
+  GridManager<Grid> gridManager( createCuboid<Grid>(x0, dx, dh, true) );
+  // mesh refinement
+  gridManager.globalRefine(refinements);
+  gridManager.enforceConcurrentReads(true);
+
+  // construction of finite element space for the vector solution u.
+  H1Space<Grid> h1Space(gridManager,gridManager.grid().leafGridView(),order);
+ 
+  auto varSetDesc = makeVariableSetDescription(makeSpaceList(&h1Space),
+                                               make_vector(Variable<SpaceIndex<0>,Components<DIM>>("u")));
+  using VarSetDesc = decltype(varSetDesc);
+
+  // use linear or nonlinear strain tensor
+  using StrainTensor = LinearizedGreenLagrangeTensor<double,DIM>;    
+  using Functional = ElasticityFunctional<VarSetDesc,StrainTensor>;
+  using Assembler = VariationalFunctionalAssembler<LinearizationAt<Functional> >;
+  // using CoefficientVectors = VarSetDesc::CoefficientVectorRepresentation<0,1>::type;
+
+  // Create the variational functional.
+  Functional F(ElasticModulus::material(material));
+
+  // construct Galerkin representation
+  Assembler assembler(varSetDesc.spaces);
+  VarSetDesc::VariableSet x(varSetDesc);
+	
+  assembler.assemble(linearization(F,x));
+  
+  auto rhs(assembler.rhs());
+  auto solution = varSetDesc.zeroCoefficientVector();
+  
+  // direct solve
+  if (direct)
+  {
+    DirectType directType = static_cast<DirectType>(solver);
+    AssembledGalerkinOperator<Assembler> A(assembler, directType == DirectType::MUMPS || directType == DirectType::PARDISO);
+    directInverseOperator(A,directType,MatrixProperties::POSITIVEDEFINITE).applyscaleadd(-1.0,rhs,solution);
+    component<0>(x) = component<0>(solution);
+  }
+  else
+  {
+    using X = Dune::BlockVector<Dune::FieldVector<double,DIM>>;
+    DefaultDualPairing<X,X> dp;
+    using Matrix = NumaBCRSMatrix<Dune::FieldMatrix<double,DIM,DIM>>;
+    using LinOp = Dune::MatrixAdapter<Matrix,X,X>;
+    Matrix Amat(assembler.get<0,0>(),true);
+    LinOp A(Amat);
+    SymmetricLinearOperatorWrapper<X,X> sa(A,dp);
+    PCGEnergyErrorTerminationCriterion<double> term(atol,maxit);
+    
+    Dune::InverseOperatorResult res;
+    X xi(component<0>(rhs).N());
+
+    std::unique_ptr<SymmetricPreconditioner<X,X>> mg;
+
+    if (order==1)
+      mg = moveUnique(makeBPX(Amat,gridManager));
+    else
+    {
+      H1Space<Grid> p1Space(gridManager,gridManager.grid().leafGridView(),1);
+      if (storageScheme=="A")
+        mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseInverseStorageTag<double>(),gridManager.grid().maxLevel()));
+      else if (storageScheme=="L")
+        mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseCholeskyStorageTag<double>(),gridManager.grid().maxLevel()));
+      else
+      {
+        std::cerr << "unknown storage scheme provided\n";
+        return -1;
+      }
+    }
+
+    Pcg<X,X> pcg(sa,*mg,term,verbose);
+    pcg.apply(xi,component<0>(rhs),res);
+    std::cout << "PCG iterations: " << res.iterations << "\n";
+    xi *= -1;
+    component<0>(x) = xi;
+  }
+
+
+  //Postprocessing 
+  L2Space<Grid> l2Space(gridManager,gridManager.grid().leafGridView(),0);
+
+  L2Space<Grid>::Element_t<DIM> normalStress(l2Space);
+  interpolateGlobally<PlainAverage>(normalStress,makeFunctionView(h1Space, [&] (auto const& evaluator)
+  {
+    auto modulus = ElasticModulus::material(material);
+    HyperelasticVariationalFunctional<Elastomechanics::MaterialLaws::StVenantKirchhoff<DIM>,StrainTensor>
+    energy(modulus);
+
+    energy.setLinearizationPoint(component<0>(x).derivative(evaluator));
+    auto stress = Dune::asVector(energy.cauchyStress());
+
+    return Dune::FieldVector<double,3>{stress[0],stress[4],stress[8]};
+  }));
+
+   auto vsd = makeVariableSetDescription(makeSpaceList(&l2Space, &h1Space),
+                                        boost::fusion::make_vector(Variable<SpaceIndex<0>,Components<3>>("NormalStress"),
+                                                                   Variable<SpaceIndex<1>,Components<3>>("Displacement")));
+  auto data = vsd.variableSet();
+  component<0>(data) = normalStress;
+  component<1>(data) = component<0>(x);
+
+  // output of solution in VTK format for visualization,
+  // the data are written as ascii stream into file elasto.vtu,
+  // possible is also binary
+  if (vtk)
+  {
+    ScopedTimingSection ts("computing time for file i/o",timer);
+    std::string outStr("elasto_");
+    if(linearStrain)
+      outStr.append("linear_p=");
+    else
+      outStr.append("nonlinear_p=");
+    writeVTK(data,outStr+paddedString(order,1),IoOptions().setOrder(order).setPrecision(16));
+  }
+ 
+  timer.stop("total computing time");
+  if (verbose>0)
+    std::cout << timer;
+    
+  std::cout << "You successfully ran the elastic beam tutorial program." << std::endl;
+  
+  return 0;
+}
+
