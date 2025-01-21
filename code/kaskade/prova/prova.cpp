@@ -62,9 +62,9 @@ int main()
   using Operator = AssembledGalerkinOperator<Assembler>;
   Operator A(assembler);
 
-  using CoefficientVectors = VariableSetDesc::CoefficientVectorRepresentation<0,1>::type;
-  CoefficientVectors solution = temperatureSpacesVarSetDesc.zeroCoefficientVector();
-  CoefficientVectors rhs(assembler.rhs());
+  // using CoefficientVectors = VariableSetDesc::CoefficientVectorRepresentation<0,1>::type;
+  auto solution = temperatureSpacesVarSetDesc.zeroCoefficientVector();
+  auto rhs(assembler.rhs());
 
   // solve the system of linear equation and obtain the coefficients which represent the solution  
   directInverseOperator(A).applyscaleadd(-1.0,rhs,solution);
