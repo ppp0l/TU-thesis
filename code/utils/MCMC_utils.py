@@ -21,8 +21,8 @@ class MCMCError(Exception) :
     pass
 
 
-def burn_in(MCMC_sampler, start, dim, n_burn = None, **kwargs) :
-    
+def burn_in(MCMC_sampler, start, n_burn = None, **kwargs) :
+    dim = len(start[0])
     if isinstance(start, emcee.State) :
         n_walkers = len(start.coords)
     else :

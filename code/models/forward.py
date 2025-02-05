@@ -32,7 +32,7 @@ class forward_model() :
             self.discr_err = uniform_error
         
     def predict(self, p, tols = 0, **kwargs):
-         
+        p = np.reshape(p, (-1, self.dim))
         n_pts = len(p)
         
         val = self.forward(p, **kwargs)
