@@ -15,7 +15,13 @@ class base_likelihood() :
         self.y_m = y_m
         self.var = var
         self.model = model
+
+    def prob(self, p) :
+        return self.plugin(p)
     
+    def log_prob(self, p) :
+        return self.log_plugin(p)
+
     def plugin(self, p):
         """
         p (np.array): must be of shape (n_pts, dim).
@@ -47,6 +53,13 @@ class base_likelihood() :
 
     
 class lipschitz_likelihood(base_likelihood) :
+
+    def prob(self, p) :
+        return self.marginal(p)
+    
+    def log_prob(self, p) :
+        return self.log_marginal(p)
+
         
     def marginal(self, p) :
         
@@ -74,6 +87,12 @@ class lipschitz_likelihood(base_likelihood) :
     
     
 class GP_likelihood(base_likelihood) :
+
+    def prob(self, p) :
+        return self.marginal(p)
+    
+    def log_prob(self, p) :
+        return self.log_marginal(p)
     
     def marginal(self, p) :
         

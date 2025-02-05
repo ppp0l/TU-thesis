@@ -1,0 +1,48 @@
+import numpy as np
+import emcee
+from likelihoods import Likelihood
+from utils.MCMC_utils import DIMEMove, burn_in
+
+class Posterior:
+    def __init__(self, likelihood: Likelihood, prior):
+        self.likelihood = likelihood
+        self.prior = prior
+        self.sampler = None
+        self.sampler_start = None
+
+    def prob(self, p) :
+        return self.prior.prob(p) * self.likelihood.prob(p)
+
+    def log_prob(self, p):
+        log_prior = self.prior.log_prob(p)
+        log_likelihood = self.likelihood.log_prob(p)
+        return log_prior + log_likelihood
+
+    def initialize_sampler(self, n_walkers, initial_pos):
+        ndim = len(initial_pos[0])
+        self.sampler = emcee.EnsembleSampler(n_walkers, ndim, self.log_posterior, moves=DIMEMove)
+        self.burn_in(initial_pos)
+
+    def sample_points(self, n_steps):
+        if self.sampler is None:
+            raise ValueError("Sampler not initialized. Call initialize_sampler first.")
+        if self.sampler_start is None :
+            raise ValueError("Initial position of sampler not defined, burn in or provide one.")
+        
+        self.sampler.run_mcmc(self.sampler_start, n_steps, progress=True)
+        self.sampler_start = self.sampler.get_last_sample()
+        
+        return self.sampler.get_chain(flat= True)
+
+    def burn_in(self, initial_pos):
+        if self.sampler is None:
+            raise ValueError("Sampler not initialized. Call initialize_sampler first.")
+        burned_in = False
+        nit = 0
+        while not burned_in :
+            if nit > 4 :
+                break
+            self.sampler_start, burned_in = burn_in(self.sampler, initial_pos)
+            nit+=1
+
+
