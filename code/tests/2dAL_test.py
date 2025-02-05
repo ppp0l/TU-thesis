@@ -12,9 +12,9 @@ from models.forward import forward_model as fm
 from models.GP_models.MTSurrogate import MTModel
 from models.lipschitz import lipschitz_regressor
 
-from likelihoods.likelihoods import base_likelihood, lipschitz_likelihood, GP_likelihood
+from IP.likelihoods import base_likelihood, lipschitz_likelihood, GP_likelihood
 
-from AL.acquisition import pos_EER
+from AL.exp_err_red import pos_EER
 from emcee import EnsembleSampler
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed

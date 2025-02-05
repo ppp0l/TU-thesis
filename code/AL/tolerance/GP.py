@@ -1,0 +1,177 @@
+import numpy as np
+import torch
+
+from copy import deepcopy
+import itertools as it
+
+from scipy.optimize import minimize, Bounds, LinearConstraint
+
+def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = False) :
+    """
+    Solves the accuracy problem, i.e. how to distribute the computational budget among the points.
+    Uses scipy.optimize.minimize, SLSQP method, multistarts.
+    Problem is solved for computational budget, so that constraints are liearized.
+
+    Args:
+        candidates (np.ndarray): candidate points.
+        W (float): computational budget.
+    
+    Returns:
+        accs (np.ndarray): new evaluation tolerances.
+        candidates (np.ndarray): new points.
+        updated (np.ndarray): which old points have to be updated up to a new tolerance.
+    """
+    ### probably wrong here
+    training_p = GP.train_x
+    precs = GP.errors**(-1/cost)
+    dim = len(training_p[0])
+
+    # old points and candidates
+    target_pts = torch.cat( (torch.tensor(training_p), torch.tensor(candidates) ), dim = 0)
+    
+    # get samples
+    samples = torch.tensor(samples).reshape( (-1, dim))
+    
+    # kernel matrices are needed multiple times
+    ker_cand_samples = GP.kernel(target_pts, samples ).to_dense().detach().numpy()
+    ker_cand = GP.kernel(target_pts, target_pts ).to_dense().detach().numpy()
+    
+    # recover scale factor in the kernel
+    raw_var = GP.model.covar_module.task_covar_module.raw_var 
+    constraint = GP.model.covar_module.task_covar_module.raw_var_constraint
+    scale= constraint.transform(raw_var).detach().numpy()
+    
+    # multistarts
+    starts = get_multistarts( len(candidates), W, precs)
+    
+    # first start is default
+    old_precs = starts[0]
+
+    # budget constraint, spend all of the budget
+    budget_constraint = LinearConstraint( np.ones_like(old_precs), lb = np.sum(old_precs) + W, ub = np.sum(old_precs) + W)
+    # old points and positivity constraint, cannot decrease acccuracy in the old points
+    old_points_constraint = Bounds(lb = old_precs, keep_feasible = True )
+    
+    iter_options = { 'maxiter' : 200,
+                    'disp' : talk, 
+                    'ftol' : 1.0e-8
+                    }
+    
+    res_list = []
+    
+    # helps avoiding weird numbers
+    norm = target(mu_samples, std_samples**2).mean()
+
+    # iterate over starts
+    for j, start in enumerate(starts) :
+        # scipy solve
+        res = minimize( acc_prob_target, start, args = (mu_samples, cost, ker_cand_samples, ker_cand, scale, norm ), 
+                                        method='SLSQP',
+                                        jac = acc_prob_grad,
+                                        constraints = (budget_constraint), 
+                                        bounds = old_points_constraint,
+                                        options = iter_options
+                                        )
+        
+        res_list.append(res)
+
+    # dictionaries with optimization data  
+    acc_sol_pars=res_list
+    
+    # recover best solution
+    best =np.inf
+    best_precs = old_precs
+    for res in res_list :
+        if res.fun < best :
+            best = res['fun']
+            best_precs = res['x']
+            best_res = res
+    print(f'Best work distribution: {best_res}')
+
+    # updated points, with threshold
+    updated = (best_precs - old_precs) > 0.02*W
+    n_tr_pts = len(training_p)
+    print(f'Number of updated points: {np.sum(updated[:n_tr_pts])}' )
+    print(f'Number of included candidates: {np.sum(updated[n_tr_pts:])}' )
+    # non updated points
+    best_precs[~updated] = old_precs[~updated]
+    # spread evenly work from non updated
+    best_precs[updated] += (W - np.sum(best_precs - old_precs))/(len(best_precs[updated]))
+    
+    # get best candidates, discards not included ones
+    best_candidates = candidates[best_precs[n_tr_pts:]>0]
+    # recovers tolerance
+    best_accs = best_precs[best_precs > 0]**(-1/cost)
+    
+    return best_accs, best_candidates, updated[:n_tr_pts]
+
+
+def get_multistarts(self, n_cands, W, precs) :
+    """
+    Multistarts for the accuracy problem.
+    """
+    
+    current = np.concatenate( (precs, np.zeros( n_cands) ) )
+    
+    starts = [current]
+    
+    n_old = len(precs)
+    p = 0.7
+    new_start = deepcopy(current)
+    new_start[n_old: ] += np.full( n_cands,  p * W/n_cands)
+                
+    p = 0.4
+    new_start = deepcopy(current)
+    new_start[ : n_old ] += np.full( n_old,  p*W/n_old)
+    
+    q = 0.6
+    
+    for vec in it.product([0,1], repeat = n_cands) :
+        
+        vec = np.array(vec, dtype = int)
+        
+        n_in = vec.sum()
+        
+        if n_in == 0 : continue 
+    
+        ns = deepcopy(new_start)
+        ns[ n_old : ] += q*W/n_in * vec
+    
+        starts.append(ns)
+
+    return starts
+
+def acc_prob_target( precs, mu_samples, cost, ker_cand_samples, ker_cand, scale, norm) :
+    """
+    Target function for the accuracy problem.
+    """
+    
+    accs = precs[precs>0]**(-1/cost)
+    
+    k_samples = ker_cand_samples[ precs > 0 ]
+    k_cand = ker_cand[precs > 0][:, precs > 0]
+    
+    k = compute_var( accs, k_samples, k_cand, scale, return_daccs = False)
+    
+    L = target(mu_samples, k).mean()
+    
+    return  L/norm
+
+def acc_prob_grad(precs, mu_samples, cost, ker_cand_samples, ker_cand, scale, norm) :
+    """
+    Gradient of the target function for the accuracy problem.
+    """
+    dL_dprecs = np.zeros(len(precs))
+    accs = precs[precs>0]**(-1/cost)
+    
+    k_samples = ker_cand_samples[ precs > 0 ]
+    k_cand = ker_cand[precs > 0][:, precs > 0]
+    
+    k, dk_daccs = compute_var( accs, k_samples, k_cand, scale, return_daccs = True)
+    
+    dl_dk = dtarget_dk(k)
+    
+    dL_daccs = np.mean(np.sum(dk_daccs * dl_dk, axis = 2), axis = 1 )
+    
+    dL_dprecs [precs>0] = dL_daccs * deps_dW(accs)
+    return dL_dprecs / norm
