@@ -11,6 +11,10 @@ import numpy as np
 from models.forward import forward_model as fm
 from models.surrogate import Surrogate
 
+from IP.priors import Prior
+from IP.likelihoods import base_likelihood
+from IP.posteriors import Posterior 
+
 from AL.acquisition import pos_EER
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
@@ -43,8 +47,15 @@ param_space = {
 # create forward model,  sets noise type
 forward = fm(dim, configuration["noise_type"], dom = param_space)
 
+# create prior
+prior = Prior()
+
+# create true likelihood
+meas_cov = configuration["meas_var"] * np.ones(forward.dout)
+true_likelihood = base_likelihood(configuration["value"], meas_cov, forward)
+
 # create true posterior
-####
+true_posterior = Posterior(true_likelihood, prior)
 
 # active learning parameters
 n_init = configuration["n_init"]
@@ -60,13 +71,23 @@ budget = n_it * points_per_it * (default_tol)**(-FE_cost)
 surrogate = Surrogate(dim, dout = forward.dout)
 # export initial surrogate
 
-# create approximate posterior
-####
+# create approximate likelihood and posterior
+approx_likelihood = base_likelihood(configuration["value"], meas_cov, surrogate)
+approx_posterior = Posterior(approx_likelihood, prior)
 
+n_samples = 0
+samples = np.array([])
 for type_run in ["posAd","fullyAd"] :
     # load initial
     for i in range(n_it) :
+        n_burn = n_samples - 10
+        n_samples += 100 
         # sample posterior
+        new_samples = approx_posterior.sample_points(n_samples)
+
+        # update sample chains
+        samples = samples[n_burn :]
+        samples = np.concatenate( (samples, new_samples), axis = 0)
 
         # position problem
 
@@ -83,5 +104,14 @@ for type_run in ["posAd","fullyAd"] :
         print()
 
     # export final round, save
+    n_burn = n_samples - 10
+    n_samples += 100 
+    # sample posterior
+    new_samples = approx_posterior.sample_points(n_samples)
+
+    # update sample chains
+    samples = samples[n_burn :]
+    samples = np.concatenate( (samples, new_samples), axis = 0)
+
 
 # run lhs
