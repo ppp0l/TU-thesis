@@ -127,27 +127,6 @@ def projection_on_simplex(y, k, tol=0.0001, max_iter=1000):
     
     return np.maximum(y - midpoint, 0)
 
-
-def flat_prior(theta, dom) :
-    """
-    Helper function for flat prior.
-    
-    Args:
-        theta (numpy.ndarray): evaluation points.
-        dom (dict): dictionary of arrays with extrema of domain.
-    """
-    theta = np.reshape(theta, (-1, len(dom['min'] )))
-    in_dom = np.array( (theta > dom['min']) * (theta < dom['max']), dtype = bool )
-    
-    if len(dom['min'] ) > 1:
-        if theta.ndim > 1 :
-            in_dom = in_dom.all(axis = 1)
-    
-    area = np.prod(dom["max"] - dom["min"] )
-    
-    in_dom = in_dom.reshape( (-1,))
-    return in_dom / area
-
 def latin_hypercube_sampling(
     domain_lower_bound: np.ndarray,
     domain_upper_bound: np.ndarray,
