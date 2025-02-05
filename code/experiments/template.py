@@ -15,7 +15,6 @@ from IP.priors import Prior
 from IP.likelihoods import base_likelihood
 from IP.posteriors import Posterior 
 
-from AL.acquisition import pos_EER
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from utils.metrics import experror, TVD
