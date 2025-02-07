@@ -2,8 +2,10 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 from utils.utils import latin_hypercube_sampling as lhs
+from AL.L2_GP import L2_approx, neg_dL2_dW
 
-def solve_pos_prob(n_pts : int, dom : dict, mu_samples : np.ndarray, std_samples : np.ndarray, talk = False, talk_a_lot = False):
+
+def solve_pos_prob(n_pts : int, dom : dict, GP, samples, std_samples : np.ndarray, cost : float, talk = False, talk_a_lot = False):
         mins = dom['min']
         maxs = dom['max']
         dim = len(maxs)
@@ -21,11 +23,11 @@ def solve_pos_prob(n_pts : int, dom : dict, mu_samples : np.ndarray, std_samples
         maxs = np.zeros_like(starts)
         vals = np.zeros(len(starts))
         
-        norm = target(mu_samples, std_samples**2).mean()
+        norm = L2_approx(std_samples**2).mean()
         for i, start in enumerate(starts) :
             
-            res = minimize( neg_dtarget_dW, start, 
-                                          args = ( norm ),
+            res = minimize( neg_dL2_dW, start, 
+                                          args = ( dim, GP, samples, cost, norm ),
                                           method='L-BFGS-B',
                                           bounds=domain,
                                           )

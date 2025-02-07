@@ -6,7 +6,9 @@ import itertools as it
 
 from scipy.optimize import minimize, Bounds, LinearConstraint
 
-def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = False) :
+from AL.L2_GP import L2_approx, dL2_dk, deps_dW
+
+def scipy_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) :
     """
     Solves the accuracy problem, i.e. how to distribute the computational budget among the points.
     Uses scipy.optimize.minimize, SLSQP method, multistarts.
@@ -25,6 +27,7 @@ def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = Fals
     training_p = GP.train_x
     precs = GP.errors**(-1/cost)
     dim = len(training_p[0])
+    dout = len(std_samples[0])
 
     # old points and candidates
     target_pts = torch.cat( (torch.tensor(training_p), torch.tensor(candidates) ), dim = 0)
@@ -60,12 +63,12 @@ def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = Fals
     res_list = []
     
     # helps avoiding weird numbers
-    norm = target(mu_samples, std_samples**2).mean()
+    norm = L2_approx(std_samples**2).mean()
 
     # iterate over starts
     for j, start in enumerate(starts) :
         # scipy solve
-        res = minimize( acc_prob_target, start, args = (mu_samples, cost, ker_cand_samples, ker_cand, scale, norm ), 
+        res = minimize( acc_prob_target, start, args = (dout, cost, ker_cand_samples, ker_cand, scale, norm ), 
                                         method='SLSQP',
                                         jac = acc_prob_grad,
                                         constraints = (budget_constraint), 
@@ -76,7 +79,7 @@ def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = Fals
         res_list.append(res)
 
     # dictionaries with optimization data  
-    acc_sol_pars=res_list
+    # acc_sol_pars=res_list
     
     # recover best solution
     best =np.inf
@@ -106,7 +109,7 @@ def scipy_acc_prob(candidates, W, GP, mu_samples, std_samples, cost, talk = Fals
     return best_accs, best_candidates, updated[:n_tr_pts]
 
 
-def get_multistarts(self, n_cands, W, precs) :
+def get_multistarts(n_cands, W, precs) :
     """
     Multistarts for the accuracy problem.
     """
@@ -141,23 +144,22 @@ def get_multistarts(self, n_cands, W, precs) :
 
     return starts
 
-def acc_prob_target( precs, mu_samples, cost, ker_cand_samples, ker_cand, scale, norm) :
+def acc_prob_target( precs, dout, cost, ker_cand_samples, ker_cand, scale, norm) :
     """
     Target function for the accuracy problem.
-    """
-    
+    """    
     accs = precs[precs>0]**(-1/cost)
     
     k_samples = ker_cand_samples[ precs > 0 ]
     k_cand = ker_cand[precs > 0][:, precs > 0]
     
-    k = compute_var( accs, k_samples, k_cand, scale, return_daccs = False)
+    k = compute_var( accs, dout, k_samples, k_cand, scale, return_daccs = False)
     
-    L = target(mu_samples, k).mean()
+    L = L2_approx(k).mean()
     
     return  L/norm
 
-def acc_prob_grad(precs, mu_samples, cost, ker_cand_samples, ker_cand, scale, norm) :
+def acc_prob_grad(precs, dout, cost, ker_cand_samples, ker_cand, scale, norm) :
     """
     Gradient of the target function for the accuracy problem.
     """
@@ -167,11 +169,46 @@ def acc_prob_grad(precs, mu_samples, cost, ker_cand_samples, ker_cand, scale, no
     k_samples = ker_cand_samples[ precs > 0 ]
     k_cand = ker_cand[precs > 0][:, precs > 0]
     
-    k, dk_daccs = compute_var( accs, k_samples, k_cand, scale, return_daccs = True)
+    k, dk_daccs = compute_var( accs, dout, k_samples, k_cand, scale, return_daccs = True)
     
-    dl_dk = dtarget_dk(k)
+    dl_dk = dL2_dk(k)
     
     dL_daccs = np.mean(np.sum(dk_daccs * dl_dk, axis = 2), axis = 1 )
     
-    dL_dprecs [precs>0] = dL_daccs * deps_dW(accs)
+    dL_dprecs [precs>0] = dL_daccs * deps_dW(accs, cost)
     return dL_dprecs / norm
+
+def compute_var(accs, dout, ker_o, ker_oo, scale,
+                    return_daccs = False) :
+    """
+    Computes the predictive variance of the GP as a function of the tolerances.
+    Can also return the gradient of the variance with respect to the tolerances.
+    """
+    
+    est = np.zeros( (len(ker_o[0]), dout) )
+    
+    if return_daccs :
+            
+        dk_daccs = np.zeros( (len(accs), len(ker_o[0]), dout) )
+    
+    for i, sc in enumerate(scale) :
+        
+        sk_o = sc * ker_o
+        sk_oo = sc * ker_oo
+        sk = sk_oo[0,0]
+        
+        sk_oo += np.diag(accs**2)
+        
+        prod = np.linalg.solve(sk_oo, sk_o)
+        
+        est[:,i] = sk - (sk_o * prod ).sum(axis = 0)
+        
+        if return_daccs :
+                
+            dk_daccs[:,:,i] = 2 * (prod.T**2 * accs).T
+            
+    if return_daccs :
+        
+        return est, dk_daccs
+        
+    return est
