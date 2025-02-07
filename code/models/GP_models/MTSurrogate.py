@@ -115,6 +115,7 @@ class MTModel(Surrogate):
 
         self.model = None
         self.num_tasks = num_tasks
+        self.dout = num_tasks
         self.training_max_iter = training_max_iter
         self.noise_std = None
         self.likelihood = None
@@ -248,6 +249,7 @@ class MTModel(Surrogate):
     
     def fit(self, train_X, train_y, noise = None, **kwargs):
         self.check_inputs(train_X, y=train_y)
+        self.dim = len(train_X[0])
         train_X = self.input_transform().forward(train_X)
         train_y = self.output_transform().forward(train_y)
         

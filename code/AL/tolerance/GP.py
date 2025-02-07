@@ -24,8 +24,8 @@ def scipy_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
         updated (np.ndarray): which old points have to be updated up to a new tolerance.
     """
     ### probably wrong here
-    training_p = GP.train_x
-    precs = GP.errors**(-1/cost)
+    training_p = GP.train_X
+    precs = np.sqrt(GP.noise.detach().numpy())**(-1/cost)
     dim = len(training_p[0])
     dout = len(std_samples[0])
 

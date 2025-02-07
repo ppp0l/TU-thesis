@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from models.GP_models import MTSurrogate
+from models.GP_models.MTSurrogate import MTModel
 
 def L2_approx( k) :
     """
@@ -11,7 +11,7 @@ def L2_approx( k) :
     return k.sum(axis = 1)
  
 
-def neg_dL2_dW( candidates : np.ndarray, dim : int, GP : MTSurrogate, samples, cost, norm = 1) :
+def neg_dL2_dW( candidates : np.ndarray, dim : int, GP : MTModel, samples, cost, norm = 1) :
     
     candidates = np.reshape(candidates, (-1, dim))
     
@@ -23,7 +23,7 @@ def neg_dL2_dW( candidates : np.ndarray, dim : int, GP : MTSurrogate, samples, c
     
     for i, theta_i in enumerate(candidates) :
         
-        dk_de = dk_deps(samples, torch.tensor(np.array([theta_i])), std[i] )
+        dk_de = dk_deps(samples, torch.tensor(np.array([theta_i])), std[i] , GP)
         
         dL_dW[i] = np.mean(dl_dk * dk_de, axis = 0) @ (- deps_dW(std[i], cost))
     
@@ -35,7 +35,7 @@ def dL2_dk(k) :
     return np.ones_like(k)
     
 
-def dk_deps( pts, theta, std, GP : MTSurrogate,) :
+def dk_deps( pts, theta, std, GP : MTModel,) :
     # returns derivative of k w.r.t. to std
     # shape is len(pts) x dim_out
 
