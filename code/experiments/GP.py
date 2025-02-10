@@ -103,7 +103,7 @@ for type_run in ["fullyAd"] :
         curr_L2 = L2_approx(std).mean()
 
         # position problem
-        candidates = solve_pos_prob(2, param_space, surrogate, samples, std, FE_cost )
+        candidates = solve_pos_prob(2, param_space, default_tol, surrogate, samples, std, FE_cost )
 
         # accuracy problem
         tolerances, new_pts, updated = scipy_acc_prob(candidates, budget, surrogate, samples, std, FE_cost)

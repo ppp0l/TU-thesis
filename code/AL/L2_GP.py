@@ -11,15 +11,16 @@ def L2_approx( k) :
     return k.sum(axis = 1)
  
 
-def neg_dL2_dW( candidates : np.ndarray, dim : int, GP : MTModel, samples, cost, norm = 1) :
+def neg_dL2_dW( candidates : np.ndarray, dim : int, default_tol, GP : MTModel, samples, cost, norm = 1) :
+    dout = GP.dout
     
     candidates = np.reshape(candidates, (-1, dim))
     
-    _, std = GP.predict( candidates, return_std = True)
+    std = default_tol * np.ones( (len(candidates), dout))
     
     dL_dW = np.empty(len(candidates))
     
-    dl_dk = dL2_dk(np.ones( (len(samples), len(std[0]))))
+    dl_dk = dL2_dk(np.ones( (len(samples), dout)))
     
     for i, theta_i in enumerate(candidates) :
         

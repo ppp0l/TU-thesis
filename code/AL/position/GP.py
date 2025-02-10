@@ -5,7 +5,7 @@ from utils.utils import latin_hypercube_sampling as lhs
 from AL.L2_GP import L2_approx, neg_dL2_dW
 
 
-def solve_pos_prob(n_pts : int, dom : dict, GP, samples, std_samples : np.ndarray, cost : float, talk = False, talk_a_lot = False):
+def solve_pos_prob(n_pts : int, dom : dict, default_tol : float, GP, samples, std_samples : np.ndarray, cost : float, talk = False, talk_a_lot = False):
     mins = dom['min']
     maxs = dom['max']
     dim = len(maxs)
@@ -27,7 +27,7 @@ def solve_pos_prob(n_pts : int, dom : dict, GP, samples, std_samples : np.ndarra
     for i, start in enumerate(starts) :
         
         res = minimize( neg_dL2_dW, start, 
-                                        args = ( dim, GP, samples, cost, norm ),
+                                        args = ( dim, default_tol, GP, samples, cost, norm ),
                                         method='L-BFGS-B',
                                         bounds=domain,
                                         )
