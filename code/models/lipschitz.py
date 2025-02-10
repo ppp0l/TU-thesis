@@ -33,7 +33,7 @@ class lipschitz_regressor(Surrogate) :
 
         tr_y = self.train_y.reshape((1, -1, self.dout)  )
         tr_x = self.train_x
-        noise = self.noise.reshape((1, -1, 1))
+        noise = self.noise.reshape((1, -1, self.dout))
         x = x.reshape( (-1, self.dim))
 
         L = self.L
@@ -63,14 +63,14 @@ class lipschitz_regressor(Surrogate) :
         x2 = np.sum(x**2, axis = 1, keepdims=True)
         xxT = x.dot(x.transpose())
         dist_x = np.sqrt( x2 + x2.transpose() - 2 *xxT )
-        
+        n_pts = len(y)
         y = y.transpose()
-        y = y.reshape( (len(y), self.dout, -1 ))
+        y = y.reshape( (self.dout, n_pts, -1 ))
         
         dist_y = np.abs(y - y.transpose((0,2,1)))
         
-        eps = noise.reshape((self.dout, -1))
-        eps2 = (eps + eps.transpose())
+        eps = noise.reshape( (self.dout, n_pts, -1 ))
+        eps2 = (eps + eps.transpose((0,2,1)))
         
         L_mat = (dist_y )/dist_x - eps2/dist_x
         
