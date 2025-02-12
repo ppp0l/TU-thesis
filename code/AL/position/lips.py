@@ -25,7 +25,7 @@ def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
     vals = np.zeros(len(starts))
     
     iter_options = { 'maxiter' : 200,
-                    'ftol' : 1.0e-8
+                    'ftol' : 1.0e-8,
                     }
     
     # solve for each start
@@ -40,6 +40,7 @@ def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
                                         )
         maxs[i] = res.x
         vals[i] = - res.fun
+        print(res)
 
     n_pts = min(n_pts, len(vals))
     
@@ -62,7 +63,7 @@ def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
         pts[i] = maxs[l]
         valori[i] = vals[l]
         
-        close = np.isclose( (maxs- maxs[l])**2, 0, rtol=0, atol=0.02**2).all(axis = 1)
+        close = np.isclose( (maxs- maxs[l])**2, 0, rtol=0, atol=0.03**2).all(axis = 1)
         
         maxs = maxs[~close]
         vals = vals[~close]
@@ -86,7 +87,7 @@ def pos_EER(p, eps, lips, samples, LB_samples, UB_samples,):
     ELI = exp_lower(beta,eps,LB_p, UB_p)
 
 
-    return np.mean(EUI - ELI )
+    return - np.mean(EUI - ELI )
 
 def pos_prob_grad(p, eps, lips, samples, LB_samples, UB_samples,):
     p = p.reshape( (1,-1))
@@ -115,4 +116,4 @@ def pos_prob_grad(p, eps, lips, samples, LB_samples, UB_samples,):
 
     derivative = EU_derivative - EL_derivative
 
-    return np.mean(np.sum(derivative , axis = 2 ), axis = 1)
+    return - np.mean(np.sum(derivative , axis = 2 ), axis = 1)
