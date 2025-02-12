@@ -29,7 +29,7 @@ class lipschitz_regressor(Surrogate) :
         
         
 
-    def predict(self,x, return_bds = False) :
+    def predict(self,x, return_bds = False, return_dp = False) :
 
         tr_y = self.train_y.reshape((1, -1, self.dout)  )
         tr_x = self.train_x
@@ -44,12 +44,34 @@ class lipschitz_regressor(Surrogate) :
         dist_x = np.sqrt( x2 + tr_x2.transpose() - 2 *xxT )
         shape = dist_x.shape
         Ldist = np.outer(dist_x.reshape(-1 ), L).reshape( (shape[0],shape[1],len(L)))
-
-
+        
         low_bd = np.max( tr_y - noise  - Ldist , axis = 1)
         up_bd = np.min( tr_y + noise  + Ldist , axis = 1)
 
+        
         pred = (low_bd + up_bd)/2
+
+        if return_dp :
+            # non vectorialized!! only gets called for single x so ok
+            dlb = np.zeros( (self.dim, 1, self.dout))
+            dub = np.zeros( (self.dim, 1, self.dout))
+
+            arg_low = np.argmax(tr_y - noise  - Ldist, axis = 1)[0]
+            low_x = tr_x[arg_low]
+            ddist = - (x-low_x) / np.linalg.norm( x - low_x, ord = 2, axis=1, keepdims=True)
+            dlb[:,0,:] = np.transpose(ddist).reshape((self.dim, -1) ) * L
+
+            arg_up = np.argmin(tr_y + noise  + Ldist, axis = 1)[0]
+            up_x = tr_x[arg_up]
+            ddist = - (x-up_x) / np.linalg.norm( x - up_x, ord = 2, axis=1, keepdims=True)
+            dub[:,0,:] = np.transpose(ddist) * L
+
+            if return_bds :
+                return pred, low_bd, up_bd,  dlb, dub
+
+            dpred = (dlb + dub) / 2
+
+            return pred, dpred
         
         if return_bds :
 

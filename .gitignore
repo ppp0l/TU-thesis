@@ -5,6 +5,8 @@
 # Python
 *__pycache__/
 *.ipynb_checkpoints/
+code/tests/random_tests.ipynb
+*outputs/
 
 
 # Latex
