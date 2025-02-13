@@ -8,7 +8,7 @@ from scipy.optimize import minimize, Bounds, LinearConstraint
 
 from AL.L2_GP import L2_approx, dL2_dk, deps_dW
 
-def scipy_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) :
+def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) :
     """
     Solves the accuracy problem, i.e. how to distribute the computational budget among the points.
     Uses scipy.optimize.minimize, SLSQP method, multistarts.
@@ -25,7 +25,7 @@ def scipy_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
     """
     ### probably wrong here
     training_p = GP.train_X
-    precs = np.sqrt(GP.noise.detach().numpy())**(-1/cost)
+    precs = np.sqrt(GP.noise.detach().numpy())**(-cost)
     dim = len(training_p[0])
     dout = len(std_samples[0])
 
