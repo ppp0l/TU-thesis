@@ -2,11 +2,11 @@ import numpy as np
 
 from scipy.optimize import minimize, Bounds
 
-from AL.exp_err_red import exp_lower, exp_upper, grad_exp_lower, grad_exp_upper
+from AL.exp_err_red import exp_lower, exp_upper, grad_exp_upper
 
 from utils.utils import latin_hypercube_sampling as lhs
 
-def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
+def pos_prob(n_pts, dom, lips, default_tol, samples) :
     mins = dom['min']
     maxs = dom['max']
     dim = len(maxs)
@@ -31,7 +31,7 @@ def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
     # solve for each start
     for i, start in enumerate(starts) :
         
-        res = minimize( pos_EER, start, 
+        res = minimize( pos_prob_target, start, 
                                         args = ( default_tol, lips, samples, LB_samples, UB_samples ),
                                         method='SLSQP',
                                         jac = pos_prob_grad,
@@ -70,7 +70,7 @@ def pos_prob(n_pts, dom, lips, default_tol, samples, cost) :
     
     return pts
 
-def pos_EER(p, eps, lips, samples, LB_samples, UB_samples,):
+def pos_prob_target(p, eps, lips, samples, LB_samples, UB_samples,):
 
     _, LB_p, UB_p = lips.predict(p, return_bds=True)
 
@@ -82,9 +82,9 @@ def pos_EER(p, eps, lips, samples, LB_samples, UB_samples,):
 
     EUI = exp_upper(alpha, eps, LB_p,  UB_p)
 
-    beta = LB_samples + L * dist + eps
+    beta = -LB_samples - L * dist - eps
 
-    ELI = exp_lower(beta,eps,LB_p, UB_p)
+    ELI = - exp_upper(beta,eps,-UB_p, -LB_p)
 
 
     return - np.mean(EUI - ELI )
