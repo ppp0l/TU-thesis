@@ -1,8 +1,8 @@
 import numpy as np
 
-def exp_upper(alpha, eps, LB, UB) :
+def exp_upper(alpha, eps, LB, UB, componentwise = False) :
 
-    #prova = np.zeros_like(alpha)
+    # prova = np.zeros_like(alpha)
 
     comp =np.zeros_like(alpha )
 
@@ -11,33 +11,36 @@ def exp_upper(alpha, eps, LB, UB) :
 
     c2 = 1/6*(alpha+eps-LB)**3
     comp[ cond1 * cond2 ] = c2  [ cond1 * cond2 ] 
-    #prova[ cond1 * cond2 ] = 2
+    # prova[ cond1 * cond2 ] = 2
 
     c3 = 1/6*((alpha - LB + eps)**3 - (alpha - UB + eps)**3)
     comp[ cond1 *~cond2 ] = c3 [ cond1 *~cond2 ]
-    #prova[ cond1 *~cond2 ] = 3
+    # prova[ cond1 *~cond2 ] = 3
 
     c1 = 1/6*((alpha - LB + eps)**3 - (alpha - LB - eps)**3)
     comp[~cond1 * cond2 ] = c1 [~cond1 * cond2 ]
-    #prova[~cond1 * cond2 ] = 1
+    # prova[~cond1 * cond2 ] = 1
 
     c4 = 2*eps*(alpha *(alpha - eps -LB) + 1/2 *(LB**2 - (alpha-eps)**2)) - 1/6 *( (alpha -UB + eps)**3 -8*eps**3)
     comp[~cond1 *~cond2 ] = c4 [~cond1 *~cond2 ]
-    #prova[~cond1 *~cond2] = 4
+    # prova[~cond1 *~cond2] = 4
 
     c5 = 2*eps*(alpha *(UB -LB) + 1/2 *(LB**2 - UB**2))
 
-    #print(prova)
+    # print(prova)
 
     cond3 = np.array(alpha - eps >= UB)
     comp[cond3] = c5[cond3]
-    #prova[cond3] = 5
+    # prova[cond3] = 5
 
     cond4 = np.array(alpha + eps <= LB)
     comp[cond4] = 0
-    #prova[cond4] = 6
+    # prova[cond4] = 6
 
-    #print(prova)
+    # print(prova)
+    comp = 1/(2*eps * (UB - LB) ) * comp
+    if componentwise :
+        return comp
 
     res = np.sum(comp, axis = 1)
 
@@ -45,7 +48,7 @@ def exp_upper(alpha, eps, LB, UB) :
 
 def grad_exp_upper(alpha, eps, LB, UB) :
 
-    #prova = np.zeros_like(alpha)
+    # prova = np.zeros_like(alpha)
 
     n_samples = len(alpha)
     n_out = len(alpha[0])
@@ -92,7 +95,7 @@ def grad_exp_upper(alpha, eps, LB, UB) :
     # c4 = 2*eps*(alpha *(alpha - eps -LB) + 1/2 *(LB**2 - (alpha-eps)**2)) - 1/6 *( (alpha -UB + eps)**3 -8*eps**3)
     der = 2*eps*( alpha -LB ) - 1/2 * (alpha -UB + eps)**2
     dalpha[~cond1 *~cond2 ] =  der  [~cond1 *~cond2 ] 
-    der = 2*(alpha *(alpha - eps -LB) + 1/2 *(LB**2 - (alpha-eps)**2)) + 2*eps**2 - 1/2 *( (alpha -UB + eps)**2  - 8*eps**2)
+    der = 2*(alpha *(alpha - eps -LB) + 1/2 *(LB**2 - (alpha-eps)**2)) - 2*eps**2 - 1/2 *( (alpha -UB + eps)**2  - 8*eps**2)
     deps[~cond1 *~cond2 ] = der  [~cond1 *~cond2 ] 
     der = 2*eps*( alpha + LB )
     dLB[~cond1 *~cond2 ] = der  [~cond1 *~cond2 ] 
@@ -123,6 +126,13 @@ def grad_exp_upper(alpha, eps, LB, UB) :
         dUB[cond4] = 0
     # prova[cond4] = 6
     # print(prova)
+
+    EU = exp_upper(alpha, eps, LB, UB, componentwise = True)
+
+    dalpha = 1/(2*eps * (UB - LB) ) * dalpha
+    deps = 1/(2* eps * (UB - LB) ) * deps - EU/eps
+    dLB = 1/(2*eps * (UB - LB) ) * dLB + EU / (UB - LB)
+    dUB = 1/(2*eps * (UB - LB) ) * dUB - EU / (UB - LB)
 
     return dalpha, deps, dLB, dUB
 

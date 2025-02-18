@@ -42,8 +42,7 @@ class lipschitz_regressor(Surrogate) :
         tr_x2 = np.sum(tr_x**2, axis = 1, keepdims=True) 
         xxT = x.dot(tr_x.transpose())
         dist_x = np.sqrt( x2 + tr_x2.transpose() - 2 *xxT )
-        shape = dist_x.shape
-        Ldist = np.outer(dist_x.reshape(-1 ), L).reshape( (shape[0],shape[1],len(L)))
+        Ldist = np.outer(dist_x.reshape(-1 ), L).reshape( (len(x),len(tr_x),len(L)))
         
         low_bd = np.max( tr_y - noise  - Ldist , axis = 1)
         up_bd = np.min( tr_y + noise  + Ldist , axis = 1)
@@ -96,7 +95,7 @@ class lipschitz_regressor(Surrogate) :
         
         L_mat = (dist_y )/dist_x - eps2/dist_x
         
-        L = np.nanmax(L_mat, axis = (1,2) )*1.2
+        L = np.nanmax(L_mat, axis = (1,2) )#*1.2
         
         self.L = L
         #self.L = 3
@@ -131,3 +130,73 @@ class lipschitz_regressor(Surrogate) :
     def load_state_dict(self, state_dict):
         self.L = state_dict['L']
 
+    def predict_acc(self, pts :np.ndarray, 
+                    accs :np.ndarray = None,
+                    Ldist :np.ndarray = None, 
+                    oth_tr :np.ndarray = None, 
+                    return_deps : bool = False
+                    ) :
+        if accs is None :
+            accs = np.mean(self.noise, axis = 1, keepdims=True)
+        n_tr = len(accs)
+        accs = accs.reshape((n_tr, -1))
+        accs = accs * np.ones( (1, self.dout))
+        
+        tr_x = self.train_x 
+        tr_y = self.train_y.reshape((1, -1, self.dout)  )
+        noise = accs.reshape((1, -1, self.dout))
+
+        return_Ldist = False
+        if Ldist is None :
+            if oth_tr is None :
+                all_tr = tr_x
+            else :
+                all_tr = np.concatenate((tr_x, oth_tr))
+
+            tr_x2 = np.sum(tr_x**2, axis = 1, keepdims=True)
+            trtrT = tr_x.dot(tr_x.transpose())
+            dist_x = np.sqrt( tr_x2 + tr_x2.transpose() - 2 *trtrT )
+
+            y = self.train_y.transpose()
+            y = y.reshape( (self.dout, n_tr, -1 ))
+            
+            dist_y = np.abs(y - y.transpose((0,2,1)))
+            
+            L_mat = (dist_y )/dist_x 
+            # TODO : magari cambia qua per punti piu vicini
+            L = np.nanmax(L_mat, axis = (1,2) )#*1.2
+
+            all_tr2 = np.sum(all_tr**2, axis = 1, keepdims=True)
+            pts2 = np.sum(pts**2, axis = 1, keepdims=True)
+            xxT = pts.dot(all_tr.transpose())
+            dist_pt_tr = np.sqrt( pts2 + all_tr2.transpose() - 2 *xxT )
+            full_Ldist = np.outer(dist_pt_tr.reshape(-1 ), L).reshape( (len(pts),len(all_tr),len(L)))
+
+            Ldist = full_Ldist[:,:len(tr_x),:]
+
+            return_Ldist = True
+
+        low_bd = np.max( tr_y - noise  - Ldist , axis = 1)
+        up_bd = np.min( tr_y + noise  + Ldist , axis = 1)
+
+        if return_deps :
+            dlb = np.zeros( (len(tr_x), len(pts), self.dout))
+            dub = np.zeros( (len(tr_x), len(pts), self.dout))
+
+            arg_low = np.argmax(tr_y - noise  - Ldist, axis = 1)
+
+            arg_up = np.argmin(tr_y + noise  + Ldist, axis = 1)
+
+            # there's surely a better way to do this, but ok
+            for i in range(len(pts)) :
+                for j in range(self.dout) :
+                    dlb[arg_low[i,j], i, j] = - 1
+                    dub[arg_up[i,j], i, j ] = 1
+
+            return low_bd, up_bd, dlb,  dub
+
+        
+        if return_Ldist :
+            return low_bd, up_bd, full_Ldist
+        
+        return low_bd, up_bd
