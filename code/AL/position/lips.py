@@ -2,11 +2,11 @@ import numpy as np
 
 from scipy.optimize import minimize, Bounds
 
-from AL.exp_err_red import exp_lower, exp_upper, grad_exp_upper
+from AL.exp_err_red import exp_upper, grad_exp_upper
 
 from utils.utils import latin_hypercube_sampling as lhs
 
-def pos_prob(n_pts, dom, lips, default_tol, samples) :
+def solve_pos_prob(n_pts, dom, lips, default_tol, samples) :
     mins = dom['min']
     maxs = dom['max']
     dim = len(maxs)

@@ -9,15 +9,15 @@ from utils.workflow import Manager
 import numpy as np
 
 from models.forward import forward_model as fm
-from models.GP_models.MTSurrogate import MTModel
+from models.lipschitz import lipschitz_regressor
 
 from IP.priors import FlatPrior
-from IP.likelihoods import base_likelihood, GP_likelihood
+from IP.likelihoods import base_likelihood, lipschitz_likelihood
 from IP.posteriors import Posterior 
 
-from AL.L2_GP import L2_approx
-from AL.position.GP import solve_pos_prob
-from AL.tolerance.GP import solve_acc_prob
+from AL.exp_err_red import L1_err
+from AL.position.lips import solve_pos_prob
+from AL.tolerance.lips import solve_acc_prob
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
@@ -47,7 +47,7 @@ param_space = {
 }
 
 # create forward model,  sets noise type
-forward = fm(dim, "N", dom = param_space)
+forward = fm(dim, "U", dom = param_space)
 
 # create prior
 prior = FlatPrior(param_space)
@@ -70,14 +70,14 @@ FE_cost = 1
 budget = points_per_it * (default_tol)**(-FE_cost)
 
 # create surrogate
-surrogate = MTModel(num_tasks = forward.dout)
+surrogate = lipschitz_regressor(dim, forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
-train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
-surrogate.fit(train_p, train_y, errors**2)
+train_y, errors = forward.predict(train_p, tols = default_tol * np.ones( (n_init,forward.dout)))
+surrogate.fit(train_p, train_y, errors)
 # export initial surrogate
 
 # create approximate likelihood and posterior
-approx_likelihood = GP_likelihood(value, meas_cov, surrogate)
+approx_likelihood = lipschitz_likelihood(value, meas_cov, surrogate)
 approx_posterior = Posterior(approx_likelihood, prior)
 
 n_walkers = 16
@@ -90,7 +90,7 @@ for type_run in ["fullyAd"] :
     # load initial
     for i in range(n_it) :
         n_burn = n_samples - 10
-        n_samples += 100 
+        n_samples += 50 
         # sample posterior
         new_samples = approx_posterior.sample_points(n_samples)
 
@@ -98,15 +98,15 @@ for type_run in ["fullyAd"] :
         samples = samples[n_burn :]
         samples = np.concatenate( (samples, new_samples), axis = 0)
 
-        _, std = surrogate.predict(samples, return_std=True)
+        _, LB, UB = surrogate.predict(samples, return_bds=True)
 
-        curr_L2 = L2_approx(std).mean()
+        curr_L1 = L1_err(LB, UB).mean()
 
         # position problem
-        candidates = solve_pos_prob(2, param_space, default_tol, surrogate, samples, std, FE_cost )
+        candidates = solve_pos_prob(2, param_space, surrogate, samples, default_tol, FE_cost )
 
         # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(candidates, budget, surrogate, samples, std, FE_cost)
+        tolerances, new_pts, updated = solve_acc_prob(budget, candidates, samples, surrogate, FE_cost)
 
         new_tols = tolerances[-len(new_pts):]
         update_tols = tolerances[:-len(new_pts)]
@@ -127,12 +127,12 @@ for type_run in ["fullyAd"] :
         # monitor convergence
 
         # save results
-        _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = L2_approx(std).mean()
+        _, LB, UB = surrogate.predict(samples, return_bds=True)
+        new_L1 = L1_err(LB, UB).mean()
         print()
         print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L2}")
-        print(f"Current L2 approx value: {new_L2}")
+        print(f"Precedent L2 approx value: {curr_L1}")
+        print(f"Current L2 approx value: {new_L1}")
         print(f"Points in the training set: {len(train_p)}")
         print()
 
