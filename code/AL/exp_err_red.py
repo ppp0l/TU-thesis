@@ -97,7 +97,7 @@ def grad_exp_upper(alpha, eps, LB, UB) :
     dalpha[~cond1 *~cond2 ] =  der  [~cond1 *~cond2 ] 
     der = 2*(alpha *(alpha - eps -LB) + 1/2 *(LB**2 - (alpha-eps)**2)) - 2*eps**2 - 1/2 *( (alpha -UB + eps)**2  - 8*eps**2)
     deps[~cond1 *~cond2 ] = der  [~cond1 *~cond2 ] 
-    der = 2*eps*( alpha + LB )
+    der = 2*eps*( - alpha + LB )
     dLB[~cond1 *~cond2 ] = der  [~cond1 *~cond2 ] 
     der = 1/2 * (alpha -UB + eps)**2
     dUB[~cond1 *~cond2 ] = der [~cond1 *~cond2 ] 
