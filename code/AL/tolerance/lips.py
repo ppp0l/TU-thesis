@@ -6,7 +6,7 @@ from AL.exp_err_red import exp_upper, grad_exp_upper
 from AL.tolerance.GP import get_multistarts
 from AL.L2_GP import deps_dW
 
-def solve_acc_prob(W, candidates, samples, lips : lipschitz_regressor, cost ) :
+def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     n_cands = len(candidates)
 
     training_p = lips.train_x
@@ -29,7 +29,8 @@ def solve_acc_prob(W, candidates, samples, lips : lipschitz_regressor, cost ) :
     old_points_constraint = Bounds(lb = current_precs, keep_feasible = True )
 
     iter_options = { 'maxiter' : 200,
-                    'ftol' : 1.0e-8
+                    'ftol' : 1.0e-8,
+                    'disp' : False,
                     }
     
     res_list = []
@@ -75,6 +76,7 @@ def solve_acc_prob(W, candidates, samples, lips : lipschitz_regressor, cost ) :
     best_candidates = candidates[best_precs[n_tr_pts:]>0]
     # recovers tolerance
     best_accs = best_precs[best_precs > 0]**(-1/cost)
+    best_accs = np.ones( (1,lips.dout)) * best_accs.reshape( (-1,1))
     
     return best_accs, best_candidates, updated[:n_tr_pts]
 

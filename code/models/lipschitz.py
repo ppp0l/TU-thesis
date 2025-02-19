@@ -34,7 +34,7 @@ class lipschitz_regressor(Surrogate) :
         tr_y = self.train_y.reshape((1, -1, self.dout)  )
         tr_x = self.train_x
         noise = self.noise.reshape((1, -1, self.dout))
-        x = x.reshape( (-1, self.dim))
+        x = np.reshape( x, (-1, self.dim))
 
         L = self.L
 

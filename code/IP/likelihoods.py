@@ -77,7 +77,7 @@ class lipschitz_likelihood(base_likelihood) :
         
         prob = 1/np.prod(ubd-lbd, axis = 1)
         for dim, var in enumerate(self.var) :
-            prob *= norm.cdf(ubd[:,dim], loc = self.y_m [:,dim], scale = np.sqrt(var) ) - norm.cdf(lbd[:,dim], loc = self.y_m[:,dim] , scale = np.sqrt(var) )
+            prob *= norm.cdf(ubd[:,dim], loc = self.y_m [dim], scale = np.sqrt(var) ) - norm.cdf(lbd[:,dim], loc = self.y_m[dim] , scale = np.sqrt(var) )
             
         return prob
     

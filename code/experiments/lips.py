@@ -103,10 +103,10 @@ for type_run in ["fullyAd"] :
         curr_L1 = L1_err(LB, UB).mean()
 
         # position problem
-        candidates = solve_pos_prob(2, param_space, surrogate, samples, default_tol, FE_cost )
+        candidates = solve_pos_prob(2, param_space, default_tol, surrogate, samples)
 
         # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(budget, candidates, samples, surrogate, FE_cost)
+        tolerances, new_pts, updated = solve_acc_prob(candidates, budget, surrogate, samples, FE_cost)
 
         new_tols = tolerances[-len(new_pts):]
         update_tols = tolerances[:-len(new_pts)]
