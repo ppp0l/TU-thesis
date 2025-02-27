@@ -7,8 +7,8 @@ In this section, we will introduce Inverse Problem by first treating briefly the
 
 \subsection{Classical Inverse Problems}\label{sec:CIP}
 
-Classical Inverse Problems deal with the problem of identifying the pre-image of an observation $y^m$ under a map \[y : \mc P \longrightarrow \mc Y \] known as the forward model. 
-If a unique $p*$ in $\mc P$ such that
+Classical Inverse Problems deal with the problem of identifying the pre-image of an observation $y^m$ under a map \[y : \Theta \longrightarrow \mc Y \] known as the forward model. 
+If a unique $p*$ in $\Theta$ such that
 \begin{equation}\label{eq:IP0}
     y(p*) = y^m
 \end{equation}
@@ -17,15 +17,15 @@ exists, the IP admits a unique solution: but this case is an exception rather th
 A number of techniques have been developed to address the numerous issues which arise in an IP.
 First, the problem can be reformulated as a least squares problem: for some norm $\| \cdot \| _\mc Y$ on $\mc Y$, Problem~\ref{eq:IP0} is generalized to a minimization problem
 \begin{equation}\label{eq:IP1}
-    \min_{p\in \mc P} \| y(p) - y^m \|_\mc Y.
+    \min_{p\in \Theta} \| y(p) - y^m \|_\mc Y.
 \end{equation}
-Under regularity conditions such as $\mc P$ and $\mc Y$ being Banach spaces and $y$ being a continuous map, this formulation cannot yet guarantee neither existance, nor unicity, nor stability of a solution $p*$ for every $y^m \in \mc Y$. Nonetheless, Problem~\ref{eq:IP1} is more general as it allows for solutions even if $y(\{y^m\} )= \emptyset$, and on the practical side suggests the adoption of optimization techniques to solve IPs.
+Under regularity conditions such as $\Theta$ and $\mc Y$ being Banach spaces and $y$ being a continuous map, this formulation cannot yet guarantee neither existance, nor unicity, nor stability of a solution $p*$ for every $y^m \in \mc Y$. Nonetheless, Problem~\ref{eq:IP1} is more general as it allows for solutions even if $y(\{y^m\} )= \emptyset$, and on the practical side suggests the adoption of optimization techniques to solve IPs.
 
 A second and often compatible approach is that of regularization techniques. This involves introducing additional information or constraints to stabilize the solution and make the problem well-posed. Regularization can be performed by the substitution of $y$ with some more treatable operator, or in the case of Variational Regularization by the formulation of a different minimization problem. Often, a regularization approach can be understood both from an operator approximation and a variational perspective: this applies to Tychonoff regularization, which can be seen as the addition of a stabilizing term to Problem~\ref{eq:IP1}
 \begin{equation}\label{eq:Tycho}
-    \min_{p\in \mc P} \| y(p) - y^m \|_\mc Y^2 + \lambda\| p - p^0 \|_\mc P^2,
+    \min_{p\in \Theta} \| y(p) - y^m \|_\mc Y^2 + \lambda\| p - p^0 \|_\Theta^2,
 \end{equation}
-for some norm $\|\cdot\|_\mc P$ on $\mc P$, $p^0$ in $\mc P$ and $\lambda $ in $ \R^+$.
+for some norm $\|\cdot\|_\Theta$ on $\Theta$, $p^0$ in $\Theta$ and $\lambda $ in $ \R^+$.
 
 What well-posedness means
 
@@ -42,21 +42,44 @@ A natural developement of the statistical approach to Inverse Problems are Bayes
 In the Bayesian setting, the unknown solution $p*$ of the IP is treated as a random variable $P$ and the solution of the IP then becomes the conditional distribution $\bb P_{P \mid Y=y^m} $ of $P$ given $Y=y^m$.
 
 In full generality, the following result guarantees the possibility of formulating BIPs for arbitrary dimensionality:
-\begin{thm}
-    Let $ (\Omega, \mc F , \bb P) $ be a probability space, $\mc P$ be a separable Banach space equipped with the Borel $\sigma$-algebra $\mc B (\mc P)$, $(\mc Y, \tilde{\mc F})$ be a measurable space.
-    Moreover let $Y:\Omega \rightarrow \mc Y$ and $P : \Omega \rightarrow \mc P$ be random variables with $P \in L^1(\Omega, \bb P; \mc P) $. \\
-    Then there exists a $\bb P_Y$-a.s. unique map $\bb P_{P \mid Y} : \mc B (\mc P) \times \mc Y \rightarrow [0,1] $ such that :
+\begin{thm} [Regular conditional probability]
+    Let $ (\Omega, \mc F , \bb P) $ be a probability space, $\Theta$ be a separable Banach space equipped with the Borel $\sigma$-algebra $\mc B (\Theta)$, $(\mc Y, \tilde{\mc F})$ be a measurable space.
+    Further, let $Y:\Omega \rightarrow \mc Y$ and $P : \Omega \rightarrow \Theta$ be random variables with $P \in L^1(\Omega, \bb P; \Theta) $. \\
+    Then there exists a $\bb P_Y$-a.s. unique map $\bb P_{P \mid Y} : \mc B (\Theta) \times \mc Y \rightarrow [0,1] $ such that :
     \begin{itemize}
-        \item $\bb P_{P \mid Y}(\cdot, y)$ is a probability density on $\mc P$ for all $y$ in $\mc Y$;
-        \item $\bb P_{P \mid Y}(A, \cdot)$ is measurable for all $A$ in $\mc B (\mc P)$;
-        \item for all $B$ in $\sigma(Y)$, $A$ in $\mc B (\mc P)$, it holds that
+        \item $\bb P_{P \mid Y}(\cdot, y)$ is a probability density on $\Theta$ for all $y$ in $\mc Y$;
+        \item $\bb P_{P \mid Y}(A, \cdot)$ is measurable for all $A$ in $\mc B (\Theta)$;
+        \item for all $B$ in $\sigma(Y)$, $A$ in $\mc B (\Theta)$, it holds that
                 \[ 
-                \int_B \bb P_{P \mid Y}(A, Y) \ d\bb P= \int_B \ind_A(P) \ d\bb P .
+                \int_B \bb P_{P \mid Y}(A, Y(\omega)) \ d\bb P(\omega)= \int_B \ind_A(P(\omega)) \ d\bb P(\omega).
                 \] 
     \end{itemize}
     Such map is known as the \textbf{regular conditional probability} of $P$ given $Y$.
 \end{thm}
 
-In the hypothesis of the above theorem, $\bb P_P$ can be interpreted as a prior distribution of $P$ and $\bb P_{P \mid Y}(\cdot, y^m)$ is then the Bayesian posterior distribution of $P$ given $Y=y^m$.
+This results guarantees the well-definedness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a functional relation between quantities. This is provided by Bayes' rule:
 
-As for the scope of this work it is not necessary to work in full generality, from now on it will be assumed that the involved spaces $\mc P, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\mc P \otimes m_\mc Y$.
+\begin{thm}[Bayes' rule]
+    Let $ (\Omega, \mc F , \bb P) $ be a probability space and $\Theta, \mc Y$ be separable Banach spaces equipped with the respective Borel $\sigma$-algebras. 
+    Moreover, let $P : \Omega \rightarrow \Theta$ and $N:\Omega \rightarrow \mc Y$ be independent random variables, and $ Y = y(P) + N$ with $y: \Theta \rightarrow \mc Y$ a measurable map. \\
+    If the regular conditional probability $\bb P_{Y\mid P}$ of $Y$ given $P$ exists and is such that $\bb P_{Y\mid P}(\cdot, p) \ll \bb P _Y$ holds for all $p \in \Theta$, then 
+    \[ Z(y) = \int_\Theta \frac{d\bb P_{Y\mid P}(\cdot, p)}{d\bb P_P}(y) \ d\bb P_P(p)
+     \]
+    is such that $ Z(y) > 0$ $\bb P_Y$-a.s. and the regular conditional probability $\bb P_{P\mid Y}$ for $P$ given $Y$ exists and is such that $\bb P_{P\mid Y}(\cdot, y) \ll \bb P _P$ $\bb P_Y$-a.s., with Radon-Nikodym derivative
+    \begin{equation}\label{eq:infdimBayes}
+        \frac{d\bb P_{P\mid Y}(\cdot, y)}{d\bb P_P}(p) = \frac{1}{Z(y)}\frac{d\bb P_{Y\mid P}(\cdot, p)}{d\bb P_Y}(y).
+    \end{equation}
+\end{thm}
+
+In the hypothesis of the above theorem, $\bb P_P$ can be interpreted as a prior distribution of $P$ and $\bb P_{P \mid Y}(\cdot, y^m)$ is then the Bayesian posterior distribution of $P$ given $Y=y^m$. \\
+
+As for the scope of this work it is not necessary to work in full generality, from now on it will be assumed that the involved spaces $\Theta, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ are random vectors that admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\Theta \otimes m_\mc Y$. This allows for a more intuitive and direct formulation of the Bayesian posterior distribution of $P$ given $Y=y^m$ by exploiting the conditional probability density.
+
+\begin{thm}[Bayes' rule with Lebesgue measure]
+    Let $Y = y(P) + N$ hold, with $P$ and $N$ independent and $y: \Theta \rightarrow \mc Y$ a measurable map.
+    Then the likelihood is \[
+        \pi_{Y\mid P = p}(y^m) = \pi_{N}(y^m - y( p) )
+    \] posterior distribution of $P$ given $Y=y^m$ is given by the probability density \begin{equation}\label{eq:Bayes}
+        \pi_{P\mid Y = y^m}(p) = \frac{\pi_{N}(y^m - y( p) ) \pi_P(p)}{\int_\Theta  \pi_{N}(y^m - y( p) ) \pi_P(p) \ dm_\Theta(p)},
+    \end{equation}
+\end{thm}

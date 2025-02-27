@@ -1,4 +1,54 @@
 \section{Stochastic surrogate models}\label{sec:surrogates}
+To reduce the computational costs related to the evaluation of the forward model, a surrogate model is an attractive option.
+The scope of the surrogate model is to approximate the forward model $y : \Theta \rightarrow \mc Y $ or the problem's likelihood $L: \Theta \rightarrow \R $ directly with a simpler and faster model.\newline
+
+Whether the surrogate aims at representing the forward model or the likelihood directly is a matter of convenience.
+Producing a surrogate representation of the forward model guarantees a cheaper representation of the likelihood, but not vice versa. Moreover, the values the likelihood assumes are constrained to be positive, which can be non-trivial to impose for certain classes of surrogates; however, an argument in favor of adopting a surrogate for the likelihood is that, if the forward model has a great number of output components, the computational costs of a likelihood surrogate can be significantly lower than the ones of a forward model surrogate.
+
+Ultimately, the choice of the target of the surrogate model depends on the adopted surrogating technique, the usage of the surrogate and the objective being pursued.
+When a point estimate of the parameter is a sufficient solution for the IP, adopting a Bayesian Optimization framework and surrogating the likelihood directly is the most natural choice.
+Instead, when aiming for a posterior representation through sampling, approaches such as Delayed Acceptance MCMC \cite{ChristenFox2005} are indifferent to the choice.
+For the approach presented in this work, a forward model representation will be obtained, as we will exploit the error estimators for FE models in the surrogate's training. \newline
+
+We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical forward model,\[ y_i = H(f_{\tau_i}(\cdot; p_i)). \]
+
+There exist different classes of surrogate models: an useful distinction is the one between deterministic and stochastic surrogate models.
+Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
+They provide an approximation of the forward model or the likelihood, but they do not provide by default an estimate of their own uncertainty.
+On the other hand, stochastic surrogate models are based on probabilistic assumptions and naturally provide an estimate of the uncertainty associated with their prediction.
+This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections. \newline
+
+We will adopt stochastic surrogate models, which for any $p \in \Theta$ provide a random prediction with a certain predictive distribution. 
+The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.  
+For training data $D$, we write \begin{align*}
+    y_D : \Theta \rightarrow \mc P( \mc Y) \\
+    p \mapsto \bb P( y(p) \mid D).
+\end{align*}
+
+In the next two section, we introduce two techinques which provide a stochastic surrogate model: Gaussian process regression (GPR) and Lipschitz regression (LR).
+
 \subsection{Gaussian process regression}\label{sec:GPR}
-\lipsum
+Gaussian process regression (GPR) is a non-parametric regression technique which relies on probabilistic assumptions and is closely related to support vector machines and kernel methods.
+
+The core idea is that the underlying function $y$ is a realization of a Gaussian process and, assuming the observation are contaminated by Gaussian noise, GPR obtains a closed-form prediction through Gaussian conditioning.\newline
+
+\begin{dfn} [Gaussian Process]
+    A Gaussian process (GP) over $\mc Y$ is a collection $\{Y_p\}_{p\in\Theta}$ of $\mc Y$-valued random variables, such that for any finite subset $p_1, \ldots, p_n \in \Theta$, the random variables $Y_{p_1}, \ldots, Y_{p_n}$ have a joint Gaussian distribution.
+
+    A Gaussian process is completely defined by its mean function $m: \Theta \rightarrow \mc Y$ and its covariance function $k: \Theta \times \Theta \rightarrow \mc Y \times \mc Y$, also known as kernel. 
+    We denote $Y \sim GP(m, k)$ for a Gaussian process of mean $m$ and kernel $k$.
+\end{dfn}
+
+Gaussian process regression relies on two assumptions:
+\begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
+    \item[(GPR-model)] the forward model $y$ is a realization of a GP, $Y \sim GP(m, k)$;
+    \item[(GPR-data)]the observations are contaminated by Gaussian noise, i.e. for $ (p,\tau,y) $ in $D$, \[ y = y(p) + \epsilon \] holds, where $\epsilon \sim \mc N(0, \Sigma(\tau)^2)$ for some $\Sigma(\tau)$.
+\end{itemize}  
+The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model. \newline
+The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and implies that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. \[
+    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc N(0, \Sigma(\tau)^2).
+\] 
+
+
+
 \subsection{Lipschitz regression}\label{sec:LR}
