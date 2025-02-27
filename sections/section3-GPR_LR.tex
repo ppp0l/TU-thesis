@@ -16,10 +16,10 @@ There exist different classes of surrogate models: an useful distinction is the 
 Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
 They provide an approximation of the forward model or the likelihood, but they do not provide by default an estimate of their own uncertainty.
 On the other hand, stochastic surrogate models are based on probabilistic assumptions and naturally provide an estimate of the uncertainty associated with their prediction.
-This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections. \newline
+This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections~\ref{sec:GPlike} and~\ref{sec:LRlike}. \newline
 
 We will adopt stochastic surrogate models, which for any $p \in \Theta$ provide a random prediction with a certain predictive distribution. 
-The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.  
+The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work, we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.  
 For training data $D$, we write \begin{align*}
     y_D : \Theta \rightarrow \mc P( \mc Y) \\
     p \mapsto \bb P( y(p) \mid D).
@@ -58,20 +58,31 @@ The second assumption allows to derive a closed-form expression for the predicti
     \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
 \end{equation} 
 and often $\tau$ is unknown and fitted together with the kernel's hyperparameters. \newline
-In the context we are working on Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~(??) presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
+In the context we are working on Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
 
 Given a prior GP $Y \sim GP(m, k)$ and the training data $D$, the posterior GP $Y \mid D$ is obtained by conditioning the prior on the observations. 
 The analytical expression for the posterior GP is given by the following theorem.
-Although this result is foundational for GPR, its complete proof is rarely explicitly stated.~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which we will present explicitly in the appendix~\ref{app:GPR}.
-\begin{restatable}[GP posterior]{theorem}{GPRpost} \label{thm:GPR-posterior}
+Although this result is foundational for GPR, its complete proof is rarely explicitly stated.~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which we will present explicitly in Appendix~\ref{app:GPR}.
+
+\begin{restatable}[GP posterior]{theorem}{GPpost} \label{thm:GP-posterior}
     Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $e_{D,1},\dots,e_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
     Then the posterior GP $Y \mid D$ is a GP over $\mc Y$ with mean function $m_D$ and kernel $k_D$, where
-    \begin{align*}
-        m_D(p) &= m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \\
-        k_D(p, p') &= k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T
-    \end{align*}
+    \begin{gather}
+        m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \label{eq:predictive-mean} \\
+        k_D(p, p') = k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T \label{eq:predictive-var}
+    \end{gather}
     for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$,  and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
 \end{restatable}
+
+As we are not interested in the full GP posterior but only in the point-wise predictive distribution, the following corollary allows us to define the GPR surrogate we will employ.
+\begin{cor}
+    Under the assumptions of Theorem~\ref{thm:GP-posterior}, the GPR predictive distribution given the prior $GP(m,k)$ and the data $D$, is given by 
+    \begin{gather*}
+        y_{D, \text{GP}} : \Theta \rightarrow \mc P( \mc Y) \\
+        p \mapsto \mc N( m_D(p), k_D(p,p)),
+    \end{gather*}
+    where $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
+\end{cor}
 
 
 

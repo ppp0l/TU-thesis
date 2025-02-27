@@ -3,7 +3,7 @@ setlocal
 
 set Arr[0]=out
 set Arr[1]=log
-set Arr[2]=aux
+set Arr[2]=ooo
 set Arr[3]=toc
 set Arr[4]=blg
 set Arr[5]=idx

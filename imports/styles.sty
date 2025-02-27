@@ -82,3 +82,17 @@
 \declaretheorem[name={}, numbered=no, style=SettingBox]{Boxed}
 
 \declaretheorem[name=Theorem,numberwithin=section]{theorem}
+
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prp}[thm]{Proposition}
+\newtheorem{dfn}[thm]{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{rmk}{Remark}
+\newtheorem{ex}[thm]{Example}
+
+\numberwithin{equation}{section}
