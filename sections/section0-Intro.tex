@@ -25,7 +25,7 @@ The map implicitly depends on the associated model: in the case of complex model
 In this work, we assume the underlying model to be an adaptive Finite Element (FE) discretization of some Partial Differential Equation model. 
 
 In order to reduce computational costs, a surrogate model approximating $y$ is introduced.
-For a training set $\{(p_i,y_i,\tau_i)\}_{i=1,\dots,n}$, with $y_i = y_{\tau_i}(p_i)$, both GPR and LR can provide a mean prediction and some stochastic error bound. 
+For a training set $D = \{(p_i,y_i,\tau_i)\}_{i=1}^n$, with $y_i = y_{\tau_i}(p_i)$, both GPR and LR can provide a mean prediction and some stochastic error bound. 
 
 GPR assumes a Gaussian process prior $\mc{G} \mc P (\mu, k)$ for the unknown ground truth $y$, with $\mu : \mc P \rightarrow \mc Y$ being some mean function and $k: \mc P \times \mc P \rightarrow \mc Y^* $ being a covariance kernel.
 Moreover, it assumes that the error on the numerical evaluations $y_\tau$ is a realization of some normally distributed noise, i.e. 

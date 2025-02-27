@@ -35,6 +35,7 @@
 
 %%%%%%%%%%						Ambienti matematici
 \usepackage{thmtools}
+\usepackage{thm-restate}
 	%%%%%%%%%% 			Stile Teorema, Proposizione, Lemma, Corollario, Definizione
 %\declaretheoremstyle[spaceabove=8pt,
 %				spacebelow=8pt,
@@ -79,3 +80,5 @@
 %%%%%%%%%%						Box			
 \declaretheoremstyle[headpunct={}, mdframed={innertopmargin=15pt, innerbottommargin=5pt, innerleftmargin=.2cm, innerrightmargin=.2cm, roundcorner=50pt, backgroundcolor=black!5, linecolor=white, fontcolor=black, skipabove = -5pt, skipbelow=-5pt}]{SettingBox}
 \declaretheorem[name={}, numbered=no, style=SettingBox]{Boxed}
+
+\declaretheorem[name=Theorem,numberwithin=section]{theorem}

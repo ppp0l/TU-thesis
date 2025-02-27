@@ -33,21 +33,46 @@ Gaussian process regression (GPR) is a non-parametric regression technique which
 The core idea is that the underlying function $y$ is a realization of a Gaussian process and, assuming the observation are contaminated by Gaussian noise, GPR obtains a closed-form prediction through Gaussian conditioning.\newline
 
 \begin{dfn} [Gaussian Process]
-    A Gaussian process (GP) over $\mc Y$ is a collection $\{Y_p\}_{p\in\Theta}$ of $\mc Y$-valued random variables, such that for any finite subset $p_1, \ldots, p_n \in \Theta$, the random variables $Y_{p_1}, \ldots, Y_{p_n}$ have a joint Gaussian distribution.
+    A Gaussian process (GP) over $\mc Y$ is a collection $Y = \{Y_p\}_{p\in\Theta}$ of $\mc Y$-valued random variables, such that for any finite subset $p_1, \ldots, p_n \in \Theta$, the random variables $Y_{p_1}, \ldots, Y_{p_n}$ have a joint Gaussian distribution.
 
-    A Gaussian process is completely defined by its mean function $m: \Theta \rightarrow \mc Y$ and its covariance function $k: \Theta \times \Theta \rightarrow \mc Y \times \mc Y$, also known as kernel. 
+    A Gaussian process is completely defined by its mean function $m: \Theta \rightarrow \mc Y$ and its covariance function $k: \Theta \times \Theta \rightarrow SPSD_{\text{dim}\mc Y}(\R)$, also known as kernel. 
     We denote $Y \sim GP(m, k)$ for a Gaussian process of mean $m$ and kernel $k$.
 \end{dfn}
+Note that the covariance operator $k(p, p')$ can be identified with a positive semidefinite matrix as $\mc Y$ is of finite dimension. \newline
 
 Gaussian process regression relies on two assumptions:
 \begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
-    \item[(GPR-model)] the forward model $y$ is a realization of a GP, $Y \sim GP(m, k)$;
-    \item[(GPR-data)]the observations are contaminated by Gaussian noise, i.e. for $ (p,\tau,y) $ in $D$, \[ y = y(p) + \epsilon \] holds, where $\epsilon \sim \mc N(0, \Sigma(\tau)^2)$ for some $\Sigma(\tau)$.
+    \item[(GPR-model)] the forward model $y$ is a realization of a GP $Y \sim GP(m, k)$;
+    \item[(GPR-data)]the observations are contaminated by Gaussian noise independent from $Y$, i.e. 
+    \[ 
+        y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
+    \] 
+    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is independent from $Y$.
 \end{itemize}  
-The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model. \newline
-The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and implies that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. \[
-    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc N(0, \Sigma(\tau)^2).
-\] 
+The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model itself. 
+The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section. \newline
+The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and in our context entails that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. \[
+    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc N(0, \Sigma_D(\tau)^2);
+\] for a general GPR task, it is common to assume 
+\begin{equation}\label{eq:iid-GPR-noise}
+    \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
+\end{equation} 
+and often $\tau$ is unknown and fitted together with the kernel's hyperparameters. \newline
+In the context we are working on Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~(??) presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
+
+Given a prior GP $Y \sim GP(m, k)$ and the training data $D$, the posterior GP $Y \mid D$ is obtained by conditioning the prior on the observations. 
+The analytical expression for the posterior GP is given by the following theorem.
+Although this result is foundational for GPR, its complete proof is rarely explicitly stated.~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which we will present explicitly in the appendix~\ref{app:GPR}.
+\begin{restatable}[GP posterior]{theorem}{GPRpost} \label{thm:GPR-posterior}
+    Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $e_{D,1},\dots,e_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
+    Then the posterior GP $Y \mid D$ is a GP over $\mc Y$ with mean function $m_D$ and kernel $k_D$, where
+    \begin{align*}
+        m_D(p) &= m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \\
+        k_D(p, p') &= k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T
+    \end{align*}
+    for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$,  and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
+\end{restatable}
+
 
 
 
