@@ -19,7 +19,7 @@ On the other hand, stochastic surrogate models are based on probabilistic assump
 This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections~\ref{sec:GPlike} and~\ref{sec:LRlike}. \newline
 
 We will adopt stochastic surrogate models, which for any $p \in \Theta$ provide a random prediction with a certain predictive distribution. 
-The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work, we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.  
+The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work, we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.
 For training data $D$, we write \begin{align*}
     y_D : \Theta \rightarrow \mc P( \mc Y) \\
     p \mapsto \bb P( y(p) \mid D).
@@ -58,7 +58,7 @@ The second assumption allows to derive a closed-form expression for the predicti
     \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
 \end{equation} 
 and often $\tau$ is unknown and fitted together with the kernel's hyperparameters. \newline
-In the context we are working on Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
+In the context we are working in, Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
 
 Given a prior GP $Y \sim GP(m, k)$ and the training data $D$, the posterior GP $Y \mid D$ is obtained by conditioning the prior on the observations. 
 The analytical expression for the posterior GP is given by the following theorem.
@@ -71,7 +71,7 @@ Although this result is foundational for GPR, its complete proof is rarely expli
         m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \label{eq:predictive-mean} \\
         k_D(p, p') = k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T \label{eq:predictive-var}
     \end{gather}
-    for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$,  and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
+    for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$, and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
 \end{restatable}
 
 As we are not interested in the full GP posterior but only in the point-wise predictive distribution, the following corollary allows us to define the GPR surrogate we will employ.
@@ -79,12 +79,59 @@ As we are not interested in the full GP posterior but only in the point-wise pre
     Under the assumptions of Theorem~\ref{thm:GP-posterior}, the GPR predictive distribution given the prior $GP(m,k)$ and the data $D$, is given by 
     \begin{gather*}
         y_{D, \text{GP}} : \Theta \rightarrow \mc P( \mc Y) \\
-        p \mapsto \mc N( m_D(p), k_D(p,p)),
+        p \mapsto \mc N( m_D(p), \sigma_D^2(p) ),
     \end{gather*}
-    where $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
+    where $ \sigma_D^2(p) = k_D(p,p)$, with $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
 \end{cor}
 
+The core of GPR is now outlined, but for practical use a few more remarks are necessary.
+As mentioned above, the kernel structure and the treatment of hyperparameters play an essential role in GPR.
 
+The choice of what parametric family of kernels $\{ k_\lambda\}$ to adopt determines the regularity of the GP's mean and realizations, see ~\cite{Kanagawa2018} and~\cite[chap. 4]{ChristmannSteinwart2008}; moreover, the parametrization $\lambda \mapsto k_\lambda$ needs to allow for efficient optimization of the hyperparameters $\lambda$. \newline
+To ease the hyperparameters optimization problem and improve computational efficiency, the kernel $k_\lambda$ is often chosen to be stationary, i.e. 
+\[
+k_\lambda(p, p') = g_\lambda(p - p') \ \text{ for every } \ p, p' \in \Theta
+\]
+for some $g_\lambda:\Theta \rightarrow \R$.
+For dim$\mc Y > 1$, it is common to model the correlation between inputs and outputs separately~\cite{AlvarezRosascoLawrence2012}; this results in what is known as a separable kernel \[
+    k_\lambda(p, p') = \kappa_{\lambda_i}(p, p') K_{\lambda_o}
+\] for $\lambda = (\lambda_i, \lambda_o)$, with $\kappa_{\lambda_i}: \Omega \times \Omega \rightarrow \R$ and $K_{\lambda_o} \in R^{m\times m}$ being a scalar kernel and a symmetric positive definite matrix.
+$\kappa_{\lambda_i}$ models the correlation between different inputs and $K_{\lambda_o}$ models the correlation between output components.
+
+The possible choices for families of kernels are vast and it is important to note that sums and products of kernels are again kernels, allowing for the construction of complex kernel structures by the combination of elementary kernels~\cite{Duvenaud}.
+Among such elementary kernels, particularly relevant are the Radial Basis Function (RBF) kernel and the Matérn kernel. \newline
+The expression of the RBF kernel, also known as squared exponential kernel, is given by
+\[
+k_{\lambda}(p, p') = \exp\left(-\frac{\|p - p'\|_\Theta^2}{2\lambda^2}\right),
+\]
+with $\lambda$ being a length-scale parameter. 
+Note that more complex RBF kernels can be obtained by altering the norm $\| \cdot \|_\Theta$, and for a parametrized norm this leads to what is known as Automatic Relevance Determination (ARD).
+The RBF kernel leads to a $\mc C^\infty$ mean prediction and is usually adopted as a default choice whenever the underlying function can be assumed to be rather smooth. \newline
+The Matérn kernel allows for less-regular predictions. Its general expression is given by
+\[
+k_{(\nu, \lambda)}(p, p') = \frac{2^{1-\nu}}{\Gamma(\nu)} \left( \frac{\sqrt{2\nu} \|p - p'\|}{\lambda} \right)^\nu K_\nu \left( \frac{\sqrt{2\nu} \|p - p'\|}{\lambda} \right),
+\]
+where $\Gamma$ is the Gamma function $K_\nu$ is a modified Bessel function~\cite[sec. 9.6]{AbramowitzStegun1964};
+for $\nu = n + \frac{1}{2}$ with $n\in \bb N$, the expression simplifies to 
+\[
+     k_{n+\frac{1}{2}, \lambda}(p, p')=\exp \left(-{\frac {{\sqrt {2n+1}}\|p - p'\|}{\lambda }}\right){\frac {n!}{(2n)!}}\sum _{i=0}^{n}{\frac {(n+i)!}{i!(n-i)!}}\left({\frac {2{\sqrt {2n+1}}\|p - p'\|}{\lambda }}\right)^{n-i}.
+\]
+The regularity of the predictive mean depends on the parameter $\nu$: the mean prediction is $\nu + \frac{1}{2}$-times weakly differentiable.
+Most commonly, $\nu$ is set to $\frac{3}{2}, \frac{5}{2}$ or $\frac{7}{2}$, as $\nu = \frac{1}{2}$ leads to a non-differentiable mean prediction, and for $\nu > \frac{7}{2}$ the high regularity favors the adoption of a RBF kernel.
+Note that for $\nu \rightarrow \infty$ the Matérn kernel converges to the RBF kernel. \newline
+
+The treatment of hyperparameters constitutes an estimation problem.
+For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the data given the hyperparameters $\Lambda = \lambda$ is given by
+\[
+    (Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda \sim \mc N \left( (m(p_1), \dots, m(p_n)), k_\lambda(P,P) + \Sigma_D(\mc T)^2 \right)
+\]
+with $k(P,P)$ and $\Sigma_D(\mc T)$ as given in Theorem~\ref{thm:GP-posterior};
+this results in the hyperparameters' likelihood given the data,
+\[
+    L(\lambda) = \pi_{(Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda} \big ( (y_1,\dots,y_n) \mid \Lambda = \lambda \big ).
+\]
+To solve the problem, one either adopts a point estimate, given usually by ML or MAP, or marginalizes the GPR prediction over the hyperparameter posterior distribution by sampling. 
+While marginalizing propagates the uncertainty in the hyperparameters, it is computationally considerably more expensive: due to this reason a point estimate is most commonly employed and one talks about hyperparameter optimization. Gradient-based methods are utilized in the problem's solution. \newline
 
 
 \subsection{Lipschitz regression}\label{sec:LR}
