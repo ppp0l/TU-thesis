@@ -43,15 +43,17 @@ Note that the covariance operator $k(p, p')$ can be identified with a positive s
 Gaussian process regression relies on two assumptions:
 \begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
     \item[(GPR-model)] the forward model $y$ is a realization of a GP $Y \sim GP(m, k)$;
-    \item[(GPR-data)]the observations are contaminated by Gaussian noise independent from $Y$, i.e. 
+    \item[(GPR-data)] the observations are contaminated by Gaussian noise indipendent from $Y$, i.e. 
     \[ 
         y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
     \] 
-    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is independent from $Y$.
+    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is indipendent from $Y$.
 \end{itemize}  
 The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model itself. 
-The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section. \newline
-The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and in our context entails that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. \[
+The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section.
+
+The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and in our context entails that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. 
+\[
     H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc N(0, \Sigma_D(\tau)^2);
 \] for a general GPR task, it is common to assume 
 \begin{equation}\label{eq:iid-GPR-noise}
@@ -84,8 +86,14 @@ As we are not interested in the full GP posterior but only in the point-wise pre
     where $ \sigma_D^2(p) = k_D(p,p)$, with $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
 \end{cor}
 
-The core of GPR is now outlined, but for practical use a few more remarks are necessary.
-As mentioned above, the kernel structure and the treatment of hyperparameters play an essential role in GPR.
+The core of GPR is now outlined, but for practical use a few more remarks are necessary. \newline
+First, note that the covariance between the noise terms $e_{D,i}, \ e_{D,k}$ is assumed to be known in Theorem~\ref{thm:GP-posterior}, but in practice information about correlations is scarce or absent. Thus, usually a block diagonal structure is assumed 
+\begin{equation} \label{eq:GPR-noise-corr}
+    \Sigma_D(\mc T)^2 = \text{diag}(\Sigma_D(\tau_1)^2, \ldots, \Sigma_D(\tau_n)^2),
+\end{equation}
+entailing uncorrelated noise terms.
+
+Moreover as mentioned above, the kernel structure and the treatment of hyperparameters play an essential role in GPR.
 
 The choice of what parametric family of kernels $\{ k_\lambda\}$ to adopt determines the regularity of the GP's mean and realizations, see ~\cite{Kanagawa2018} and~\cite[chap. 4]{ChristmannSteinwart2008}; moreover, the parametrization $\lambda \mapsto k_\lambda$ needs to allow for efficient optimization of the hyperparameters $\lambda$. \newline
 To ease the hyperparameters optimization problem and improve computational efficiency, the kernel $k_\lambda$ is often chosen to be stationary, i.e. 
@@ -123,7 +131,7 @@ Note that for $\nu \rightarrow \infty$ the Matérn kernel converges to the RBF k
 The treatment of hyperparameters constitutes an estimation problem.
 For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the data given the hyperparameters $\Lambda = \lambda$ is given by
 \[
-    (Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda \sim \mc N \left( (m(p_1), \dots, m(p_n)), k_\lambda(P,P) + \Sigma_D(\mc T)^2 \right)
+    (Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda \sim \mc N \left( (m(p_1), \dots, m(p_n)), k_\Lambda(P,P) + \Sigma_D(\mc T)^2 \right)
 \]
 with $k(P,P)$ and $\Sigma_D(\mc T)$ as given in Theorem~\ref{thm:GP-posterior};
 this results in the hyperparameters' likelihood given the data,
@@ -135,3 +143,34 @@ While marginalizing propagates the uncertainty in the hyperparameters, it is com
 
 
 \subsection{Lipschitz regression}\label{sec:LR}
+Lipschitz regression (LR) is a non-parametric regression technique which provides uniform confidence intervals and hard bounds for the values of the target function. \newline
+
+Similarly to GPR, LR requires one assumption about the model and one assumption about the data; unlike GPR, the only assumption with probabilistic content is the one about the data. The two assumptions are the following:
+\begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
+    \item[(LR-model)] the forward model $y$ is globally and component-wise Lipschitz continuous, i.e. there exist constants $L_1,\dots, L_{\text{dim}\mc Y}$ in $\R_+^0$ such that 
+    \[
+        |y^{(j)}(p) - y^{(j)}(p')| \leq L_j \|p - p'\|_\Theta \ \text{ for every } \ p, p' \in \Theta
+    \]
+    holds for every $j = 1, \dots, \text{dim}\mc Y$;
+    \item[(LR-data)] the observations are contaminated by indipendent and centered uniform noise, i.e. 
+    \[ 
+        y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D
+    \] 
+    holds, where $e_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[e_{D,i}] = 0$ and $e_{D,i}$ is indipendent from $e_{D,k}$ for every $k \neq i$.
+\end{itemize}  
+The first assumption requires fixing a basis for $\mc Y$ and a norm on $\Theta$; despite this, the assumption is weaker than \textit{(GPR-model)}, as it does not require any level of smoothness for $y$ but Lipschitz continuity. \newline
+Issues may arise due to the global nature of the Lipschitz constants $L_j$, as a model exihibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
+Moreover when the Lipschitz constants are unknown, their estimation is sensitive to noise.
+
+The second assumption does not allow for correlated noise terms $e_{D,i}$, $e_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their indipendence, as in Equation~\ref{eq:GPR-noise-corr}. 
+In the context of this work, \textit{(LR-data)} entails that the discretization error is uniformly distributed in a region $I_\tau$, i.e. 
+\[
+    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc U(I_\tau),
+\] 
+with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
+Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \newline
+
+The following theorem gives the predictive mean and variance for LR.
+\begin{thm} [Lipschitz Regression]
+    Under assumptions \textit{(LR-model)} and \textit{(LR-data)}, let $p$
+\end{thm}
