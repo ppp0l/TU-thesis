@@ -1,3 +1,109 @@
 \section{Surrogate-based likelihoods}\label{sec:likelihoods}
+\todo[inline]{read again}
+Having obtained a stochastic surrogate model $y_D$, we wish to utilize it to evaluate the likelihood of the problem.
+
+A first approach consists of considering the mean prediction of the surrogate model as a response surface and use that in the likelihood~\eqref{eq:likelihood} evaluations. 
+For a mean prediction $m_D$, this corresponds to a parameter-to-observation relation 
+\begin{equation}\label{eq:plug-in-par-to-obs}
+    Y^m = m_D(p) + N
+\end{equation}
+and results in the likelihood
+\begin{equation}\label{eq:plug-in-likelihood}
+    L_{\text{plug-in}}(p) = \pi_N(y^m - m_D(p)).
+\end{equation}
+This is the so-called plug-in likelihood, which is a frequent choice in the literature~\cite{SinsbeckNowak2017}. 
+
+However, this approach does not take into account the uncertainty of the surrogate model, which can lead to overconfident predictions and biased estimates of the parameters.
+As we assume to be working with partial knowledge about the forward model $y$ only, our information about the relation between observation and parameters will also be limited. 
+Relation~\eqref{eq:par-to-obs} may hold for the true forward map $y$, but as only a set $\{y_i\}_{i=1}^n$ of evaluations up to a certain accuracy is available, it is of little practical use. 
+Thanks to the assumptions required by GPR and LR a new relation can be obtained, incorporating the uncertainty about the forward model and resulting in a surrogate-dependent likelihood. 
+
 \subsection{GPR-based likelihood}\label{sec:GPlike}
+By the assumptions of Section~\ref{sec:GPR}, when performing GPR one assumes the forward model to be a realization of a Gaussian process $Y$.
+Incorporating this into the Relation~\eqref{eq:par-to-obs} leads to a different parameter-to-observation relation
+\begin{equation}\label{eq:GPR-par-to-obs}
+    Y^m = Y_p + N.
+\end{equation}
+Under normality and indipendence assumptions this results in a different likelihood, as stated in the following proposition.
+
+\begin{prp}
+    Let Relation~\eqref{eq:GPR-par-to-obs} hold with Gaussian noise $N \sim \mc N (0, \Sigma_N^2)$, let $y^m$ be a realization of $Y^m$ and let $y_{D, \text{GP}}$ be a GPR surrogate model describing the posterior distribution of $Y_p$ given training data $D = \{ (p_i, y_i) \}_{i=1}^n$.
+
+    Under the hypothesis that the GP prediction $Y_p$ is indipendent from the measurement noise $N$, Relation~\eqref{eq:GPR-par-to-obs} yields that $Y^m$ is normally distributed,
+    \[
+    Y^m \sim \mc N(m_D(p), \Sigma_N^2 + k_D(p,p)), 
+    \]
+    and consequently the marginal GPR likelihood is given by
+    \begin{equation}\label{eq:GPR-likelihood}
+        L_{D, \text{GP}}(p) = (2\pi)^{-\frac{\text{dim} \mc Y}{2}} \text{det}\big ( \Sigma_N^2 + k_D(p, p) \big )^{-\frac{1}{2}} \exp \Big( -\frac{1}{2}\norm{y^m - m_D(p)}_{(\Sigma_N^2 + k_D(p,p))^{-1}}^2 \Big ).
+    \end{equation}
+\end{prp}
+\begin{proof}
+    \todo[inline]{Proof}
+\end{proof}
+\begin{rmk}
+    The marginal GPR likelihood is the marginal distribution for $Y^m$ of the joint distribution of $Y^m$ and $Y(p)$:
+    \begin{equation*}
+        L_{D}(p) =  \mathbb E_{Y_p \sim \mc N (m_D(p),k_D(p,p))} \Big [ \pi_N (y^m - Y_p) \Big ].
+    \end{equation*}
+\end{rmk}
+
+\todo[inline]{maybe rephrase last parts}
+
+As the prediction of GPR is stochastic, it is reasonable that likelihood of observing $y^m$ depends not only on the mean $m_D$, but also on the variance $k_D$. 
+This is reflected in the likelihood~\eqref{eq:GPR-likelihood}, which by having an higher variance is less prone to produce an overconfident posterior, but comes at the price of a more complicated likelihood function when compared to the plug-in likelihood~\eqref{eq:plug-in-likelihood}.
+Since the covariance of the marginal likelihood depends on $p$, more local minima and non-convex behavior can be present; nonetheless, this can be expected to be less of a problem for sampling-based approaches to IPs than for optimization-oriented approaches.
+
+Picture () compares the plug-in and the marginalized likelihoods for a simple one-dimensional case.
+\todo[inline]{picture representing plugin/marginal likelihood}
+
+
 \subsection{LR-based likelihood}\label{sec:LRlike}
+
+Under the assumptions described in Section~\ref{sec:LR}, we can treat Relation~\eqref{eq:par-to-obs} similarly as done for GPR. 
+
+Remind that, given training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, LR provides a predictive uniform distribution over some convex set $\mc PI_p \subseteq \mc Y $.
+Marginalizing the likelihood over this predictive distribution leads to a marginal likelihood $L_{D, \text{LR}}(p)$ as given by the following proposition.
+
+\begin{prp}\label{prp:LR-likelihood}
+    Let $y_{D, \text{LR}}$ be a LR surrogate model as given in Definition~\ref{dfn:LR}, then if the prediction $Y_p \sim \mc U (\mc IP_p)$ is indipendent from the noise term $N$, the LR parameter-to-observation relation 
+    \begin{equation*}
+        Y^m = Y_p + N 
+    \end{equation*}
+    yields the marginal LR likelihood
+    \begin{equation}\label{eq:LR-likelihood}
+        L_{D, \text{LR}}(p) = \frac{1}{m_\mc Y (\mc PI_p)} \mathbb P \Big ( N \in \mc PI_p - y^m \Big ).
+    \end{equation}
+\end{prp}
+\begin{proof}
+    \todo[inline]{Proof}
+    \begin{align*}
+        \pi\big (y^m \mid L, D, p \big ) &= \int_{\mc P I_p } \frac{\varphi(y^m - y)}{m_\mc Y (\mc PI_p)} \ dy = \\
+        & = \frac{1}{m_\mc Y (\mc PI_p)} \int_{\mc P I_p  - y^m} \varphi(e )  \ de  = \frac{1}{m_\mc Y (\mc PI_p)} \mathbb P \Big ( N \in   \mc PI_p - y^m \Big  ). \notag
+    \end{align*}
+\end{proof}
+
+The efficience in computing the likelihood~\eqref{eq:LR-likelihood} depends on the distribution of the measurement noise $N$ and the shape of $\mc P I_p  $.
+For Gaussian measurement noise $N$ with indipendent components and $\mc PI_p$ being a rectangle, the likelihood can be computed as the product of differences of Gaussian cumulative distribution functions, as stated in the next proposition.
+
+\begin{prp}
+    In the hypothesis of Proposition~\ref{prp:LR-likelihood}, let  $N \sim \mc N (0, \Sigma^2_N)$ be Gaussian with $\Sigma_N = \text{diag} (\sigma_1, \ldots, \sigma_m)$, and let $\mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right] $.
+    Then the LR likelihood~\eqref{eq:LR-likelihood} can be computed as 
+    \[
+        L_{D, \text{LR}}(p) = \prod_{j=1}^{\text{dim}\mc Y} \frac{\varphi \left( \frac{UB^{(j)}(p) - y^m}{\sigma_j} \right) - \varphi\left( \frac{LB^{(j)} - y^m}{\sigma_j} \right)}{UB^{(j)}(p) - LB^{(j)}(p)},
+    \]
+    where $\varphi$ is the standard normal cumulative distribution function.
+
+\end{prp}
+\begin{proof}
+    \todo[inline]{Proof}
+\end{proof}
+
+\begin{rmk}
+    Proposition~\ref{prp:LR-PI} states sufficient conditions for the predictive interval $\mc PI_p$ to be a multi-dimensional interval and provides the explicit formula to compute the bounds.
+\end{rmk}
+
+As for the GPR case, the marginal likelihood is more complicated than the plug-in likelihood, but it is more informative and less prone to bias. 
+Picture () shows the difference between the plug-in and the marginalized likelihoods for the simple one-dimensional case already presented in Section~\ref{sec:GPlike}. 
+In the 1-d case, the LR mean is piecewise linear, resulting in a piecewise Gaussian plugin likelihood; the marginal likelihood is instead smoother.
+\todo[inline]{picture representing plugin/marginal likelihood}

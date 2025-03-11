@@ -81,9 +81,9 @@ As we are not interested in the full GP posterior but only in the point-wise pre
     Under the assumptions of Theorem~\ref{thm:GP-posterior}, the GPR predictive distribution given the prior $GP(m,k)$ and the data $D$, is given by 
     \begin{gather*}
         y_{D, \text{GP}} : \Theta \rightarrow \mc P( \mc Y) \\
-        p \mapsto \mc N( m_D(p), \sigma_D^2(p) ),
+        p \mapsto \mc N( m_D(p), k_D(p,p) ),
     \end{gather*}
-    where $ \sigma_D^2(p) = k_D(p,p)$, with $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
+    with $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
 \end{cor}
 
 The core of GPR is now outlined, but for practical use a few more remarks are necessary. \newline
@@ -180,7 +180,7 @@ The following proposition allows us to define a predictive interval of possible 
     \end{equation}
 \end{prp}
 \begin{proof}
-    
+    \todo[inline]{Proof}
 \end{proof}
 \begin{rmk}
     $\mc PI_p$ inherits regularity properties from the error intervals $I_\tau$: if $I_\tau$ are convex sets, then $\mc PI_p$ is a convex set as well, and if $I_\tau$ are multi-dimensional intervals, then $\mc PI_p$ is a multi-dimensional interval as well, see Proposition~\ref{prp:LR-PI}. 
@@ -188,7 +188,7 @@ The following proposition allows us to define a predictive interval of possible 
 \end{rmk}
 
 The Lipschitz Regression predictive distribution is then defined by taking a uniform distribution over the predictive interval $\mc P I$.
-\begin{dfn} [Lipschitz Regression]
+\begin{dfn} [Lipschitz Regression] \label{dfn:LR}
     The Lipschitz regression predictive distribution given the data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and the Lipschitz constants $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)})$ is defined by
     \begin{gather*}
         y_{D, \text{LR}} : \Theta \rightarrow \mc P( \mc Y) \\
@@ -213,7 +213,7 @@ For noise terms $e_{D,i}$ with indipendent components, i.e. $I_{\tau_i}$ being a
     \end{equation}
 \end{prp}
 \begin{proof}
-
+    \todo[inline]{Proof}
 \end{proof}
 
 In the numerical experiments, we will adopt the LR predictive interval given by Proposition~\ref{prp:LR-PI}, as it is more computationally efficient and easier to interpret than the general one given by Equation~\eqref{eq:LR-PI-general}; nonetheless, the general form will be kept for the theoretical considerations. \newline
@@ -241,7 +241,7 @@ For the indipendent noise components setting, the minimal value of the Lipschitz
     hold for the training points $i,k$ realizing the maximum. 
 \end{prp}
 \begin{proof}
-    
+    \todo[inline]{Proof}
 \end{proof}
 \begin{rmk}
 Due to the fact the $L^{(j)}=L^{(j)}_{\min}$ can be realized, the bound provided by Equation~\eqref{eq:LR-const} is optimal. 
