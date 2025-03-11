@@ -2,8 +2,8 @@
 
 When dealing with real-world phenomena, adopting a mathematical representation is often necessary in order to simplify complexity, obtain insight about underlying features, and produce sufficiently accurate predictions on the behaviour of the considered portion of reality. 
 
-In the present day, computer simulations and scientific computing have become essential parts of mathematical modelling, rendering it possible to adopt numerical techniques to solve analytically untractable problems.
-Moreover, as numerous and vast families of mathematical models are available to adequately represent different classes of processes, the modeller is presented with choices about model complexity and desired characteristics, and with tasks such as parameter identification, model order reduction and uncertainty quantification. 
+In the present day, computer simulations and scientific computing have become essential parts of mathematical modeling, rendering it possible to adopt numerical techniques to solve analytically untractable problems.
+Moreover, as numerous and vast families of mathematical models are available to adequately represent different classes of processes, the modeler is presented with choices about model complexity and desired characteristics, as well as with tasks such as parameter identification, model order reduction and uncertainty quantification. 
 This work involves all three of these tasks in different manners and measures. 
 
 The problem of the calibration of parameters for a computationally expensive numerical model is considered: a Bayesian perspective is adopted in formulating the inverse problem, and then the cost of model evaluation is reduced by considering a regression-based surrogate model, instead of classical model order reduction techniques such as Proper Orthogonal Decomposition or Reduced-Basis methods.
@@ -52,7 +52,7 @@ The motivation for this work lies precisely in the different assumptions on the 
 For an underlying FE model, the evaluation error depends mostly on the discretization error which results from the choice of a FE basis.
 For adaptive FE, the basis is refined until the prescribed tolerance $\tau$ is not met by an error indicator.
 The error indicator often guarantees an hard bound on the discretization error: while this is compatible with Assumption~\ref{eq:LR-noise}, it is incompatible with Assumption~\ref{eq:GPR-noise}, which requires an unbounded support for the evaluation error. 
-The greater fitness of Assumption~\ref{eq:LR-noise} is the motivation for considering LR, examinating different approaches to it and tayloring some of its component to an IP setting.
+The greater fitness of Assumption~\ref{eq:LR-noise} is the motivation for considering LR, examining different approaches to it and tailoring some of its component to an IP setting.
 
 Additionally, in Assumption~\ref{eq:GPR-noise} the covariance matrix $\Sigma_D(\tau)^2$ is often assumed to be diagonal, resulting in independent noise components. 
 This ignores any correlation between error components, while the discretization error has some structure due to the underlying FE system.
