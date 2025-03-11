@@ -145,11 +145,13 @@ While marginalizing propagates the uncertainty in the hyperparameters, it is com
 \subsection{Lipschitz regression}\label{sec:LR}
 Lipschitz regression (LR) is a non-parametric regression technique which provides uniform confidence intervals and hard bounds for the values of the target function. \newline
 
-Similarly to GPR, LR requires one assumption about the model and one assumption about the data; unlike GPR, the only assumption with probabilistic content is the one about the data. The two assumptions are the following:
+Similarly to GPR, LR depends on one assumption about the model and on one assumption about the data; unlike GPR, the relation between the assumptions and the regression technique is weaker, as in LR the assumptions motivate the definition of a predictive posterior without implying it directly, and the only assumption with probabilistic content is the one about the data.
+
+The two assumptions are the following:
 \begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
-    \item[(LR-model)] the forward model $y$ is globally and component-wise Lipschitz continuous, i.e. there exist constants $L_1,\dots, L_{\text{dim}\mc Y}$ in $\R_+^0$ such that 
+    \item[(LR-model)] the forward model $y$ is globally and component-wise Lipschitz continuous, i.e. there exist constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ in $\R_+^0$ such that 
     \[
-        |y^{(j)}(p) - y^{(j)}(p')| \leq L_j \|p - p'\|_\Theta \ \text{ for every } \ p, p' \in \Theta
+        |y^{(j)}(p) - y^{(j)}(p')| \leq L^{(j)} \|p - p'\|_\Theta \ \text{ for every } \ p, p' \in \Theta
     \]
     holds for every $j = 1, \dots, \text{dim}\mc Y$;
     \item[(LR-data)] the observations are contaminated by indipendent and centered uniform noise, i.e. 
@@ -159,7 +161,7 @@ Similarly to GPR, LR requires one assumption about the model and one assumption 
     holds, where $e_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[e_{D,i}] = 0$ and $e_{D,i}$ is indipendent from $e_{D,k}$ for every $k \neq i$.
 \end{itemize}  
 The first assumption requires fixing a basis for $\mc Y$ and a norm on $\Theta$; despite this, the assumption is weaker than \textit{(GPR-model)}, as it does not require any level of smoothness for $y$ but Lipschitz continuity. \newline
-Issues may arise due to the global nature of the Lipschitz constants $L_j$, as a model exihibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
+Issues may arise due to the global nature of the Lipschitz constants $L^{(j)}$, as a model exihibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
 Moreover when the Lipschitz constants are unknown, their estimation is sensitive to noise.
 
 The second assumption does not allow for correlated noise terms $e_{D,i}$, $e_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their indipendence, as in Equation~\ref{eq:GPR-noise-corr}. 
@@ -170,7 +172,83 @@ In the context of this work, \textit{(LR-data)} entails that the discretization 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
 Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \newline
 
-The following theorem gives the predictive mean and variance for LR.
-\begin{thm} [Lipschitz Regression]
-    Under assumptions \textit{(LR-model)} and \textit{(LR-data)}, let $p$
-\end{thm}
+The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
+\begin{prp}
+    Let $\upsilon \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with gloobal Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = \upsilon$ if and only if $\upsilon \in \mc C_p$, with $\mc PI_p$ given by
+    \begin{equation}\label{eq:LR-PI-general}
+        \mc PI_p = \left \{ \upsilon \in \mc Y \mid Cone_{p,\upsilon,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \forall i = 1, \dots, n \right \}.
+    \end{equation}
+\end{prp}
+\begin{proof}
+    
+\end{proof}
+\begin{rmk}
+    $\mc PI_p$ inherits regularity properties from the error intervals $I_\tau$: if $I_\tau$ are convex sets, then $\mc PI_p$ is a convex set as well, and if $I_\tau$ are multi-dimensional intervals, then $\mc PI_p$ is a multi-dimensional interval as well, see Proposition~\ref{prp:LR-PI}. 
+    This motivates the name predictive interval. 
+\end{rmk}
+
+The Lipschitz Regression predictive distribution is then defined by taking a uniform distribution over the predictive interval $\mc P I$.
+\begin{dfn} [Lipschitz Regression]
+    The Lipschitz regression predictive distribution given the data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and the Lipschitz constants $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)})$ is defined by
+    \begin{gather*}
+        y_{D, \text{LR}} : \Theta \rightarrow \mc P( \mc Y) \\
+        p \mapsto \mc U( \mc PI_p ),
+    \end{gather*}
+    with the predictive interval $\mc PI_p$ is given by Equation~\eqref{eq:LR-PI-general}
+\end{dfn}
+
+For noise terms $e_{D,i}$ with indipendent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
+\begin{prp}\label{prp:LR-PI}
+    Let $I_{\tau_i} = \otimes_{j=1}^{\text{dim}\mc Y} [ -\tau_i^{(j)}, \tau_i^{(j)} ]$ for every $i = 1, \dots, n$.
+    Then the LR predictive interval $\mc PI_p$ is an interval given by
+    \begin{equation}\label{eq:LR-PI}
+        \mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right]
+    \end{equation}
+    with lower and upper bounds given for each component $j$ by
+    \begin{equation} \label{LR-bounds}
+    \begin{gathered}
+        LB^{(j)}(p) = \max_{i=1,\dots,n} y_i^{(j)} - \tau_i^{(j)} L^{(j)} \| p - p_i \|_\Theta, \\
+        UB^{(j)}(p) = \min_{i=1,\dots,n} y_i^{(j)} + \tau_i^{(j)} L^{(j)} \| p - p_i \|_\Theta.
+    \end{gathered}
+    \end{equation}
+\end{prp}
+\begin{proof}
+
+\end{proof}
+
+In the numerical experiments, we will adopt the LR predictive interval given by Proposition~\ref{prp:LR-PI}, as it is more computationally efficient and easier to interpret than the general one given by Equation~\eqref{eq:LR-PI-general}; nonetheless, the general form will be kept for the theoretical considerations. \newline
+
+The Lipschitz constants $\underline L$ play a role similar to the one of kernel hyperparameters in GPR, as the quality of the surrogate prediction is heavily affected by their estimate.
+A number of techniques have been proposed to estimate the Lipschitz constants, see~\cite{Calliess2017} for an example, but being from a Machine Learning setting they rely on an high number of training points, which is not realistic in a high-cost forward model setting.
+
+For the indipendent noise components setting, the minimal value of the Lipschitz constants $L^{(j)}$ compatible with training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ is given by the following proposition.
+\begin{prp} \label{prp:LR-const}
+    Let $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and $y$ be a component-wise Lipschitz function with global Lipschitz constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ such that 
+    \[
+        y^{(j)}(p_i) -y_i^{(j)} \in  [-\tau_i^{(j)},\tau_i^{(j)}] \ \text{ for every } \ i = 1, \dots, n.
+    \]
+    Then for every component $j$ it holds that
+    \begin{equation}\label{eq:LR-const}
+        L^{(j)} \geq L^{(j)}_{\min}\coloneq \max_{ \stackrel{i, k \in \{1, \dots, n\}}{i\neq k} } \frac{| y_i^{(j)} - y_k^{(j)} | - \tau_i^{(j)} - \tau_k^{(j)}}{\| p_i - p_k \|_\Theta},
+    \end{equation}
+    and equality holds if and only if
+    \begin{equation}\label{eq:LR-const-minimality}
+        \begin{aligned}
+            LB^{(j)}(p_i) =UB^{(j)}(p_i) = y_i^{(j)} + \tau_i^{(j)}  \ &\text{ and }   \ LB^{(j)}(p_k) =UB^{(j)}(p_k) = y_k^{(j)} - \tau_k^{(j)}, \ \text{ or } \\
+            LB^{(j)}(p_i) =UB^{(j)}(p_i) = y_i^{(j)} - \tau_i^{(j)}  \ &\text{ and }   \ LB^{(j)}(p_k) =UB^{(j)}(p_k) = y_k^{(j)} + \tau_k^{(j)}
+        \end{aligned}
+    \end{equation}
+    hold for the training points $i,k$ realizing the maximum. 
+\end{prp}
+\begin{proof}
+    
+\end{proof}
+\begin{rmk}
+Due to the fact the $L^{(j)}=L^{(j)}_{\min}$ can be realized, the bound provided by Equation~\eqref{eq:LR-const} is optimal. 
+\end{rmk}
+\begin{rmk}
+By the minimality condition~\eqref{eq:LR-const-minimality}, if at component $j$ the lower bound is obtained with training points $p_i, \ p_k$, then the $j$-th components of the predictive intervals $\mc PI_{p_i},\ \mc PI_{p_k}$ degenerate into a single point; it can be proved that this happens in all the points $p = t p_i + (1-t) p_k$ for $t \in [0,1]$. 
+\end{rmk}
+
+Proposition~\ref{prp:LR-const} suggests an approach to estimate the Lipschitz constants: for training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ the Lipschitz constants estimate is given by $\hat{\underline{L}}_D = \lambda ( L^{(1)}_{\min}, \dots, L^{(\text{dim}\mc Y)}_{\min})$ for some fixed $\lambda > 1$. 
+The multiplicative constant $\lambda$ is considered to avoid the degenerate case given by Equation~\eqref{eq:LR-const-minimality}, and we will set its value in the experimental section.
