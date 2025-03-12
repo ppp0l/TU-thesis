@@ -16,7 +16,13 @@ This is the so-called plug-in likelihood, which is a frequent choice in the lite
 However, this approach does not take into account the uncertainty of the surrogate model, which can lead to overconfident predictions and biased estimates of the parameters.
 As we assume to be working with partial knowledge about the forward model $y$ only, our information about the relation between observation and parameters will also be limited. 
 Relation~\eqref{eq:par-to-obs} may hold for the true forward map $y$, but as only a set $\{y_i\}_{i=1}^n$ of evaluations up to a certain accuracy is available, it is of little practical use. 
-Thanks to the assumptions required by GPR and LR a new relation can be obtained, incorporating the uncertainty about the forward model and resulting in a surrogate-dependent likelihood. 
+Thanks to the assumptions required by GPR and LR new relations can be obtained, incorporating the uncertainty about the forward model and resulting in surrogate-dependent likelihoods, $L_{D, \text{GP}}$ and $L_{D, \text{LR}}$ respectively. 
+
+Having obtained a surrogate-based likelihood $L_D$, we can reformulate the posterior~\eqref{eq:Bayes} into 
+\begin{equation} \label{eq:surr-posterior}
+    \pi_{P\mid Y^m = y^m}(p) = \frac{L_D(p) \pi_P(p)}{\int_\Theta  L_D(p) \pi_P(p) \ dm_\Theta(p)},
+\end{equation}
+obtaining the Bayesian surrogate-informed posterior.
 
 \subsection{GPR-based likelihood}\label{sec:GPlike}
 By the assumptions of Section~\ref{sec:GPR}, when performing GPR one assumes the forward model to be a realization of a Gaussian process $Y$.
