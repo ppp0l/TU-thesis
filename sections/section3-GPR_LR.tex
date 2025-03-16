@@ -1,6 +1,6 @@
 \section{Stochastic surrogate models}\label{sec:surrogates}
 To reduce the computational costs related to the evaluation of the forward model, a surrogate model is an attractive option.
-The scope of the surrogate model is to approximate the forward model $y : \Theta \rightarrow \mc Y $ or the problem's likelihood $L: \Theta \rightarrow \R $ directly with a simpler and faster model.\newline
+The scope of the surrogate model is to approximate the forward model $y : \Theta \rightarrow \mc Y $ or the problem's likelihood $L: \Theta \rightarrow \R $ directly with a simpler and faster model.\medbreak
 
 Whether the surrogate aims at representing the forward model or the likelihood directly is a matter of convenience.
 Producing a surrogate representation of the forward model guarantees a cheaper representation of the likelihood, but not vice versa. Moreover, the values the likelihood assumes are constrained to be positive, which can be non-trivial to impose for certain classes of surrogates; however, an argument in favor of adopting a surrogate for the likelihood is that, if the forward model has a great number of output components, the computational costs of a likelihood surrogate can be significantly lower than the ones of a forward model surrogate.
@@ -8,7 +8,7 @@ Producing a surrogate representation of the forward model guarantees a cheaper r
 Ultimately, the choice of the target of the surrogate model depends on the adopted surrogating technique, the usage of the surrogate and the objective being pursued.
 When a point estimate of the parameter is a sufficient solution for the IP, adopting a Bayesian Optimization framework and surrogating the likelihood directly is the most natural choice.
 Instead, when aiming for a posterior representation through sampling, approaches such as Delayed Acceptance MCMC \cite{ChristenFox2005} are indifferent to the choice.
-For the approach presented in this work, a forward model representation will be obtained, as we will exploit the error estimators for FE models in the surrogate's training. \newline
+For the approach presented in this work, a forward model representation will be obtained, as we will exploit the error estimators for FE models in the surrogate's training. \medbreak
 
 We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical forward model,\[ y_i = H(f_{\tau_i}(\cdot; p_i)). \]
 
@@ -16,7 +16,7 @@ There exist different classes of surrogate models: an useful distinction is the 
 Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
 They provide an approximation of the forward model or the likelihood, but they do not provide by default an estimate of their own uncertainty.
 On the other hand, stochastic surrogate models are based on probabilistic assumptions and naturally provide an estimate of the uncertainty associated with their prediction.
-This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections~\ref{sec:GPlike} and~\ref{sec:LRlike}. \newline
+This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections~\ref{sec:GPlike} and~\ref{sec:LRlike}. \medbreak
 
 We will adopt stochastic surrogate models, which for any $p \in \Theta$ provide a random prediction with a certain predictive distribution. 
 The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work, we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.
@@ -30,7 +30,7 @@ In the next two section, we introduce two techinques which provide a stochastic 
 \subsection{Gaussian process regression}\label{sec:GPR}
 Gaussian process regression (GPR) is a non-parametric regression technique which relies on probabilistic assumptions and is closely related to support vector machines and kernel methods.
 
-The core idea is that the underlying function $y$ is a realization of a Gaussian process and, assuming the observation are contaminated by Gaussian noise, GPR obtains a closed-form prediction through Gaussian conditioning.\newline
+The core idea is that the underlying function $y$ is a realization of a Gaussian process and, assuming the observation are contaminated by Gaussian noise, GPR obtains a closed-form prediction through Gaussian conditioning.\medbreak
 
 \begin{dfn} [Gaussian Process]
     A Gaussian process (GP) over $\mc Y$ is a collection $Y = \{Y_p\}_{p\in\Theta}$ of $\mc Y$-valued random variables, such that for any finite subset $p_1, \ldots, p_n \in \Theta$, the random variables $Y_{p_1}, \ldots, Y_{p_n}$ have a joint Gaussian distribution.
@@ -38,7 +38,7 @@ The core idea is that the underlying function $y$ is a realization of a Gaussian
     A Gaussian process is completely defined by its mean function $m: \Theta \rightarrow \mc Y$ and its covariance function $k: \Theta \times \Theta \rightarrow SPSD_{\text{dim}\mc Y}(\R)$, also known as kernel. 
     We denote $Y \sim GP(m, k)$ for a Gaussian process of mean $m$ and kernel $k$.
 \end{dfn}
-Note that the covariance operator $k(p, p')$ can be identified with a positive semidefinite matrix as $\mc Y$ is of finite dimension. \newline
+Note that the covariance operator $k(p, p')$ can be identified with a positive semidefinite matrix as $\mc Y$ is of finite dimension. \medbreak
 
 Gaussian process regression relies on two assumptions:
 \begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
@@ -60,7 +60,7 @@ The second assumption allows to derive a closed-form expression for the predicti
     \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
 \end{equation} 
 and often $\tau$ is unknown and fitted together with the kernel's hyperparameters. \newline
-In the context we are working in, Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \newline
+In the context we are working in, Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \medbreak
 
 Given a prior GP $Y \sim GP(m, k)$ and the training data $D$, the posterior GP $Y \mid D$ is obtained by conditioning the prior on the observations. 
 The analytical expression for the posterior GP is given by the following theorem.
@@ -126,7 +126,7 @@ for $\nu = n + \frac{1}{2}$ with $n\in \bb N$, the expression simplifies to
 \]
 The regularity of the predictive mean depends on the parameter $\nu$: the mean prediction is $\nu + \frac{1}{2}$-times weakly differentiable.
 Most commonly, $\nu$ is set to $\frac{3}{2}, \frac{5}{2}$ or $\frac{7}{2}$, as $\nu = \frac{1}{2}$ leads to a non-differentiable mean prediction, and for $\nu > \frac{7}{2}$ the high regularity favors the adoption of a RBF kernel.
-Note that for $\nu \rightarrow \infty$ the Matérn kernel converges to the RBF kernel. \newline
+Note that for $\nu \rightarrow \infty$ the Matérn kernel converges to the RBF kernel. \medbreak
 
 The treatment of hyperparameters constitutes an estimation problem.
 For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the data given the hyperparameters $\Lambda = \lambda$ is given by
@@ -139,11 +139,11 @@ this results in the hyperparameters' likelihood given the data,
     L(\lambda) = \pi_{(Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda} \big ( (y_1,\dots,y_n) \mid \Lambda = \lambda \big ).
 \]
 To solve the problem, one either adopts a point estimate, given usually by ML or MAP, or marginalizes the GPR prediction over the hyperparameter posterior distribution by sampling. 
-While marginalizing propagates the uncertainty in the hyperparameters, it is computationally considerably more expensive: due to this reason a point estimate is most commonly employed and one talks about hyperparameter optimization. Gradient-based methods are utilized in the problem's solution. \newline
+While marginalizing propagates the uncertainty in the hyperparameters, it is computationally considerably more expensive: due to this reason a point estimate is most commonly employed and one talks about hyperparameter optimization. Gradient-based methods are utilized in the problem's solution. \medbreak
 
 
 \subsection{Lipschitz regression}\label{sec:LR}
-Lipschitz regression (LR) is a non-parametric regression technique which provides uniform confidence intervals and hard bounds for the values of the target function. \newline
+Lipschitz regression (LR) is a non-parametric regression technique which provides uniform confidence intervals and hard bounds for the values of the target function. \medbreak
 
 Similarly to GPR, LR depends on one assumption about the model and on one assumption about the data; unlike GPR, the relation between the assumptions and the regression technique is weaker, as in LR the assumptions motivate the definition of a predictive posterior without implying it directly, and the only assumption with probabilistic content is the one about the data.
 
@@ -170,7 +170,7 @@ In the context of this work, \textit{(LR-data)} entails that the discretization 
     H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc U(I_\tau),
 \] 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
-Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \newline
+Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \medbreak
 
 The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
 \begin{prp}
@@ -216,7 +216,7 @@ For noise terms $e_{D,i}$ with indipendent components, i.e. $I_{\tau_i}$ being a
     \todo[inline]{Proof}
 \end{proof}
 
-In the numerical experiments, we will adopt the LR predictive interval given by Proposition~\ref{prp:LR-PI}, as it is more computationally efficient and easier to interpret than the general one given by Equation~\eqref{eq:LR-PI-general}; nonetheless, the general form will be kept for the theoretical considerations. \newline
+In the numerical experiments, we will adopt the LR predictive interval given by Proposition~\ref{prp:LR-PI}, as it is more computationally efficient and easier to interpret than the general one given by Equation~\eqref{eq:LR-PI-general}; nonetheless, the general form will be kept for the theoretical considerations. \medbreak
 
 The Lipschitz constants $\underline L$ play a role similar to the one of kernel hyperparameters in GPR, as the quality of the surrogate prediction is heavily affected by their estimate.
 A number of techniques have been proposed to estimate the Lipschitz constants, see~\cite{Calliess2017} for an example, but being from a Machine Learning setting they rely on an high number of training points, which is not realistic in a high-cost forward model setting.
