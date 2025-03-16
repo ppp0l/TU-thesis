@@ -49,7 +49,7 @@ The designs are obtained by solving the following sequence of DoE problems:
     \min_{\mc D_{j} \le \mc D_{j-1}} E(D(\mc D_{j})) \quad \text{s.t.} 
     \quad W(\mc D_{j} \mid D(\mc D_{j-1}) ) \le \Delta W_j, \ \text{ for every } \ j=1,\dots,J.
 \end{equation} 
-Notice that at each step, Problem~\eqref{eq:incremental-doe} is not yet directly numerically solvable; in fact:
+Notice that at each step, Problem~\eqref{prob:incremental-doe} is not yet directly numerically solvable; in fact:
 \begin{enumerate}[label=\textbf{\arabic*}]    
     \item $E(D(\mc D_{j}))$ involves the computation of an integral with respect to the unknown posterior $\pi_{Y^m = y^m}$;
     \item the problem is a mixed continuous-combinatorial optimization problem with possibly non convex objective and constraints;
@@ -85,7 +85,7 @@ The tolerance problem at step $j$ is then given by
 where \[
 \bb D_j = \{ \mc D = \{ (p_i, \tau_i) \}_{i=1}^{n_{j-1}+s} \mid (\tau_1, \dots, \tau_{n_{j-1}+s}) \in \mc T_j \}.
 \]
-\medbreak
+\newpage
 
 The following pseudo-algorithm summarizes the adopted methodology. \medskip
 
@@ -100,8 +100,8 @@ Iterative solution of the training problem.
 For $j =1, \dots, J$ do: 
 \begin{enumerate}
     \item \textbf{Sample the posterior.} \newline
-    Decide: $n_j$, $h_j \in \bb N$. \newline
-    Sample $n_j$ points from $\pi_{P \mid D_{j-1}, Y^m = y^m}$. \newline
+    Decide: $d_j$, $h_j \in \bb N$. \newline
+    Sample $d_j$ points from $\pi_{P \mid D(\mc D_{j-1}), Y^m = y^m}$. \newline
     Discard the $h_j$ oldest samples from $\mc S_{j-1}$. \newline
     Concatenate the new samples to the remaining old samples to obtain $\mc S_j$.
 
@@ -109,19 +109,34 @@ For $j =1, \dots, J$ do:
     Decide: $s_j \in \bb N$. \newline
     For any $p\in \Theta$, approximate the acquisition function~\ref{eq:acq-fun-gen} by
     \begin{equation}\label{eq:acq-fun-disc}
-        \bar{\mc A}_j(p) \coloneq \sum_{p' \in \mc S_j} \alpha_{\mc D_{j-1}}(p, p') .
+        \bar{\mc A}_j(p) \coloneq \frac{1}{|\mc S_j|}\sum_{p' \in \mc S_j} \alpha_{\mc D_{j-1}}(p, p') .
     \end{equation}
     Select $s_j$  local maximizers of $\bar{\mc A}_j$.
 
-    \item \textbf{Select the tolerances.} Solve the discretization 
-    \begin{equation}\label{prob:discrete-tol}
-    \end{equation} of Problem~\ref{prob:tolerance-doe} to determine the new evaluation tolerances $T = (\tau_1, \dots \tau_{s_j+r_j})$. If $\tau_i = \infty$ for some $i = s_j +1, \dots , s_j+r_j$, exclude the corresponding candidate $p_i$ from the design. This results in the new experimental design $\mc D_j  = \big ( (p_i, \tau_i))_{i = 1, \dots , s_{j+1}}$
+    \item \textbf{Select the tolerances.} \newline
+    Solve the discretization of Problem~\ref{prob:tolerance-doe}
+    \begin{equation}\label{prob:discrete-tol}       
+        \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} e_{D(\mc D_j)}(p')  \quad \text{s.t.} 
+        \quad W(\mc D_{j} \mid D(\mc D_{j-1}) ) \le \Delta W_j, 
+    \end{equation} to obtain the new experimental design $\mc D_j $. \newline
+    If $\tau_i = +\infty$ for some $(p_i, \tau_i) \in \mc D_j $, discard $(p_i, \tau_i) $ from $\mc D_j $.
 
-    \item \textbf{Evaluate the model.} For every $(p, \tau )$ in $\mc D_j$ which was updated, i.e. the new evaluation points and the old points where the tolerance has changed, evaluate the model $y_\tau(p)$. Having obtained the new values $(y_1, \dots, y_{r_{j+1}})$, update the training set and re-train the surrogate to obtain $y_{\mc D_j}$.
+    \item \textbf{Evaluate the model.} \newline
+    For every $(p_i, \tau_i )$ in $\mc D_j$: \begin{itemize}[nosep]
+        \item if $(p_i, \tau_i ) \notin \mc D_{j-1}$, i.e. it's a new point or the tolerance was updated, set $y_i = H(f_{\tau_i}(\cdot, p_i))$ and include $(p_i, \tau_i, y_i)$ in $D(\mc D_j)$;
+        \item else, there exists $(p_i, \tau_i, y_i) \in D(\mc D_{j-1})$: include it in $D(\mc D_j)$.
+    \end{itemize}
+    Train the surrogate model on $D(\mc D_j)$, obtain $y_{D(\mc D_j)}$.
 \end{enumerate}
-At last, the final set of samples $\mc S_{J+1}$ is obtained by drawing $n_{J+1}$ samples from $\pi(p \mid y^m, \mc D_J)$ and discarding the oldest $h_{J+1}$ samples, for some numbers  $n_{J+1},h_{J+1}$. 
+Decide: $d_{J+1}$, $h_{J+1} \in \bb N$. \newline
+Sample $d_{J+1}$ points from $\pi_{P \mid D(\mc D_J), Y^m = y^m}$. \newline
+Discard the $h_{J+1}$ oldest samples from $\mc S_J$. \newline
+Concatenate the new samples to the remaining old samples to obtain $\mc S_{J+1}$. \newline
+Return the resulting surrogate model $y_{D(\mc D_J)}$ and posterior samples $\mc S_{J+1}$.
 \par\noindent\rule[3.5mm]{\textwidth}{0.4pt}
-blablabla
+
+The algorithm depends on a number of parameters, namely the fractionating of the budget $\Delta W_j$, the numbers of samples to draw $d_j$ and to discard $h_j$, and the number of candidates to select $s_j$.
+These parameter have to be decided by the user, and Section~\ref{sec:setup} will describe the choices made in this work as well as give general guidelines for the selection of these parameters. 
 
 \subsection{Active learning for GPR}\label{sec:GPAL}
 \subsection{Active learning for LR}\label{sec:LRAL}
