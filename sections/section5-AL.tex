@@ -139,4 +139,44 @@ The algorithm depends on a number of parameters, namely the fractionating of the
 These parameter have to be decided by the user, and Section~\ref{sec:setup} will describe the choices made in this work as well as give general guidelines for the selection of these parameters. 
 
 \subsection{Active learning for GPR}\label{sec:GPAL}
+
+For GPR surrogate models, we consider the local error indicator function 
+\begin{equation} \label{eq:loc-err-GP}
+    e_{D, \text{GP}}(p) = \text{Trace} (k_D(p,p)),
+\end{equation}
+which can be interpreted as the expected value over the GP predictive posterior of the squared error of the surrogate model mean at $p$, as
+\[
+    \text{Trace} (k_D(p,p)) = \bb E_{y(p) \sim \mc N (m_D, k_D(p,p)) } \big[ \| m_{D}(p) - y(p)\|_2^2 \big].
+\]
+Note that, as the predictive covariance $k_D(p,p)$~\eqref{eq:predictive-var} does not depend on the model evaluations $y_i$, $e_{D, \text{GPR}}(p)$ can be computed when the design $\mc D$ is known, but the corresponding training set $D(\mc D)$ is not. 
+This renders it possible to solve the tolerance problem~\eqref{prob:tolerance-doe} without any other approximation than the discretization of the integral as given in Equation~\eqref{prob:discrete-tol}.  \medbreak
+
+As an acquisition function for new candidates we consider the sensitivity of the error indicator with respect to computational work spent in the point, following~\cite{SemlerWeiser2024,VillaniUngerWeiser2024}.\newline
+Assume to be at step $j$ of the algorithm, with a design $\mc D_{j-1} = \{ (p_i, \tau_i) \}_{i=1}^{n_{j-1}}$.
+We define the map 
+\begin{gather*}
+    \Gamma_{\mc D_{j-1}} : \Omega \times \Omega \times \R^+ \to SPSD_{\text{dim}\mc Y}(\R) \\
+    (p', p, \tau) \mapsto k_{D(\mc D_{j-1} \cup \{(p, \tau)\}) }(p',p')
+\end{gather*}
+which maps a parameter point $p'$, a candidate point $p$ and a tolerance level $\tau$ to the predictive covariance of the surrogate model $y_{D(\mc D_{j-1} \cup \{(p, \tau)\}) }$ trained on any training data $D(\mc D_{j-1} \cup \{(p, \tau)\})$  resulting from the design $\mc D_{j-1}$ with the addition of the new point $(p, \tau)$.
+Note that this map is well-defined as, for any design $\mc D$ and corresponding training data $D(\mc D)$, the predictive covariance $k_{D(\mc D)}$ is actually a function of $\mc D$ only and not of model evaluations, as noted above.\newline
+Then, the sensitivity of the error indicator at $p'$ with respect to the computational work spent in $p$ for an evaluation at a given default tolerance $\tau_p$ is defined by
+\begin{equation} \label{eq:alpha-GP}
+    \alpha_{\mc D_{j-1}, \text{GP}}(p, p') = \frac{\partial \Gamma_{\mc D_{j-1}}}{\partial \tau} \bigg |_{(p',p,\tau_p)} \frac{\partial \tau}{\partial W}\bigg |_{W(\tau_p)},
+\end{equation}
+where $W(\tau)$ is the estimate given by (!!) for the computational work needed to evaluate the forward model with tolerance $\tau$ and $\tau(W)$ is the inverse of such relation. \newline
+Note that the derivatives are well defined for every $\tau >0$ as long as the discretization noise covariance $\Sigma_D(\tau)$ is differentiable with respect to $\tau$, as in the case given by Equation~\eqref{eq:iid-GPR-noise}. 
+For the explicit expressions of the derivatives with the current notation, we refer to the Appendix~\ref{app:derivatives}.
+
+The acquisition function is then given by~\eqref{eq:acq-fun-gen} with $\alpha_{\mc D_{j-1},GP}$ as in~\eqref{eq:alpha-GP}. 
+It depends on the default tolerance parameter $\tau_p$, which can be either a fixed value or a function of the point $p$; in~\cite{VillaniUngerWeiser2024} it is set to the average over the components of the predictive standard deviation, i.e.
+\[ \tau_p = \frac{1}{\text{dim}\mc Y} \sum_{i=1}^{\text{dim}\mc Y} \sqrt{ \big (k_{D(\mc D_{j-1})}(p,p) \big )_{i,i}}, \] which will be adopted in the numerical experiments of this work. \medbreak
+
+In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma_D(\tau)$ from the evaluations of the forward model.
+As the model evaluations are performed through Adaptive FE, for each data point $(p, \tau, y) \in D$ we will have a sequence of evaluations $y^{(1)}, \dots, y^{(m)}$ with decreasing tolerance levels $\tau^{(1)} > \dots > \tau^{(m)} = \tau$, corresponding to the sequence of FE refinements.
+We aim at exploiting this evaluations to estimate the noise covariance $\Sigma_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2019}.
+
+
+
+
 \subsection{Active learning for LR}\label{sec:LRAL}
