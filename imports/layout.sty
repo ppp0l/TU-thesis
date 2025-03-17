@@ -47,42 +47,40 @@
 \usepackage{setspace}
 \addtocontents{toc}{\protect\setstretch{1.25}}
 %Nascondere dall'indice
-\newcounter{Counter2}
-\newcommand{\hidefromtoc}{\setcounter{Counter2}{\value{tocdepth}}
-	\addtocontents{toc}{\protect\setcounter{tocdepth}{-10}}}
-\newcommand{\unhidefromtoc}{\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}}
-\contentsmargin{0cm}
-	% Sezioni
-\titlecontents{section}[.5 pc]
-{\addvspace{0pt}}
-{\normalsize\contentslabel[\bfseries\thecontentslabel]{1pc}\small}
-{}
-{\dotfill \thecontentspage}
-[]
-	% Sottosezioni
-\titlecontents{subsection}[1.25 pc]
-{\addvspace{1pt}}
-{\normalsize\contentslabel[\bfseries \thecontentslabel]{2.5pc} \small\hspace{-.5cm}}
-{}
-{\dotfill \thecontentspage}
-[]
-	% Sotto-sottosezioni
-\titlecontents{subsubsection}[2pc]
-{\addvspace{1pt}}
-{\normalsize\contentslabel[\bfseries\thecontentslabel]{4pc}\small\hspace{-.5cm}}
-{}
-{\dotfill \thecontentspage}
-[]
+% \newcounter{Counter2}
+% \newcommand{\hidefromtoc}{\setcounter{Counter2}{\value{tocdepth}}
+% 	\addtocontents{toc}{\protect\setcounter{tocdepth}{-10}}}
+% \newcommand{\unhidefromtoc}{\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}}
+% \contentsmargin{0cm}
+% 	% Sezioni
+% \titlecontents{section}[.5 pc]
+% {\addvspace{0pt}}
+% {\normalsize\contentslabel[\bfseries\thecontentslabel]{1pc}\small}
+% {}
+% {\dotfill \thecontentspage}
+% []
+% 	% Sottosezioni
+% \titlecontents{subsection}[1.25 pc]
+% {\addvspace{1pt}}
+% {\normalsize\contentslabel[\bfseries \thecontentslabel]{2.5pc} \small\hspace{-.5cm}}
+% {}
+% {\dotfill \thecontentspage}
+% []
+% 	% Sotto-sottosezioni
+% \titlecontents{subsubsection}[2pc]
+% {\addvspace{1pt}}
+% {\normalsize\contentslabel[\bfseries\thecontentslabel]{4pc}\small\hspace{-.5cm}}
+% {}
+% {\dotfill \thecontentspage}
+% []
 	% TOC generico
 \usepackage{multicol} %Per mettere l'indice su due colonne
 \setlength\columnsep{40pt}
 \makeatletter
 \renewcommand{\tableofcontents}{
 {
-\begin{multicols}{2}
-		\fontsize{10.5}{20}\selectfont 
+	\fontsize{10.5}{20}\selectfont 
 	\@starttoc{toc}
-\end{multicols}
 }}
 \makeatother
 
