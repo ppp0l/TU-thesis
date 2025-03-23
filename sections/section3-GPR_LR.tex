@@ -207,8 +207,8 @@ For noise terms $e_{D,i}$ with indipendent components, i.e. $I_{\tau_i}$ being a
     with lower and upper bounds given for each component $j$ by
     \begin{equation} \label{LR-bounds}
     \begin{gathered}
-        LB^{(j)}(p) = \max_{i=1,\dots,n} y_i^{(j)} - \tau_i^{(j)} L^{(j)} \| p - p_i \|_\Theta, \\
-        UB^{(j)}(p) = \min_{i=1,\dots,n} y_i^{(j)} + \tau_i^{(j)} L^{(j)} \| p - p_i \|_\Theta.
+        LB^{(j)}(p) = \max_{i=1,\dots,n} y_i^{(j)} - \tau_i^{(j)} - L^{(j)} \| p - p_i \|_\Theta, \\
+        UB^{(j)}(p) = \min_{i=1,\dots,n} y_i^{(j)} + \tau_i^{(j)} + L^{(j)} \| p - p_i \|_\Theta.
     \end{gathered}
     \end{equation}
 \end{prp}

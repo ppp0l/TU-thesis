@@ -90,7 +90,7 @@ where \[
 The following pseudo-algorithm summarizes the adopted methodology. \medskip
 
 \par\noindent\rule[1mm]{\textwidth}{0.4pt}
-\phantomsection \makeatletter\def\@currentlabel{Algorithm 1}\makeatother\label{algo:AGP}
+\phantomsection \makeatletter\def\@currentlabel{Algorithm 1}\makeatother\label{algo:AL}
 \large{\textbf{Algorithm 1.} } \normalsize
 \par\noindent\rule[2mm]{\textwidth}{0.2pt}
 \textbf{Require:} initial design $\mc D_0$, fractionating of the budget $\Delta W_1,\dots, \Delta W_J$.
@@ -218,7 +218,7 @@ For the independent noise case, we can explicitly compute the expected value in~
     Let $p, p' \in \Omega$ and $\tau_p \in \R^+$, let $D = \{ (p_i, \tau_i, y_i) \}_{i=1}^n$ be a training set, and let the hypothesis of Proposition~\ref{prp:LR-PI} hold. \newline
     Let $L^{(1)}, \dots L^{(\text{dim} \mc Y)}$ be the Lipschitz constants used in the LR surrogate.
     Then, the expected error reduction in $p'$ is given by \begin{equation}\label{eq:alpha-LR}
-        \alpha_{D, \text{LR}}(p, p') =  \frac{1}{2\sqrt{3}m_{\mc Y}(\mc P I_p)} \sum_{j=1}^{\text{dim}\mc Y} EUI(p,p')^{(j)} - ELI(p,p')^{(j)},
+        \alpha_{D, \text{LR}}(p, p') =  \frac{1}{4 \sqrt{3} \tau_p } \sum_{j=1}^{\text{dim}\mc Y} \frac{UI(p,p')^{(j)} - ELI(p,p')^{(j)}}{UB^{(j)}(p) - LB^{(j)}(p)} ,
     \end{equation}
     where $m_{\mc Y}$ is the Lebesgue measure over $\mc Y$ and the expected upper improvement $EUI$ and expected lower improvement $ELI$ in the $j$-th component are given by
     \begin{equation*}
@@ -316,6 +316,46 @@ For the sake of brevity the proof of this result is given in the Appendix~\ref{a
 With the expected error reduction $\alpha_{D, \text{LR}}$ at hand, the acquisition function for new candidates is given by~\eqref{eq:acq-fun-gen}. 
 Like for the GPR acquisition function, it depends on the default tolerance parameter $\tau_p$, which can be treated as in the GPR case. \medbreak
 
-As mentioned with the introduction of the LR error indicator function $e_{D, \text{LR}}$ in~\eqref{eq:loc-err-LR}, this function unlike $e_{D, \text{GPR}}$ cannot be computed without the knowledge of the training data $D$.
-Thus, in the tolerance problem~\eqref{prob:tolerance-doe} the local error indicator function is substituted by its expected value over the model response and the discretization noise, similarly as done for the acquisition function~\eqref{eq:alpha-LR-general}.
+As mentioned with the introduction of the LR error indicator function $e_{D, \text{LR}}$ in~\eqref{eq:loc-err-LR}, this function unlike $e_{D, \text{GPR}}$ cannot be computed without the knowledge of the training data $D$; thus, in the tolerance problem~\eqref{prob:tolerance-doe} $e_{D, \text{LR}}$ cannot be directly used. \newline
+Similarly as done for the acquisition function~\eqref{eq:alpha-LR-general}, for a fixed set of evaluation points $p_1, \dots, p_n$ with predictive intervals $\mc PI_{p_1}, \dots, \mc PI_{p_n}$ we consider the expected value of the error indicator function over the model response and the discretization noise
+\begin{equation} \label{eq:tol-exp-err}
+    E(p, \tau_1, \dots, \tau_n)\coloneq \bb E _{ (Y_{p_1}, \dots Y_{p_n}, \nu_1, \dots, \nu_n) \sim  \mc U\left( \bigotimes_{i=1}^n \mc PI_{p_i} \times \bigotimes_{i=1}^n  [-\tau_i, \tau_i] ^{ \text{dim} \mc Y } \right)} 
+    \left[ 
+         e_{\{(p_i,\tau_i, Y_{p_i} + \nu_i )\}_{i=1}^n, \text{LR}}(p)
+    \right]
+\end{equation}
+as a function the given tolerance levels $\tau_1, \dots, \tau_n$
 
+Computing analytically the integrals is challenging due to the multiple cases to be considered, and a recursive formula on $n$ could not be found. 
+Consequently, an approximation of this expected value is required; as Monte Carlo integration would pose some computational challenges due to the dimensionality of the problem growing with the number of evaluation points $n$, we look for some bounds which can be used to estimate $E(\tau_1,\dots, \tau_n)$.\newline
+We once again consider the independent noise component setting to derive a computable quantity: in such case it holds
+\begin{gather*}
+    e_{\{(p_i,\tau_{i}, Y_{p_i} + \nu_i )\}_{i=1}^n, \text{LR}}(p)  = 
+    \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} \left( UB^{(j)}(p) - LB^{(j)}(p) \right) = \qquad \qquad \qquad \qquad \qquad\qquad \qquad\qquad \qquad  \\
+    \qquad = \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} 
+    \left( \min_{i=1,\dots,n}\left\{ Y_{p_i} + \nu_i + \tau_{i}^{(j)} + L^{(j)} \| p - p_i \|_\Theta \right\}- \max_{i=1,\dots,n} \left\{ Y_{p_i} + \nu_i - \tau_i^{(j)} - L^{(j)} \| p - p_i \|_\Theta \right\} \right),
+\end{gather*} 
+where the first equality is given by Equation~\eqref{eq:loc-err-LR} and in the second we substituted to $LB^{(j)}(p)$ and $UB^{(j)}(p)$ their formulas as given by Equations~\eqref{LR-bounds}.\newline
+Due to the monotonicity of the expected value, the expected value of the minimum of $n$ random variables is less or equal to the minimum of the expected values, and similarly for the maximum. 
+By this, it holds that 
+\begin{align*}
+    E(p, \tau_1, \dots, \tau_n) &=\bb E\left[ 
+        e_{\{(p_i,\tau_{i}, Y_{p_i} + \nu_i )\}_{i=1}^n, \text{LR}}(p)
+   \right] \leq\\
+   &\leq \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} 
+    \Big( \min_{i=1,\dots,n}\left\{ \bb E[Y_{p_i} + \nu_i] + \tau_i^{(j)} + L^{(j)} \| p - p_i \|_\Theta \right\}- \\
+    & \qquad\qquad \qquad\qquad\qquad \qquad \qquad -\max_{i=1,\dots,n} \left\{ \bb E[Y_{p_i} + \nu_i] - \tau_i^{(j)} - L^{(j)} \| p - p_i \|_\Theta \right\} \Big) = \\
+    &= \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} \Big(  \min_{i=1,\dots, n}\left\{ \bb E[Y_{p_i}] + \tau_i^{(j)} + L^{(j)} \| p - p_i \|_\Theta \right\}- \\
+    & \qquad\qquad\qquad \qquad\qquad\qquad \qquad \qquad - \max_{i=1,\dots,n} \left\{ \bb E[Y_{p_i} ] - \tau_i^{(j)} - L^{(j)} \| p - p_i \|_\Theta \right\} \Big)\eqcolon \\ 
+    & \qquad\qquad \qquad\qquad\qquad \qquad \qquad  \qquad\qquad \qquad\qquad\qquad \qquad \qquad 
+     \eqcolon\hat E(p, \tau_1, \dots, \tau_n),
+\end{align*}
+where the expected values are to be intended as in Equation~\eqref{eq:tol-exp-err}, and in the last equality we used the linearity of the expected value and that the noise $\nu_i$ has zero mean. \medskip
+
+In the LR training strategy, for any design $\mc D_j = \{ (p_i, \tau_i) \}_{i=1}^{n_j}$ we adopt $\hat{E} (p, \tau_1, \dots, \tau_{n_j})$ as an estimate of $e_{D(\mc D_j), \text{LR}}(p)$ in the tolerance problem~\eqref{prob:tolerance-doe}.
+Then, the discrete tolerance problem for LR becomes
+\begin{equation}\label{prob:discrete-tol-LR}       
+    \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} E(p', \tau_1, \dots, \tau_{n_j})  \quad \text{s.t.} 
+    \quad W(\mc D_{j} \mid D(\mc D_{j-1}) ) \le \Delta W_j, 
+\end{equation} 
+which is use to optimize the accuracies in~\ref{algo:AL} for the LR surrogate model.
