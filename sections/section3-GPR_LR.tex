@@ -25,7 +25,7 @@ For training data $D$, we write \begin{align*}
     p \mapsto \bb P( y(p) \mid D).
 \end{align*}
 
-In the next two section, we introduce two techinques which provide a stochastic surrogate model: Gaussian process regression (GPR) and Lipschitz regression (LR).
+In the next two section, we introduce two techniques which provide a stochastic surrogate model: Gaussian process regression (GPR) and Lipschitz regression (LR).
 
 \subsection{Gaussian process regression}\label{sec:GPR}
 Gaussian process regression (GPR) is a non-parametric regression technique which relies on probabilistic assumptions and is closely related to support vector machines and kernel methods.
@@ -38,16 +38,16 @@ The core idea is that the underlying function $y$ is a realization of a Gaussian
     A Gaussian process is completely defined by its mean function $m: \Theta \rightarrow \mc Y$ and its covariance function $k: \Theta \times \Theta \rightarrow SPSD_{\text{dim}\mc Y}(\R)$, also known as kernel. 
     We denote $Y \sim GP(m, k)$ for a Gaussian process of mean $m$ and kernel $k$.
 \end{dfn}
-Note that the covariance operator $k(p, p')$ can be identified with a positive semidefinite matrix as $\mc Y$ is of finite dimension. \medbreak
+Note that the covariance operator $k(p, p')$ can be identified with a positive semi-definite matrix as $\mc Y$ is of finite dimension. \medbreak
 
 Gaussian process regression relies on two assumptions:
 \begin{itemize}[font=\itshape, leftmargin=1.5cm, align=right, labelwidth=2.4cm]
     \item[(GPR-model)] the forward model $y$ is a realization of a GP $Y \sim GP(m, k)$;
-    \item[(GPR-data)] the observations are contaminated by Gaussian noise indipendent from $Y$, i.e. 
+    \item[(GPR-data)] the observations are contaminated by Gaussian noise independent from $Y$, i.e. 
     \[ 
         y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
     \] 
-    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is indipendent from $Y$.
+    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is independent from $Y$.
 \end{itemize}  
 The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model itself. 
 The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section.
@@ -154,17 +154,17 @@ The two assumptions are the following:
         |y^{(j)}(p) - y^{(j)}(p')| \leq L^{(j)} \|p - p'\|_\Theta \ \text{ for every } \ p, p' \in \Theta
     \]
     holds for every $j = 1, \dots, \text{dim}\mc Y$;
-    \item[(LR-data)] the observations are contaminated by indipendent and centered uniform noise, i.e. 
+    \item[(LR-data)] the observations are contaminated by independent and centered uniform noise, i.e. 
     \[ 
         y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D
     \] 
-    holds, where $e_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[e_{D,i}] = 0$ and $e_{D,i}$ is indipendent from $e_{D,k}$ for every $k \neq i$.
+    holds, where $e_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[e_{D,i}] = 0$ and $e_{D,i}$ is independent from $e_{D,k}$ for every $k \neq i$.
 \end{itemize}  
 The first assumption requires fixing a basis for $\mc Y$ and a norm on $\Theta$; despite this, the assumption is weaker than \textit{(GPR-model)}, as it does not require any level of smoothness for $y$ but Lipschitz continuity. \newline
-Issues may arise due to the global nature of the Lipschitz constants $L^{(j)}$, as a model exihibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
+Issues may arise due to the global nature of the Lipschitz constants $L^{(j)}$, as a model exhibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
 Moreover when the Lipschitz constants are unknown, their estimation is sensitive to noise.
 
-The second assumption does not allow for correlated noise terms $e_{D,i}$, $e_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their indipendence, as in Equation~\ref{eq:GPR-noise-corr}. 
+The second assumption does not allow for correlated noise terms $e_{D,i}$, $e_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their independence, as in Equation~\ref{eq:GPR-noise-corr}. 
 In the context of this work, \textit{(LR-data)} entails that the discretization error is uniformly distributed in a region $I_\tau$, i.e. 
 \[
     H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc U(I_\tau),
@@ -174,7 +174,7 @@ Given the structure of FE discretization errors and the nature of their estimato
 
 The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
 \begin{prp}
-    Let $\upsilon \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with gloobal Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = \upsilon$ if and only if $\upsilon \in \mc C_p$, with $\mc PI_p$ given by
+    Let $\upsilon \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with global Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = \upsilon$ if and only if $\upsilon \in \mc C_p$, with $\mc PI_p$ given by
     \begin{equation}\label{eq:LR-PI-general}
         \mc PI_p = \left \{ \upsilon \in \mc Y \mid Cone_{p,\upsilon,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \forall i = 1, \dots, n \right \}.
     \end{equation}
@@ -197,7 +197,7 @@ The Lipschitz Regression predictive distribution is then defined by taking a uni
     with the predictive interval $\mc PI_p$ is given by Equation~\eqref{eq:LR-PI-general}
 \end{dfn}
 
-For noise terms $e_{D,i}$ with indipendent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
+For noise terms $e_{D,i}$ with independent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
 \begin{prp}\label{prp:LR-PI}
     Let $I_{\tau_i} = \otimes_{j=1}^{\text{dim}\mc Y} [ -\tau_i^{(j)}, \tau_i^{(j)} ]$ for every $i = 1, \dots, n$.
     Then the LR predictive interval $\mc PI_p$ is an interval given by
@@ -221,7 +221,7 @@ In the numerical experiments, we will adopt the LR predictive interval given by 
 The Lipschitz constants $\underline L$ play a role similar to the one of kernel hyperparameters in GPR, as the quality of the surrogate prediction is heavily affected by their estimate.
 A number of techniques have been proposed to estimate the Lipschitz constants, see~\cite{Calliess2017} for an example, but being from a Machine Learning setting they rely on an high number of training points, which is not realistic in a high-cost forward model setting.
 
-For the indipendent noise components setting, the minimal value of the Lipschitz constants $L^{(j)}$ compatible with training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ is given by the following proposition.
+For the independent noise components setting, the minimal value of the Lipschitz constants $L^{(j)}$ compatible with training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ is given by the following proposition.
 \begin{prp} \label{prp:LR-const}
     Let $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and $y$ be a component-wise Lipschitz function with global Lipschitz constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ such that 
     \[

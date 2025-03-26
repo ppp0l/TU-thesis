@@ -30,12 +30,12 @@ Incorporating this into the Relation~\eqref{eq:par-to-obs} leads to a different 
 \begin{equation}\label{eq:GPR-par-to-obs}
     Y^m = Y_p + N.
 \end{equation}
-Under normality and indipendence assumptions this results in a different likelihood, as stated in the following proposition.
+Under normality and independence assumptions this results in a different likelihood, as stated in the following proposition.
 
 \begin{prp}
     Let Relation~\eqref{eq:GPR-par-to-obs} hold with Gaussian noise $N \sim \mc N (0, \Sigma_N^2)$, let $y^m$ be a realization of $Y^m$ and let $y_{D, \text{GP}}$ be a GPR surrogate model describing the posterior distribution of $Y_p$ given training data $D = \{ (p_i, y_i) \}_{i=1}^n$.
 
-    Under the hypothesis that the GP prediction $Y_p$ is indipendent from the measurement noise $N$, Relation~\eqref{eq:GPR-par-to-obs} yields that $Y^m$ is normally distributed,
+    Under the hypothesis that the GP prediction $Y_p$ is independent from the measurement noise $N$, Relation~\eqref{eq:GPR-par-to-obs} yields that $Y^m$ is normally distributed,
     \[
     Y^m \sim \mc N(m_D(p), \Sigma_N^2 + k_D(p,p)), 
     \]
@@ -72,7 +72,7 @@ Remind that, given training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, LR provi
 Marginalizing the likelihood over this predictive distribution leads to a marginal likelihood $L_{D, \text{LR}}(p)$ as given by the following proposition.
 
 \begin{prp}\label{prp:LR-likelihood}
-    Let $y_{D, \text{LR}}$ be a LR surrogate model as given in Definition~\ref{dfn:LR}, then if the prediction $Y_p \sim \mc U (\mc IP_p)$ is indipendent from the noise term $N$, the LR parameter-to-observation relation 
+    Let $y_{D, \text{LR}}$ be a LR surrogate model as given in Definition~\ref{dfn:LR}, then if the prediction $Y_p \sim \mc U (\mc IP_p)$ is independent from the noise term $N$, the LR parameter-to-observation relation 
     \begin{equation*}
         Y^m = Y_p + N 
     \end{equation*}
