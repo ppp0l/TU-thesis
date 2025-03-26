@@ -250,5 +250,8 @@ Due to the fact the $L^{(j)}=L^{(j)}_{\min}$ can be realized, the bound provided
 By the minimality condition~\eqref{eq:LR-const-minimality}, if at component $j$ the lower bound is obtained with training points $p_i, \ p_k$, then the $j$-th components of the predictive intervals $\mc PI_{p_i},\ \mc PI_{p_k}$ degenerate into a single point; it can be proved that this happens in all the points $p = t p_i + (1-t) p_k$ for $t \in [0,1]$. 
 \end{rmk}
 
-Proposition~\ref{prp:LR-const} suggests an approach to estimate the Lipschitz constants: for training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ the Lipschitz constants estimate is given by $\hat{\underline{L}}_D = \lambda ( L^{(1)}_{\min}, \dots, L^{(\text{dim}\mc Y)}_{\min})$ for some fixed $\lambda > 1$. 
+Proposition~\ref{prp:LR-const} suggests an approach to estimate the Lipschitz constants: for training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ the Lipschitz constants estimate is given by 
+\begin{equation}\label{eq:lips-const}
+    \hat{\underline{L}}_D = \lambda ( L^{(1)}_{\min}, \dots, L^{(\text{dim}\mc Y)}_{\min})
+\end{equation} for some fixed $\lambda > 1$. 
 The multiplicative constant $\lambda$ is considered to avoid the degenerate case given by Equation~\eqref{eq:LR-const-minimality}, and we will set its value in the experimental section.

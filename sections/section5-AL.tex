@@ -8,7 +8,9 @@ Consequently, we now turn our attention to the problem of selecting the training
 
 We adopt an Active Learning (AL) framework, aiming to select the most informative points to evaluate the forward model $y$; the forward model evaluations are inexact but thanks to the FE adaptivity the tolerance on the discretization error can be controlled, so we also aim at selecting the optimal tolerance level for each evaluation.
 The adaptive selection of the tolerance level has been shown to be particularly effective in reducing the computational costs for GPR in an IP setting, both for MAP estimates~\cite{SemlerWeiser2023,SemlerWeiser2024} and for posterior sampling~\cite{VillaniUngerWeiser2024}.
-The methodology of the latter works is expanded and adapted to the present setting, considering the LR surrogate model and different target functions, and incorporating a discretization error covariance estimate for GPR. 
+The methodology of the latter works is expanded and adapted to the present setting, considering the LR surrogate model and different target functions, and incorporating a discretization error covariance estimate for GPR. \medbreak
+
+The remainder of this section is organized as follows: Section~\ref{sec:AL-method} introduces the notation and the general methodology for the AL framework, presenting the challenges of the adopted approach and the general structure of the algorithm; Section~\ref{sec:GPAL} describes the specific implementation of the AL framework for GPR, introducing the GPR-specific error indicator function and acquisition function, and developing a strategy to estimate the noise covariance from the forward model evaluations; finally, Section~\ref{sec:LRAL} presents the implementation of the AL framework for LR, introducing the LR-specific error indicator function, the acquisition function, and the necessary adjustments for the tolerance optimization problem for the LR surrogate model.
 
 \subsection{General methodology}\label{sec:AL-method}
 
@@ -172,15 +174,60 @@ The acquisition function is then given by~\eqref{eq:acq-fun-gen} with $\alpha_{\
 It depends on the default tolerance parameter $\tau_p$, which can be either a fixed value or a function of the point $p$; in~\cite{VillaniUngerWeiser2024} it is set to the average over the components of the predictive standard deviation, i.e.
 \[ \tau_p = \frac{1}{\text{dim}\mc Y} \sum_{i=1}^{\text{dim}\mc Y} \sqrt{ \big (k_{D(\mc D_{j-1})}(p,p) \big )_{i,i}}. \]  \medbreak
 
-In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma_D(\tau)$ from the evaluations of the forward model.
-As the model evaluations are performed through Adaptive FE, for each data point $(p, \tau, y) \in D$ we will have a sequence of evaluations $y^{(1)}, \dots, y^{(m)}$ with decreasing tolerance levels $\tau^{(1)} > \dots > \tau^{(m)} = \tau$, corresponding to the sequence of FE refinements.
-We aim at exploiting this evaluations to estimate the noise covariance $\Sigma_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2019}.
+In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma^2_D(\tau)$ from the evaluations of the forward model.\newline
+As the model evaluations are performed through Adaptive FE, for each data point $(p_i, \tau_i, y_i) \in D$ we will have a sequence of provisory evaluations 
+\begin{equation}\label{eq:eval-seq}
+     y_{i,1}, \dots, y_{i,r_i} = y_i
+\end{equation} 
+    with decreasing estimated error levels 
+\begin{equation} \label{eq:tol-seq}
+        \tau_{i,1} > \dots > \tau_{i,r_i} = \tau_i
+\end{equation}
+ corresponding to the sequence of FE refinements.
+We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2019}. \newline
+\todo[inline]{change/update reference}
+Given some centered i.i.d. data $x_1,\dots, x_s$ in $\R^d$, a linear shrinkage estimator for the covariance matrix $\Sigma^2 \in \R^{d\times d}$ of the generating distribution is given by the convex combination of the empirical covariance matrix \[
+S = \frac{1}{s} \sum_{i=1}^h x_i \cdot x_i^T
+\] 
+and some other fixed SPD matrix $\Sigma_0$, resulting in an estimator of the form
+\begin{equation}\label{eq:shrinkage-estimator-gen}
+    \hat \Sigma^2 = \delta \Sigma^2_0 + (1-\delta) S,
+\end{equation}
+where the parameter $\delta$ is an estimate of the value which minimizes the mean squared error of the estimator and given by 
+\begin{equation} \label{eq:shrinkage-delta}
+    \delta = \frac{1}{\big \|S - \Sigma^2_0 \big \|_F^2} \min \left( \frac{1}{s} \sum_{i=1}^{s} \big \|S - x_i \cdot x_i^T\big \|_F^2, \big \|S - \Sigma^2_0 \big\|_F^2 \right).
+\end{equation}\medbreak
 
-\todo[inline]{describe covariance estimator}
-
+In the present setting, we aim at estimating the noise covariance $\Sigma^2_D(\tau)$ of the discretization noise affecting the forward model evaluations at a given tolerance level $\tau$.
+We first assume that $\Sigma^2_D(\tau)$ scales quadratically with the tolerance level, i.e. 
+\[
+\Sigma^2_D(\tau) = \tau^2 \Sigma^2_D(1),
+\]
+and second, as we expect the final evaluation $y_i$ to be significantly less noisy than most of the provisory evaluations $y_{i,j}$, i.e. $\tau_i \ll \tau_{i,j}$, we assume the final residual to be zero, i.e. $y(p_i) = y_i$.
+Under these assumptions it holds that 
+\[
+\eta_{i,j} \coloneq \frac{1}{\tau_{i,j}} ( y_{i,j} - y_i) \text{ is a realization of } \nu_{i,j} \sim \mc N (0, \Sigma^2_D(1))
+\]
+for every $ i=1,\dots,n $ and $ j=1,\dots,r_i$. \newline
+While assuming $\nu_{i,j}$ to be independent from $\nu_{h,k}$ for $i\neq h$ can be a reasonable approximation, the residuals in a same evaluation sequence will most likely be correlated.
+This leads us to consider a correlation-adjusted sample covariance matrix  
+\begin{equation}
+    \hat S = \frac{1}{s_\text{eff}} \sum_{i=1}^n\sum_{j=1}^{r_i} \eta_{i,j} \cdot \eta_{i,j}^T,
+\end{equation} 
+where $s_{\text{eff}}$ is the effective sample size of $\{\eta_{i,j}\}_{i,j}$. \newline
+Then, the linear shrinkage estimator for the noise covariance $\Sigma^2_D(1)$ is given by
+\[
+    \hat \Sigma_D^2 = \delta \hat S + (1-\delta) I_{\text{dim}\mc Y},
+\]
+where we adopted the identity matrix $I_{\text{dim}\mc Y}$ as the fixed matrix $\Sigma_0$ of Equation~\eqref{eq:shrinkage-estimator-gen} and the parameter $\delta$ is given by the formula~\eqref{eq:shrinkage-delta} with the substitution of $\{x_i\}$ by $\{\eta_{i,j}\}$, of $S$ by $\hat S$ and of $s$ by $s_{\text{eff}}$.\newline
+This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)$
+\begin{equation}\label{eq:shrinkage-estimator}
+    \hat{\Sigma}_D^2(\tau) = \tau^2 \hat \Sigma_D^2,
+\end{equation}
+which can be used when computing the predictive mean and variance of the GPR model as given by Theorem~\ref{thm:GP-posterior}.
 
 \subsection{Active learning for LR}\label{sec:LRAL}
-\todo[inline]{in this section I chose to introduce a general error indicator function for LR, and then to specialize it for the case of independent discretization noise components (similarly as done in Sections~\ref{sec:LR} and~\ref{sec:LRlike}), but the general error indicator function is not super meaningful so maybe can be omitted.}
+\pv{in this section I chose to introduce a general error indicator function for LR, and then to specialize it for the case of independent discretization noise components (similarly as done in Sections~\ref{sec:LR} and~\ref{sec:LRlike}), but the general error indicator function is not super meaningful so maybe can be omitted.}
 
 For a LR surrogate model $y_{D,\text{LR}}$, let $\Sigma^2_{y_{D,\text{LR}}}(p)$ be the covariance matrix of the distribution $y_{D,\text{LR}}(p) = \mc U (\mc PI_p)$, where we recall that $\mc PI_p$ is the predictive interval given by Equation~\eqref{eq:LR-PI-general}.\newline
 Then, the considered local error indicator function is the vector 1-norm of the square root $\Sigma_{y_{D,\text{LR}}}(p)$ of $\Sigma^2_{y_{D,\text{LR}}}(p)$,
@@ -193,7 +240,7 @@ In the case of independent discretization noise components described by Proposit
 \end{equation*}
 we have that
 \[
-    \Sigma^2_{y_{D,\text{LR}}} = \frac{1}{12} \text{diag} \left( UB^{(1)}(p) - LB^{(1)}(p), \dots, UB^{(\text{dim}\mc Y)}(p) - LB^{(\text{dim}\mc Y)}(p) \right),
+    \Sigma^2_{y_{D,\text{LR}}} = \frac{1}{12} \text{diag} \Big ( \big( UB^{(1)}(p) - LB^{(1)}(p)\big)^2, \dots,\big( UB^{(\text{dim}\mc Y)}(p) - LB^{(\text{dim}\mc Y)}(p) \big)^2 \Big),
 \] and the local error indicator function can be computed by 
 \begin{equation} \label{eq:loc-err-LR}
     e_{D, \text{LR}}(p) = \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} \left( UB^{(j)}(p) - LB^{(j)}(p) \right).
@@ -316,8 +363,16 @@ For the sake of brevity the proof of this result is given in the Appendix~\ref{a
 With the expected error reduction $\alpha_{D, \text{LR}}$ at hand, the acquisition function for new candidates is given by~\eqref{eq:acq-fun-gen}. 
 Like for the GPR acquisition function, it depends on the default tolerance parameter $\tau_p$, which can be treated as in the GPR case. \medbreak
 
-As mentioned with the introduction of the LR error indicator function $e_{D, \text{LR}}$ in~\eqref{eq:loc-err-LR}, this function unlike $e_{D, \text{GPR}}$ cannot be computed without the knowledge of the training data $D$; thus, in the tolerance problem~\eqref{prob:tolerance-doe} $e_{D, \text{LR}}$ cannot be directly used. \newline
-Similarly as done for the acquisition function~\eqref{eq:alpha-LR-general}, for a fixed set of evaluation points $p_1, \dots, p_n$ with predictive intervals $\mc PI_{p_1}, \dots, \mc PI_{p_n}$ we consider the expected value of the error indicator function over the model response and the discretization noise
+As mentioned with the introduction of the LR error indicator function $e_{D, \text{LR}}$ in~\eqref{eq:loc-err-LR}, this function unlike $e_{D, \text{GPR}}$ cannot be computed without the knowledge of the training data $D$; thus, in the tolerance problem~\eqref{prob:tolerance-doe} $e_{D, \text{LR}}$ cannot be directly used. 
+Moreover, as the Lipschitz constants $L^{(1)}, \dots, L^{(\text{dim} \mc Y)}$ are estimated via~\eqref{eq:lips-const}, they depend both on the training data $D$ and on the tolerance levels $\tau_1, \dots, \tau_n$. \newline
+The handling of the first problem requires more care and we'll dedicate the remainder of the section to its solution; the second problem instead is solved by fixing the Lipschitz constants to \[
+    L^{(j)} = \max_{ \stackrel{i, k \in \{1, \dots, n\}}{i\neq k} } \frac{| y_i^{(j)} - y_k^{(j)} |}{\| p_i - p_k \|_\Omega},
+\]
+which is obtained from Equation~\eqref{eq:LR-const} by setting $\tau_i=0$ for every $i=1,\dots,n$.
+Such assignment makes the constants independent from the tolerance levels $\tau_1, \dots, \tau_n$ and guarantees that the Lipschitz conditions are compatible with any tolerance level.\medskip
+
+The derivation of a computable tolerance problem for LR follows a similar idea as done for the acquisition function~\eqref{eq:alpha-LR-general}.
+For a fixed set of evaluation points $p_1, \dots, p_n$ with predictive intervals $\mc PI_{p_1}, \dots, \mc PI_{p_n}$ we consider the expected value of the error indicator function over the model response and the discretization noise
 \begin{equation} \label{eq:tol-exp-err}
     E(p, \tau_1, \dots, \tau_n)\coloneq \bb E _{ (Y_{p_1}, \dots Y_{p_n}, \nu_1, \dots, \nu_n) \sim  \mc U\left( \bigotimes_{i=1}^n \mc PI_{p_i} \times \bigotimes_{i=1}^n  [-\tau_i, \tau_i] ^{ \text{dim} \mc Y } \right)} 
     \left[ 
@@ -350,7 +405,7 @@ By this, it holds that
     & \qquad\qquad \qquad\qquad\qquad \qquad \qquad  \qquad\qquad \qquad\qquad\qquad \qquad \qquad 
      \eqcolon\hat E(p, \tau_1, \dots, \tau_n),
 \end{align*}
-where the expected values are to be intended as in Equation~\eqref{eq:tol-exp-err}, and in the last equality we used the linearity of the expected value and that the noise $\nu_i$ has zero mean. \medskip
+where the expected values are to be intended as in Equation~\eqref{eq:tol-exp-err}, and in the last equality we used the linearity of the expected value and that the noise $\nu_i$ has zero mean. \medbreak
 
 In the LR training strategy, for any design $\mc D_j = \{ (p_i, \tau_i) \}_{i=1}^{n_j}$ we adopt $\hat{E} (p, \tau_1, \dots, \tau_{n_j})$ as an estimate of $e_{D(\mc D_j), \text{LR}}(p)$ in the tolerance problem~\eqref{prob:tolerance-doe}.
 Then, the discrete tolerance problem for LR becomes
@@ -358,4 +413,4 @@ Then, the discrete tolerance problem for LR becomes
     \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} E(p', \tau_1, \dots, \tau_{n_j})  \quad \text{s.t.} 
     \quad W(\mc D_{j} \mid D(\mc D_{j-1}) ) \le \Delta W_j, 
 \end{equation} 
-which is use to optimize the accuracies in~\ref{algo:AL} for the LR surrogate model.
+which is used to optimize the evaluation tolerances in~\ref{algo:AL} for the LR surrogate model. \newline
