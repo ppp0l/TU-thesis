@@ -26,6 +26,7 @@ def solve_pos_prob(n_pts, dom, default_tol, lips, samples) :
     
     iter_options = { 'maxiter' : 200,
                     'ftol' : 1.0e-8,
+                    'disp' : False,
                     }
     
     # solve for each start
@@ -40,7 +41,6 @@ def solve_pos_prob(n_pts, dom, default_tol, lips, samples) :
                                         )
         maxs[i] = res.x
         vals[i] = - res.fun
-        print(res)
 
     n_pts = min(n_pts, len(vals))
     

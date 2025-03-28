@@ -44,7 +44,8 @@ def d2_model(x, dom = None) :
     
     return ret
 
-def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dim = 3, dom = None) :
+def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dom = None) :
+    dim = 3
     
     if not dom is None :
         x = 2*(x - dom['min'] )/ (dom['max'] - dom['min'])-1
@@ -59,7 +60,7 @@ def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dim = 3, dom = None) :
     for i,t in enumerate(ts) :
         sol[:,:, i] *= (4*math.pi*k*t)**(-3/2) * np.exp( - dist_sq/(4*k*t))
         
-    return sol
+    return 10 * sol
 
 def stationary_heat_eq(x, sensors, k = 1, dom = None) :
     
@@ -77,43 +78,6 @@ def stationary_heat_eq(x, sensors, k = 1, dom = None) :
     
     sol = k*sol
     
-    return sol
+    return 2 * sol
 
 
-def forward_model(x, inp, out=None, dom=None, wiggle = True, 
-                  sensors : np.ndarray = None,
-                  meas_time : np.ndarray = None,
-                  k = 0.5,
-                  ) :
-    if out is None:
-        out = inp+1
-        
-    match inp :
-        case 1 :
-            val = d1_model(x, n = out, dom = dom) 
-        
-        case 2 : 
-            val = d2_model(x, n = out, dom = dom) 
-        
-        case 3 :
-            if x.size == 0 :
-                return np.zeros((len(x), len(sensors) * len(meas_time)))
-            val = time_evolving_heat_eq(x, sensors, dom = dom, ts = meas_time, k = k)
-            val = val.reshape((len(x), -1) )
-            wiggle = False
-            
-        case 4 :
-            if x.size == 0 :
-                return np.zeros((len(x), len(sensors)))
-            
-            val = stationary_heat_eq(x, sensors, dom = dom, k = k)
-            val = val.reshape((len(x), -1) )
-            wiggle = False
-            
-        case _:
-            raise NotImplementedError()
-            
-    if wiggle : 
-        val += wiggly(x, out, dom)
-        
-    return val

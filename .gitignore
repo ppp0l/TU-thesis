@@ -8,6 +8,13 @@
 code/tests/random_tests.ipynb
 *outputs/
 
+# C++/kaskade
+*.o
+*.d
+*.vtu
+*gccerr.txt
+*.gnu
+
 
 # Latex
 

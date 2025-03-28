@@ -8,6 +8,8 @@ from utils.workflow import Manager
 
 import numpy as np
 
+import corner
+
 from models.forward import forward_model as fm
 from models.lipschitz import lipschitz_regressor
 
@@ -33,10 +35,12 @@ workflow_manager = Manager(path, dim)
 
 # loads configuration parameters
 #configuration = workflow_manager.read_parameters()
-value = np.array([0.36768606, 0.83379858])
+value = np.array([0.33069597382962845, 0.23476875535969113, 0.13201256840100192, -0.04325756645644445, -0.18841948370375194, 
+                  -0.37610577847838084, -0.1493904551279874, -0.4478949378911753, -0.1410582844824224, -0.15266744400879384, 
+                  0.01789137267732835, 0.1927816879708893])# np.array([0.36768606, 0.83379858])
 
 # sets seed
-reproducibility_seed(seed = 1)
+reproducibility_seed(seed = 17)
 
 ### actual task
 
@@ -53,19 +57,20 @@ forward = fm(dim, "U", dom = param_space)
 prior = FlatPrior(param_space)
 
 # create true likelihood
-meas_cov = 0.01 * np.ones(forward.dout)
+meas_cov = 0.1 * np.ones(forward.dout)
 true_likelihood = base_likelihood(value, meas_cov, forward)
 
 # create true posterior
 true_posterior = Posterior(true_likelihood, prior)
 
+
 # active learning parameters
-n_init = 5
-points_per_it = dim
-n_it = 5
+n_init = 20
+points_per_it = 1
+n_it = 40
 
 
-default_tol = 0.05
+default_tol = 0.02
 FE_cost = 1
 budget = points_per_it * (default_tol)**(-FE_cost)
 
@@ -84,26 +89,30 @@ n_walkers = 16
 initial_pos = lhs(param_space["min"], param_space["max"], n_walkers)
 approx_posterior.initialize_sampler(n_walkers, initial_pos)
 
+true_posterior.initialize_sampler(n_walkers, initial_pos)
+true_samples = true_posterior.sample_points(4000)
+
 n_samples = 0
 samples = np.array([np.zeros(dim)])
 for type_run in ["fullyAd"] :
     # load initial
     for i in range(n_it) :
-        n_burn = n_samples - 10
-        n_samples += 50 
-        # sample posterior
-        new_samples = approx_posterior.sample_points(n_samples)
+        if i%dim == 0 :
+            n_burn = n_samples - 10
+            n_samples += 50 
+            # sample posterior
+            new_samples = approx_posterior.sample_points(n_samples)
 
-        # update sample chains
-        samples = samples[n_burn :]
-        samples = np.concatenate( (samples, new_samples), axis = 0)
+            # update sample chains
+            samples = samples[n_burn*n_walkers:]
+            samples = np.concatenate( (samples, new_samples), axis = 0)
 
         _, LB, UB = surrogate.predict(samples, return_bds=True)
 
         curr_L1 = L1_err(LB, UB).mean()
 
         # position problem
-        candidates = solve_pos_prob(2, param_space, default_tol, surrogate, samples)
+        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, samples)
 
         # accuracy problem
         tolerances, new_pts, updated = solve_acc_prob(candidates, budget, surrogate, samples, FE_cost)
@@ -131,10 +140,17 @@ for type_run in ["fullyAd"] :
         new_L1 = L1_err(LB, UB).mean()
         print()
         print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L1}")
-        print(f"Current L2 approx value: {new_L1}")
+        print(f"Precedent L1 approx value: {curr_L1}")
+        print(f"Current L1 approx value: {new_L1}")
         print(f"Points in the training set: {len(train_p)}")
         print()
+
+        if i%5== 0 :
+            fig = corner.corner(samples, color="crimson", plot_datapoints = False)
+            corner.corner(true_samples[:len(samples)], color="teal", plot_datapoints = False, fig = fig)
+            corner.overplot_points(fig, train_p, color="black", markersize = 5)
+            fig.savefig(path + f"/outputs/samples_{i}.png")
+            #fig.close()
 
     # export final round, save
     n_burn = n_samples - 10
@@ -146,5 +162,13 @@ for type_run in ["fullyAd"] :
     samples = samples[n_burn :]
     samples = np.concatenate( (samples, new_samples), axis = 0)
 
-np.save(path + "outputs/samples.npy" , samples)
+    fig = corner.corner(samples, color="crimson", plot_datapoints = False)
+    corner.corner(true_samples[:len(samples)], color="teal", plot_datapoints = False, fig = fig)
+    corner.overplot_points(fig, train_p, color="black", markersize = 5 )
+    fig.savefig(path + f"/outputs/samples_{i}.png")
+    #fig.close()
+    
+
+
+np.save(path + "/outputs/samples.npy" , samples)
 # run lhs

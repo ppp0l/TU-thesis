@@ -29,12 +29,11 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     old_points_constraint = Bounds(lb = current_precs, keep_feasible = True )
 
     iter_options = { 'maxiter' : 200,
+                    'disp' : False, 
                     'ftol' : 1.0e-8,
-                    'disp' : False,
                     }
     
     res_list = []
-    
     # iterate over starts
     for j, start in enumerate(starts) :
         # scipy solve
