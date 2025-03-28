@@ -10,15 +10,14 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     n_cands = len(candidates)
 
     training_p = lips.train_x
-    n_train = len(training_p)
     
     current_accs = np.mean(lips.noise, axis = 1)
 
     target_pts = np.concatenate( (training_p, candidates), axis = 0)
     current_precs = current_accs**(-1/cost) 
 
-    _, LB_p, UB_p = lips.predict(target_pts, return_bds=True)
-    LB_samples, UB_samples, Ldist = lips.predict_acc(samples, oth_tr=candidates)
+    mean_p = lips.predict(target_pts)
+    Ldist = lips.compute_Ldist(samples, oth_tr=candidates)
 
     starts = get_multistarts(n_cands, W, current_precs)
     current_precs = starts[0]
@@ -38,7 +37,7 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     for j, start in enumerate(starts) :
         # scipy solve
         res = minimize( acc_prob_target, start, 
-                       args = ( n_train, LB_p, UB_p, samples, LB_samples, UB_samples, Ldist, lips, cost), 
+                       args = ( mean_p, Ldist, lips, cost), 
                        method='SLSQP',
                        jac = acc_prob_grad,
                        constraints = (budget_constraint), 
@@ -79,92 +78,32 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     
     return best_accs, best_candidates, updated[:n_tr_pts]
 
-def acc_prob_target(precs, n_train, LB_p, UB_p, samples, LB_samples, UB_samples, Ldist, lips, cost):
+def acc_prob_target(precs, mean_p, Ldist, lips, cost):
 
     accs = precs[precs>0]**(-1/cost)
+    mean_p = mean_p[precs>0]
+    Ldist = Ldist[:,precs>0,:]
 
-    accs_tr = accs[:n_train]
-    accs_new = accs[n_train:]
-
-    new_LB, new_UB = lips.predict_acc(samples, accs_tr, Ldist[:,:n_train,:])
-
-    EU = UB_samples - new_UB
-    EL = LB_samples - new_LB
-    #print(EU.mean(), EL.mean())
-    for i in range(len(accs_new)) :
-        alpha = UB_samples - Ldist[:,n_train +i] - accs_new[[i]]
-
-        EU_pt = exp_upper(alpha, accs_new[[i]], LB_p[[n_train +i]],  UB_p[[n_train +i]], componentwise=True)
-
-        beta = -LB_samples - Ldist[:,n_train +i] - accs_new[[i]]
-        EL_pt = - exp_upper(beta,accs_new[[i]],-UB_p[[n_train +i]], -LB_p[[n_train +i]], componentwise=True)
-        #print(EU_pt.mean())
-
-        # EU = np.max( np.array([EU, EU_pt]), axis = 0)
-        # EL = np.min( np.array([EL, EL_pt]), axis = 0)
-        EU = EU + EU_pt
-        EL = EL + EL_pt
-
-
+    new_LB, new_UB = lips.predict_acc(Ldist, mean_p, accs)
     
-    return - np.mean(np.sum( EU - EL, axis = 1), axis = 0 )
+    return np.mean(np.sum(new_UB - new_LB, axis = 1), axis = 0 )
 
 
 
-def acc_prob_grad(precs, n_train, LB_p, UB_p, samples, LB_samples, UB_samples, Ldist, lips, cost):
+def acc_prob_grad(precs, mean_p, Ldist, lips, cost):
+
     accs = precs[precs>0]**(-1/cost)
+    mean_p = mean_p[precs>0]
+    Ldist = Ldist[:,precs>0,:]
 
-    accs_tr = accs[:n_train]
-    accs_new = accs[n_train:]
+    _, _, dLB_daccs, dUB_daccs = lips.predict_acc(Ldist, mean_p, accs, return_deps = True)
 
-    new_LB, new_UB, dLB_deps, dUB_deps = lips.predict_acc(samples, accs_tr, Ldist[:,:n_train,:], return_deps = True)
+    dE_daccs = np.mean(np.sum( dUB_daccs - dLB_daccs, axis = 2), axis = 1 )
 
-    # EU = UB_samples - new_UB
-    # EL = LB_samples - new_LB
-
-    dEU_daccs = np.concatenate((-dUB_deps, np.zeros((len(accs_new), len(samples), lips.dout))), axis = 0)
-    dEL_daccs = np.concatenate((-dLB_deps, np.zeros((len(accs_new), len(samples), lips.dout))), axis = 0)
-
-    for i in range(len(accs_new)) :
-        alpha = UB_samples - Ldist[:,n_train +i] - accs_new[[i]]
-        dalpha_dacc = -1
-
-        # EU_pt = exp_upper(alpha, accs_new[[i]], LB_p[[n_train +i]],  UB_p[[n_train +i]], componentwise=True)
-
-        dEU_dalpha, dEU_deps, _, _ = grad_exp_upper(alpha, accs_new[[i]], LB_p[[n_train +i]],  UB_p[[n_train +i]])
-
-        grad = dEU_dalpha * dalpha_dacc + dEU_deps 
-
-        # cond = np.array(EU <= EU_pt)
-        # dEU_daccs[:,cond] = 0
-        # dEU_daccs[n_train +i,cond] = grad[cond]
-        dEU_daccs[n_train + i] = grad
-
-        beta = -LB_samples - Ldist[:,n_train +i] - accs_new[i]
-        dbeta_dacc = -1
-
-        # EL_pt = - exp_upper(beta,accs_new[[i]],-UB_p[[n_train +i]], -LB_p[[n_train +i]], componentwise=True)
-
-        dEL_dbeta, dEL_deps, _, _ = grad_exp_upper(beta, accs_new[[i]], -UB_p[[n_train +i]], -LB_p[[n_train +i]])
-        dEL_dbeta = - dEL_dbeta
-
-        grad = dEL_dbeta * dbeta_dacc + dEL_deps
-        # print(grad[cond])
-
-        # cond = np.array(EL >= EU_pt)
-        # dEL_daccs[:,cond] = 0
-        # dEL_daccs[n_train +i,cond] = grad[cond]
-        dEL_daccs[n_train + i] = grad
-
-        # EU = np.max( np.array([EU, EU_pt]), axis = 0)
-        # EL = np.min( np.array([EL, EL_pt]), axis = 0)
-
-    dEI_daccs = np.mean(np.sum( dEU_daccs - dEL_daccs, axis = 2), axis = 1 )
-
-    dEI_dprecs = np.zeros(len(precs))
+    dE_dprecs = np.zeros(len(precs))
     # print(dEI_daccs)
 
-    dEI_dprecs[precs>0] = dEI_daccs * deps_dW(accs, cost)
+    dE_dprecs[precs>0] = dE_daccs * deps_dW(accs, cost)
     
-    return - dEI_dprecs
+    return dE_dprecs
 
