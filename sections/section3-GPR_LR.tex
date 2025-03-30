@@ -172,16 +172,41 @@ In the context of this work, \textit{(LR-data)} entails that the discretization 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
 Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \medbreak
 
+For any $p,p'$ in $\Theta$, $v\in \mc Y$, $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)} ) \in \R^{\text{dim} \mc Y}$ let us write 
+\[
+        Cone_{p,v,\underline L}(p') = \bigotimes_{j=1}^{\text{dim} \mc Y} \left[ v^{(j)} - L^{(j)} \|p-p'\|_\Theta, v^{(j)} + L^{(j)} \|p-p'\|_\Theta \right]
+\]
+for the projection in $p'$ of the cone in $\Omega \times \mc Y$ of vertex $(p,v)$ and directrix of slope $\underline L$.
 The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
+\todo[inline]{riformula}
 \begin{prp}
-    Let $\upsilon \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with global Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = \upsilon$ if and only if $\upsilon \in \mc C_p$, with $\mc PI_p$ given by
-    \begin{equation}\label{eq:LR-PI-general}
-        \mc PI_p = \left \{ \upsilon \in \mc Y \mid Cone_{p,\upsilon,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \forall i = 1, \dots, n \right \}.
-    \end{equation}
+    Let $v \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with global Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = v$ if and only if 
+        \[
+        Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \text{ for all } \ i = 1, \dots, n
+        \]
 \end{prp}
 \begin{proof}
-    \todo[inline]{Proof}
+    $(\Rightarrow)$ Let $v\in \mc Y$ and let $f$ be as in the statement.
+    For any $i\in \{1, \dots, n\}$ and $j \in \{1, \dots, \text{dim}\mc Y\}$, by Lipschitz continuity it holds 
+    \[
+    | v^{(j)} - f(p_i)^{(j)} | = | f(p)^{(j)} - f(p_i)^{(j)} | \leq L^{(j)} \|p-p_i\|_\Theta, 
+    \] 
+    which implies \[
+        f(p_i)^{(j)} \in \left[ v^{(j)} - L^{(j)} \|p-p_i\|_\Theta, v^{(j)} + L^{(j)} \|p-p_i\|_\Theta \right].
+    \]
+    By the arbitrariety of $j$, $f(p_i) \in Cone_{p,v,\underline L}(p_i) $ and as by hypothesis $f(p_i) \in y_i + I_{\tau_i}$, we have \[
+    Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset.
+    \] 
+    The arbitrariety of $i$ implies the statement. \newline
+    $(\Leftarrow)$ For each et  
 \end{proof}
+For fixed training data $D =\{(p_i, \tau_i, y_i)\}_{i=1}^n $, noise intervals $I_{\tau_i} \subseteq \mc Y$ and Lipschitz constants $\underline L$, we write $\mc P I_p$ for the subset of $\mc Y$ containing the values $v$ which can be assumed at $p$ by some component-wise Lipschitz function with Lipschitz constants $\underline L$ and assuming value in $y_i + I_{\tau_i}$ at $p_i$, for every $i=1, \dots, n$.  \newline
+By the above proposition, it holds
+\begin{equation}\label{eq:LR-PI-general}
+    \mc PI_p = \left \{ v \in \mc Y \mid Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \forall i = 1, \dots, n \right \},
+\end{equation}
+and we call $\mc P I_p$ the predictive interval in $p$.
+To simplify the notation, the dipendence from the training data $D$, the noise model and the constants $\underline L$ is omitted.
 \begin{rmk}
     $\mc PI_p$ inherits regularity properties from the error intervals $I_\tau$: if $I_\tau$ are convex sets, then $\mc PI_p$ is a convex set as well, and if $I_\tau$ are multi-dimensional intervals, then $\mc PI_p$ is a multi-dimensional interval as well, see Proposition~\ref{prp:LR-PI}. 
     This motivates the name predictive interval. 
@@ -222,6 +247,7 @@ The Lipschitz constants $\underline L$ play a role similar to the one of kernel 
 A number of techniques have been proposed to estimate the Lipschitz constants, see~\cite{Calliess2017} for an example, but being from a Machine Learning setting they rely on an high number of training points, which is not realistic in a high-cost forward model setting.
 
 For the independent noise components setting, the minimal value of the Lipschitz constants $L^{(j)}$ compatible with training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ is given by the following proposition.
+\todo[inline]{separa in proposizione che parla di $y$ e corollario con LR}
 \begin{prp} \label{prp:LR-const}
     Let $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and $y$ be a component-wise Lipschitz function with global Lipschitz constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ such that 
     \[
