@@ -232,7 +232,7 @@ which can be used when computing the predictive mean and variance of the GPR mod
 For a LR surrogate model $y_{D,\text{LR}}$, let $\Sigma^2_{y_{D,\text{LR}}}(p)$ be the covariance matrix of the distribution $y_{D,\text{LR}}(p) = \mc U (\mc PI_p)$, where we recall that $\mc PI_p$ is the predictive interval given by Equation~\eqref{eq:LR-PI-general}.\newline
 Then, the considered local error indicator function is the vector 1-norm of the square root $\Sigma_{y_{D,\text{LR}}}(p)$ of $\Sigma^2_{y_{D,\text{LR}}}(p)$,
 \begin{equation} \label{eq:loc-err-LR-general}
-    e_{D, \text{LR}}(p) = \left\| \text{vec}(\Sigma_{y_{D,\text{LR}}}(p)) \right\|_1.
+    e_{D, \text{LR}}(p) = \text{trace}(\Sigma_{y_{D,\text{LR}}}(p)).
 \end{equation}
 In the case of independent discretization noise components described by Proposition~\ref{prp:LR-const}, as the predictive interval given by Equation~\eqref{eq:LR-PI} is
 \begin{equation*}
@@ -265,7 +265,7 @@ For the independent noise case, we can explicitly compute the expected value in~
     Let $p, p' \in \Omega$ and $\tau_p \in \R^+$, let $D = \{ (p_i, \tau_i, y_i) \}_{i=1}^n$ be a training set, and let the hypothesis of Proposition~\ref{prp:LR-PI} hold. \newline
     Let $L^{(1)}, \dots L^{(\text{dim} \mc Y)}$ be the Lipschitz constants used in the LR surrogate.
     Then, the expected error reduction in $p'$ is given by \begin{equation}\label{eq:alpha-LR}
-        \alpha_{D, \text{LR}}(p, p') =  \frac{1}{4 \sqrt{3} \tau_p } \sum_{j=1}^{\text{dim}\mc Y} \frac{UI(p,p')^{(j)} - ELI(p,p')^{(j)}}{UB^{(j)}(p) - LB^{(j)}(p)} ,
+        \alpha_{D, \text{LR}}(p, p') =  \frac{1}{4 \sqrt{3} \tau_p } \sum_{j=1}^{\text{dim}\mc Y} \frac{EUI(p,p')^{(j)} - ELI(p,p')^{(j)}}{UB^{(j)}(p) - LB^{(j)}(p)} ,
     \end{equation}
     where $m_{\mc Y}$ is the Lebesgue measure over $\mc Y$ and the expected upper improvement $EUI$ and expected lower improvement $ELI$ in the $j$-th component are given by
     \begin{equation*}
@@ -410,7 +410,7 @@ where the expected values are to be intended as in Equation~\eqref{eq:tol-exp-er
 In the LR training strategy, for any design $\mc D_j = \{ (p_i, \tau_i) \}_{i=1}^{n_j}$ we adopt $\hat{E} (p, \tau_1, \dots, \tau_{n_j})$ as an estimate of $e_{D(\mc D_j), \text{LR}}(p)$ in the tolerance problem~\eqref{prob:tolerance-doe}.
 Then, the discrete tolerance problem for LR becomes
 \begin{equation}\label{prob:discrete-tol-LR}       
-    \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} E(p', \tau_1, \dots, \tau_{n_j})  \quad \text{s.t.} 
+    \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} \hat E(p', \tau_1, \dots, \tau_{n_j})  \quad \text{s.t.} 
     \quad W(\mc D_{j} \mid D(\mc D_{j-1}) ) \le \Delta W_j, 
 \end{equation} 
 which is used to optimize the evaluation tolerances in~\ref{algo:AL} for the LR surrogate model. \newline

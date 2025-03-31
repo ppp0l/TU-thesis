@@ -172,21 +172,30 @@ In the context of this work, \textit{(LR-data)} entails that the discretization 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
 Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \medbreak
 
+\pv{it may be not extremely clear why the below object is named a cone, and the whole proposition with proof may seem not super intuitive. if that's the case, I can add a figure depicting a 1d case which would make it much clearer.}
 For any $p,p'$ in $\Theta$, $v\in \mc Y$, $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)} ) \in \R^{\text{dim} \mc Y}$ let us write 
 \[
         Cone_{p,v,\underline L}(p') = \bigotimes_{j=1}^{\text{dim} \mc Y} \left[ v^{(j)} - L^{(j)} \|p-p'\|_\Theta, v^{(j)} + L^{(j)} \|p-p'\|_\Theta \right]
 \]
 for the projection in $p'$ of the cone in $\Omega \times \mc Y$ of vertex $(p,v)$ and directrix of slope $\underline L$.
 The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
-\todo[inline]{riformula}
-\begin{prp}
-    Let $v \in \mc Y$, there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with global Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = v$ if and only if 
-        \[
-        Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \text{ for all } \ i = 1, \dots, n
-        \]
+
+\begin{prp}\label{prp:lips}
+    Let $v \in \mc Y$, if there exists a component-wise Lipschitz function $f: \Theta \rightarrow \mc Y$ with global Lipschitz constants $\underline L = (L^{(1)},\dots L^{(\text{dim}\mc Y)} )$ such that $f(p_i) \in y_i + I_{\tau_i}$ for every $i = 1, \dots, n$ and $f(p) = v$, then it holds that
+        \begin{equation} \label{eq:lips-cond1}
+            Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset \ \text{ for all } \ i = 1, \dots, n .         
+        \end{equation}
+    The converse holds if for each $i = 1, \dots, n$ there exist 
+    \begin{equation} \label{eq:lips-cond1.2}
+        \tilde y_i \in Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big )
+    \end{equation}
+    such that
+    \begin{equation} \label{eq:lips-cond2}
+        \tilde y_i \in  Cone_{p_k,\tilde y_k,\underline L}(p_i) \ \text{ for all } \ k = 1, \dots, n.
+    \end{equation}
 \end{prp}
 \begin{proof}
-    $(\Rightarrow)$ Let $v\in \mc Y$ and let $f$ be as in the statement.
+    Let $v\in \mc Y$ and let $f$ be as in the statement.
     For any $i\in \{1, \dots, n\}$ and $j \in \{1, \dots, \text{dim}\mc Y\}$, by Lipschitz continuity it holds 
     \[
     | v^{(j)} - f(p_i)^{(j)} | = | f(p)^{(j)} - f(p_i)^{(j)} | \leq L^{(j)} \|p-p_i\|_\Theta, 
@@ -198,8 +207,40 @@ The following proposition allows us to define a predictive interval of possible 
     Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset.
     \] 
     The arbitrariety of $i$ implies the statement. \newline
-    $(\Leftarrow)$ For each et  
+    For the converse direction, let $\tilde y_1, \dots, \tilde y_n$ be as in the second part of the statement.
+    We write $\tilde y_{n+1} = v$ and $p_{n+1} = p$ and then define
+    \begin{equation}\label{eq:lips-interp}
+        \begin{gathered}
+            f:\Theta \rightarrow \mc Y \\
+            p' \mapsto \frac{1}{2} \left[\min_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} + L^{(j)} \| p' - p_k \|_\Theta \right\}+ \max_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} - L^{(j)} \| p' - p_k \|_\Theta \right\} \right]_{j=1}^{\text{dim} \mc Y}.
+        \end{gathered}
+    \end{equation}
+    Such $f$ satisfies the Lipschitz condition with global Lipschitz constants $\underline L$ as it scales at most linearly with the distance $\| \cdot \|$; moreover, $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$.
+    In fact, let $i \in \{ 1, \dots, n+1\}$: if $i<n+1$, by Condition~\eqref{eq:lips-cond1.2} we can expand Condition~\eqref{eq:lips-cond2} to $k=n+1$ obtaining
+    \begin{equation}\label{eq:cone-cond}
+        \tilde y_i \in Cone_{p_k, \tilde y_k,\underline L}(p_i) \ \text{ for all } k = 1, \dots, n+1;
+    \end{equation}
+    if $i= n+1$, we observe that or arbitrary $\hat p,p' \in \Theta$, $\hat y,y'\in \Theta$ \[
+        y' \in Cone_{\hat p, \hat y, \underline L}(p') \ \text{ if and only if } \ \hat y \in Cone_{p', y', \underline L}(\hat p),
+    \]
+    so by Condition~\eqref{eq:lips-cond1.2} Expression~\eqref{eq:cone-cond} holds for every $i=1, \dots, n+1$. \newline
+    We now fix an arbitrary $j \in \{1, \dots, \text{dim} \mc Y\}$, and write~\eqref{eq:cone-cond} for component $j$ by using the definition of the cone, obtaining
+    \[
+        \tilde y_i^{(j)} \in \left[ \tilde y_k^{(j)} - L^{(j)} \|p_i - p_k \|_\Theta, \tilde y_k^{(j)} + L^{(j)} \|p_i - p_k \|_\Theta \right] \ \text{ for all } k = 1, \dots, n+1,
+    \] 
+    which implies 
+    \[
+        \min_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} + L^{(j)} \|p_i - p_k \|_\Theta \right\} =  \max_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} - L^{(j)} \|p_i - p_k \|_\Theta \right\} = \tilde y_i^{(j)}.
+    \]
+    By the arbitrariety of $j$, it holds that $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$. \newline
+    By this, we proved that there exists a Lipschitz function $f$ with global Lipschitz constants $\underline L$ such that $f(p_i) = \tilde y_i \in y_i + I_\tau$ for every $i = 1, \dots, n$ and $f(p) = v$.
 \end{proof}
+\begin{rmk}
+    The function $f$ defined by Equation~\eqref{eq:lips-interp} is the Lipschitz interpolation of the points $\{(p_i, \tilde y_i)\}_{i=1}^n$ with global Lipschitz constants $\underline L$. 
+    Lipschitz interpolation coincides with the noise-free case of LR, $\tau_i = 0$ for every $i = 1, \dots, n$ and $ I_0 = \emptyset$, and the expression of $f$ can be retrieved as a particular case of the mean prediction of the LR predictive interval, which will be defined in Definition~\ref{dfn:LR} and given with an explicit formula in Proposition~\ref{prp:LR-PI}.
+\end{rmk}
+
+The above proposition motivates the following definition.
 For fixed training data $D =\{(p_i, \tau_i, y_i)\}_{i=1}^n $, noise intervals $I_{\tau_i} \subseteq \mc Y$ and Lipschitz constants $\underline L$, we write $\mc P I_p$ for the subset of $\mc Y$ containing the values $v$ which can be assumed at $p$ by some component-wise Lipschitz function with Lipschitz constants $\underline L$ and assuming value in $y_i + I_{\tau_i}$ at $p_i$, for every $i=1, \dots, n$.  \newline
 By the above proposition, it holds
 \begin{equation}\label{eq:LR-PI-general}
@@ -207,6 +248,10 @@ By the above proposition, it holds
 \end{equation}
 and we call $\mc P I_p$ the predictive interval in $p$.
 To simplify the notation, the dipendence from the training data $D$, the noise model and the constants $\underline L$ is omitted.
+\begin{rmk}
+    In Proposition~\ref{prp:lips}, Condition~\eqref{eq:lips-cond2} only serves to ensure that $\mc PI_p$ is non-empty for every $p$ in $\Theta$, i.e. that the training data is compatible with the Lipschitz assumption and an underlying globally Lipschitz function generating the data can exist. \newline
+    The interesting condition for a point $p$ is Condition~\eqref{eq:lips-cond1}, which we use for the definition of the predictive interval $\mc PI_p$ and guarantees that $\mc PI_p$ includes all and only the feasible values in $p$ of Lipschitz functions compatible with the data.
+\end{rmk}
 \begin{rmk}
     $\mc PI_p$ inherits regularity properties from the error intervals $I_\tau$: if $I_\tau$ are convex sets, then $\mc PI_p$ is a convex set as well, and if $I_\tau$ are multi-dimensional intervals, then $\mc PI_p$ is a multi-dimensional interval as well, see Proposition~\ref{prp:LR-PI}. 
     This motivates the name predictive interval. 
@@ -238,7 +283,27 @@ For noise terms $e_{D,i}$ with independent components, i.e. $I_{\tau_i}$ being a
     \end{equation}
 \end{prp}
 \begin{proof}
-    \todo[inline]{Proof}
+    By the definition of $\mc PI_p$ given by Equation~\eqref{eq:LR-PI-general}, we have that $v\in \mc PI_p$ if and only if for every $i = 1, \dots, n$ it holds that
+    \[
+    Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset;
+    \]
+    by using the definition of the cone and the assumption on $I_{\tau_i}$, the above expression is equivalent to 
+    \[
+        \left[ v^{(j)} - L^{(j)} \|p-p_i\|_\Theta, v^{(j)} + L^{(j)} \|p-p_i\|_\Theta \right] \cap  \left[ y_i^{(j)} - \tau_i^{(j)}, y_i^{(j)} + \tau_i^{(j)} \right] \neq \emptyset
+    \]
+    holding for every $j = 1, \dots, \text{dim} \mc Y$. \newline
+    Two intervals $[a,b]$ and $[c,d]$ have empty intersection if and only if $b < c$ or $d < a$; thus, by negation the above holds if and only if
+    \[
+        v^{(j)} - L^{(j)} \|p-p_i\|_\Theta \leq y_i^{(j)} + \tau_i^{(j)} \ \text{ and } \ v^{(j)} + L^{(j)} \|p-p_i\|_\Theta \geq y_i^{(j)} - \tau_i^{(j)},
+    \] which is equivalent to 
+    \[
+        y_i^{(j)} - \tau_i^{(j)} - L^{(j)} \|p-p_i\|_\Theta \leq v^{(j)} \leq y_i^{(j)} + \tau_i^{(j)} + L^{(j)} \|p-p_i\|_\Theta.
+    \]
+    Consequently, we proved that $v \in \mc PI_p$ if and only if
+    \[
+        v^{(j)} \in \left[ y_i^{(j)} - \tau_i^{(j)} - L^{(j)} \|p-p_i\|_\Theta, y_i^{(j)} + \tau_i^{(j)} + L^{(j)} \|p-p_i\|_\Theta \right]
+    \]
+    for every $i = 1, \dots, n$ and $j = 1, \dots, \text{dim} \mc Y$, which implies the statement
 \end{proof}
 
 In the numerical experiments, we will adopt the LR predictive interval given by Proposition~\ref{prp:LR-PI}, as it is more computationally efficient and easier to interpret than the general one given by Equation~\eqref{eq:LR-PI-general}; nonetheless, the general form will be kept for the theoretical considerations. \medbreak
@@ -247,8 +312,8 @@ The Lipschitz constants $\underline L$ play a role similar to the one of kernel 
 A number of techniques have been proposed to estimate the Lipschitz constants, see~\cite{Calliess2017} for an example, but being from a Machine Learning setting they rely on an high number of training points, which is not realistic in a high-cost forward model setting.
 
 For the independent noise components setting, the minimal value of the Lipschitz constants $L^{(j)}$ compatible with training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ is given by the following proposition.
-\todo[inline]{separa in proposizione che parla di $y$ e corollario con LR}
-\begin{prp} \label{prp:LR-const}
+
+\begin{prp}
     Let $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ and $y$ be a component-wise Lipschitz function with global Lipschitz constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ such that 
     \[
         y^{(j)}(p_i) -y_i^{(j)} \in  [-\tau_i^{(j)},\tau_i^{(j)}] \ \text{ for every } \ i = 1, \dots, n.
@@ -257,26 +322,67 @@ For the independent noise components setting, the minimal value of the Lipschitz
     \begin{equation}\label{eq:LR-const}
         L^{(j)} \geq L^{(j)}_{\min}\coloneq \max_{ \stackrel{i, k \in \{1, \dots, n\}}{i\neq k} } \frac{| y_i^{(j)} - y_k^{(j)} | - \tau_i^{(j)} - \tau_k^{(j)}}{\| p_i - p_k \|_\Theta},
     \end{equation}
-    and equality holds if and only if
-    \begin{equation}\label{eq:LR-const-minimality}
-        \begin{aligned}
-            LB^{(j)}(p_i) =UB^{(j)}(p_i) = y_i^{(j)} + \tau_i^{(j)}  \ &\text{ and }   \ LB^{(j)}(p_k) =UB^{(j)}(p_k) = y_k^{(j)} - \tau_k^{(j)}, \ \text{ or } \\
-            LB^{(j)}(p_i) =UB^{(j)}(p_i) = y_i^{(j)} - \tau_i^{(j)}  \ &\text{ and }   \ LB^{(j)}(p_k) =UB^{(j)}(p_k) = y_k^{(j)} + \tau_k^{(j)}
-        \end{aligned}
-    \end{equation}
-    hold for the training points $i,k$ realizing the maximum. 
+    and if equality holds for component $j$ then for every $t \in [0,1]$ \[
+     y^{(j)}\big (t \cdot p_i + (1 - t) \cdot p_k \big )  = t \cdot \left(y_i^{(j)} - \tau_i^{(j)} \right) + (1 - t) \cdot \left(y_k^{(j)} + \tau_k^{(j)} \right)
+    \]holds for the training points $i,k$, with $y^{(j)}_i > y^{(j)}_k$, realizing the maximum. 
 \end{prp}
 \begin{proof}
-    \todo[inline]{Proof}
+    By the Lipschitz condition, for every $p, p'$ in $\Theta$ and every $j = 1, \dots, \text{dim} \mc Y$ 
+    \[
+        | y^{(j)}(p) - y^{(j)}(p') | \leq L^{(j)} \| p - p' \|_\Theta
+    \] holds, so by taking $p = p_i$ and $p' = p_k$ with $i \neq k$ and dividing by $\| p_i - p_k \|_\Theta$ we obtain
+    \[
+        L^{(j)} \geq \frac{| y^{(j)}(p_i) - y^{(j)}(p_k) |}{\| p_i - p_k \|_\Theta}.
+    \]
+    As $| y^{(j)}(p_h) - y_h^{(j)} | \leq \tau_h^{(j)}$ for every $h = 1, \dots, n$, we can write
+    \[
+        | y^{(j)}(p_i) - y^{(j)}(p_k) | = | y_i^{(j)} - y_k^{(j)} +  y^{(j)}(p_i) - y_i^{(j)} - y^{(j)}(p_k) + y_k^{(j)} |  \geq | y_i^{(j)} - y_k^{(j)} | - \tau_i^{(j)} - \tau_k^{(j)},
+    \]
+    which by the arbitrariety of $i$ and $k$ implies Equation~\eqref{eq:LR-const}. \newline
+    For the second part, let $j$ be such that $L^{(j)} = L^{(j)}_{\min}$ and let $i,k$ be the training points realizing the maximum in Equation~\eqref{eq:LR-const}, with $y^{(j)}_i > y^{(j)}_k$. \newline
+    We prove second part of the statement by using Proposition~\ref{prp:lips} and Proposition~\ref{prp:LR-PI} : let $t \in [0,1]$ and $p = t \cdot p_i + (1 - t) \cdot p_k$, then by the first cited result we have that $y(p) \in \mc PI_p$. 
+    By the second cited result, taking the $j$-th component of the predictive interval deals
+    \begin{equation}\label{eq:proof-LR-elem0}
+        y^{(j)}_h - \tau_h^{(j)} - L^{(j)} \| p - p_h \|_\Theta \leq y^{(j)}(p) \leq y^{(j)}_l + \tau_l^{(j)} + L^{(j)} \| p - p_l \|_\Theta
+    \end{equation}
+    for every $h,l \in \{1, \dots, n\}$. 
+    We note that 
+    \begin{equation}\label{eq:proof-LR-elem1}
+        L^{(j)}\| p_i - p_k \|_\Theta =  y_i^{(j)} - y_k^{(j)} - \tau_i^{(j)} - \tau_k^{(j)}
+    \end{equation}
+    holds and by $p = t \cdot p_i + (1 - t) \cdot p_k$ we have that 
+    \begin{gather}
+        \| p - p_i \|_\Theta = (1-t) \cdot \| p_i - p_k \|_\Theta \ \text{ and} \label{eq:proof-LR-elem2} \\
+        \| p - p_k \|_\Theta = t \cdot \| p_i - p_k \|_\Theta \label{eq:proof-LR-elem3}
+    \end{gather}
+     hold.\newline
+    These observations deal 
+    \begin{flalign*}
+        y_i - & \tau_i - L^{(j)} \| p - p_i \|_\Theta \stackrel{\ref{eq:proof-LR-elem2}}{=} y_i^{(j)} - \tau_i^{(j)} - L^{(j)} (1-t) \cdot \| p_i - p_k \|_\Theta \stackrel{\ref{eq:proof-LR-elem1}}{=}  && \\
+        &\stackrel{\ref{eq:proof-LR-elem1}}{=} y_i^{(j)} - \tau_i^{(j)} - (1-t) \cdot \left(y_i^{(j)} - y_k^{(j)} - \tau_i^{(j)} - \tau_k^{(j)}\right)=  t \cdot \left(y_i^{(j)} - \tau_i^{(j)} \right) + (1 - t) \cdot \left(y_k^{(j)} + \tau_k^{(j)} \right) =   &&\\ 
+        &= y_k^{(j)} + \tau_k^{(j)} + t \cdot \left(y_i^{(j)} - y_k^{(j)} - \tau_i^{(j)} - \tau_k^{(j)}\right) \stackrel{\ref{eq:proof-LR-elem1}}{=} y_k^{(j)} + \tau_k^{(j)} + t \cdot L^{(j)} \| p_i - p_k \|_\Theta \stackrel{\ref{eq:proof-LR-elem3}}{=} && \\ 
+        &\stackrel{\ref{eq:proof-LR-elem3}}{=} y_k^{(j)} + \tau_k^{(j)} + L^{(j)} \| p - p_k \|_\Theta .
+    \end{flalign*}
+    By this chain of equalities, we have that for $h=i$ and $l=k$ the two sides of the inequalities in Equation~\eqref{eq:proof-LR-elem0} are equal to the right-hand-side of the desired equality and so does $y^{(j)}(p)$, concluding the proof.
 \end{proof}
 \begin{rmk}
-Due to the fact the $L^{(j)}=L^{(j)}_{\min}$ can be realized, the bound provided by Equation~\eqref{eq:LR-const} is optimal. 
+    Unless $L^{(j)}_{\min}< 0$ for some $j$, the lower bound $L^{(j)}=L^{(j)}_{\min}$ for every $j$ can be realized, for instance by a Lipschitz interpolation function, so the bound provided by Equation~\eqref{eq:LR-const} is optimal. 
 \end{rmk}
+\begin{cor} \label{cor:LR-const}
+    Let $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ be some training data, and $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ be Lipschitz constants. \newline
+    In order for the training data to be feasible, i.e. it can be generated by inexact evaluations of a Lipschitz function with global Lipschitz constants $L^{(1)},\dots, L^{(\text{dim}\mc Y)}$ and the predictive interval $\mc IP_p$ is non-empty for every $p\in \Theta$, it is necessary that Equation~\eqref{eq:LR-const} holds for all $j = 1, \dots, \text{dim} \mc Y$.\\
+    If $L^{(j)} = L^{(j)}_{\min}$ holds for some $j$, then
+    \begin{flalign}\label{eq:LR-const-minimality}
+        LB^{(j)}\big (t \cdot p_i + (1 - t) \cdot p_k \big ) &=UB^{(j)}\big (t \cdot p_i + (1 - t) \cdot p_k \big ) = && \notag \\
+        & = t \cdot \left(y_i^{(j)} - \tau_i^{(j)} \right) + (1 - t) \cdot \left(y_k^{(j)} + \tau_k^{(j)} \right) \ \text{ for every } \ t \in [0,1] &&
+    \end{flalign}
+    holds for the training points $i,k$, with $y^{(j)}_i > y^{(j)}_k$, realizing the maximum.
+\end{cor}
 \begin{rmk}
-By the minimality condition~\eqref{eq:LR-const-minimality}, if at component $j$ the lower bound is obtained with training points $p_i, \ p_k$, then the $j$-th components of the predictive intervals $\mc PI_{p_i},\ \mc PI_{p_k}$ degenerate into a single point; it can be proved that this happens in all the points $p = t p_i + (1-t) p_k$ for $t \in [0,1]$. 
+By the minimality condition~\eqref{eq:LR-const-minimality}, if at component $j$ the lower bound is obtained with training points $p_i, \ p_k$, then the $j$-th components of the predictive interval $\mc PI_{p}$ degenerates into a single point in all the points $p = t \cdot p_i + (1-t) \cdot p_k$ for $t \in [0,1]$. 
 \end{rmk}
 
-Proposition~\ref{prp:LR-const} suggests an approach to estimate the Lipschitz constants: for training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ the Lipschitz constants estimate is given by 
+Corollary~\ref{cor:LR-const} suggests an approach to estimate the Lipschitz constants: for training data $D=\{ (p_i, \tau_i, y_i) \}_{i=1}^n$ the Lipschitz constants estimate is given by 
 \begin{equation}\label{eq:lips-const}
     \hat{\underline{L}}_D = \lambda ( L^{(1)}_{\min}, \dots, L^{(\text{dim}\mc Y)}_{\min})
 \end{equation} for some fixed $\lambda > 1$. 
