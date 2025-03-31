@@ -234,7 +234,7 @@ Then, the considered local error indicator function is the vector 1-norm of the 
 \begin{equation} \label{eq:loc-err-LR-general}
     e_{D, \text{LR}}(p) = \text{trace}(\Sigma_{y_{D,\text{LR}}}(p)).
 \end{equation}
-In the case of independent discretization noise components described by Proposition~\ref{prp:LR-const}, as the predictive interval given by Equation~\eqref{eq:LR-PI} is
+In the case of independent discretization noise components described by Proposition~\ref{cor:LR-const}, as the predictive interval given by Equation~\eqref{eq:LR-PI} is
 \begin{equation*}
     \mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right],
 \end{equation*}
@@ -312,51 +312,50 @@ For the independent noise case, we can explicitly compute the expected value in~
         }
     \end{equation*}
     and 
-    \todo[inline]{write actual ELI}
     \begin{equation*}
         \makebox[\textwidth][c]{$
         ELI(p,p')^{(j)}  = 
         \begin{cases}
-            2\tau_p(c_1^j (UB^{(j)}(p) -LB^{(j)}(p)) + \dfrac{1}{2} (LB^{(j)}(p)^2 - UB^{(j)}(p)^2)) &
-            \text{if } \ UB^{(j)}(p) \leq c_1^j - \tau_p  
+            2\tau_p(c_2^j (UB^{(j)}(p) -LB^{(j)}(p)) - \dfrac{1}{2} (LB^{(j)}(p)^2 - UB^{(j)}(p)^2)) &
+            \text{if } \ LB^{(j)}(p) \geq - c_2^j + \tau_p  
             \\[3ex]
 
-            \dfrac{1}{6}((c_1^j - LB^{(j)}(p) + \tau_p)^3 - (c_1^j - LB^{(j)}(p) - \tau_p)^3)&
+            \dfrac{1}{6}((c_2^j + UB^{(j)}(p) - \tau_p)^3 - (c_2^j + LB^{(j)}(p) + \tau_p)^3)&
             \begin{aligned}
-                \text{if } & \ c_1^j + \tau_p < UB^{(j)}(p) \\
-                &\text{ and } LB^{(j)}(p) \leq c_1^j - \tau_p
+                \text{if } & \ - c_2^j - \tau_p > LB^{(j)}(p) \\
+                &\text{ and } UB^{(j)}(p) \geq - c_2^j + \tau_p
             \end{aligned}
             \\[4ex]
 
-            \dfrac{1}{6}(c_1^j+\tau_p-LB^{(j)}(p))^3 &
+            -\dfrac{1}{6}(c_2^j+\tau_p+UB^{(j)}(p))^3 &
             \begin{aligned}
-                \text{if } & \ c_1^j + \tau_p < UB^{(j)}(p) \\
-                &\text{ and } c_1^j - \tau_p < LB^{(j)}(p) \leq c_1^j + \tau_p
+                \text{if } & \ - c_2^j - \tau_p > LB^{(j)}(p) \\
+                &\text{ and } - c_2^j + \tau_p > UB^{(j)}(p) \geq - c_2^j - \tau_p
             \end{aligned}
             \\[4ex]
 
-            \dfrac{1}{6}((c_1^j - LB^{(j)}(p) + \tau_p)^3 - (c_1^j - UB^{(j)}(p) + \tau_p)^3) &
+            \dfrac{1}{6}((c_2^j + LB^{(j)}(p) + \tau_p)^3 - (c_2^j + UB^{(j)}(p) + \tau_p)^3) &
             \begin{aligned}
-                \text{if } & \ c_1^j - \tau_p < UB^{(j)}(p) \leq c_1^j + \tau_p \\
-                &\text{ and } c_1^j - \tau_p < LB^{(j)}(p) \leq c_1^j + \tau_p
+                \text{if } & \ - c_2^j + \tau_p > LB^{(j)}(p) \geq - c_2^j - \tau_p \\
+                &\text{ and } - c_2^j + \tau_p > UB^{(j)}(p) \geq - c_2^j - \tau_p
             \end{aligned}
             \\[4ex]
 
             \begin{aligned}
-                2\tau_p(c_1^j (c_1^j - \tau_p -LB^{(j)}(p)) &+ \dfrac{1}{2} (LB^{(j)}(p)^2 - (c_1^j-\tau_p)^2)) -\\
-                &- \dfrac{1}{6} ( (c_1^j -UB^{(j)}(p) + \tau_p)^3 -8\tau_p^3)
+                2\tau_p(c_2^j (-c_2^j + \tau_p -UB^{(j)}(p)) &- \dfrac{1}{2} (UB^{(j)}(p)^2 - (c_2^j-\tau_p)^2)) +\\
+                &+ \dfrac{1}{6} ( (c_2^j +LB^{(j)}(p) + \tau_p)^3 -8\tau_p^3)
             \end{aligned}&
             \begin{aligned}
-                \text{if } & \ UB^{(j)}(p) \leq c_1^j + \tau_p \\
-                &\text{ and } LB^{(j)}(p) \leq c_1^j - \tau_p
+                \text{if } & \ LB^{(j)}(p) \geq - c_2^j - \tau_p \\
+                &\text{ and } UB^{(j)}(p) \geq - c_2^j + \tau_p
             \end{aligned}
             \\[5ex]
             0 & 
-            \text{if } \  c_1^j + \tau_p  < LB^{(j)}(p)
+            \text{if } \  -c_2^j - \tau_p  > UB^{(j)}(p)
         \end{cases}$
         }
     \end{equation*}
-    for $c_1^j = UB^{(j)}(p') - L^{(j)} \| p - p' \|_\Omega -\tau_p$ and $c_2^j = -LB^{(j)}(p') + L^{(j)} \| p - p' \|_\Omega +\tau_p$.
+    for $c_1^j = UB^{(j)}(p') - L^{(j)} \| p - p' \|_\Omega -\tau_p$ and $c_2^j = -LB^{(j)}(p') - L^{(j)} \| p - p' \|_\Omega -\tau_p$.
 \end{restatable}
 For the sake of brevity the proof of this result is given in the Appendix~\ref{app:EER}, as it involves the integration of a piecewise linear function and needs to distinguish between different cases. \medbreak
 
