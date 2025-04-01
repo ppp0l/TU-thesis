@@ -184,8 +184,8 @@ As the model evaluations are performed through Adaptive FE, for each data point 
         \tau_{i,1} > \dots > \tau_{i,r_i} = \tau_i
 \end{equation}
  corresponding to the sequence of FE refinements.
-We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2019}. \newline
-\todo[inline]{change/update reference}
+We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2004b}. 
+Such an estimator is adopted do to its efficiency in contexts where the amount of data and the dimensionality of the covariance matrix are of comparable sizes. \newline
 Given some centered i.i.d. data $x_1,\dots, x_s$ in $\R^d$, a linear shrinkage estimator for the covariance matrix $\Sigma^2 \in \R^{d\times d}$ of the generating distribution is given by the convex combination of the empirical covariance matrix \[
 S = \frac{1}{s} \sum_{i=1}^h x_i \cdot x_i^T
 \] 
@@ -249,48 +249,48 @@ Note that neither in the general case~\eqref{eq:loc-err-LR-general} nor in the i
 
 As an acquisition function for new candidates, we consider the expected error reduction in over the predictive interval $\mc PI_{p}$ for a new point $p$. \newline
 Let us be at step $j$ of the algorithm, with a design $\mc D_{j-1} = \{ (p_i, \tau_i) \}_{i=1}^{n_{j-1}}$.
-For a point $p \in \Omega$, a tolerance $\tau_p\in \R^+$ and a value $y\in \mc Y$, we write $D(p,\tau_p, y) = D(\mc D_{j-1} ) \cup \{(p, \tau_p, y)\}$ for the training data obtained by adding the point $p$ at tolerance $\tau_p$ and value $y$ to the available training data $D(\mc D_{j-1})$. \newline
-The expected error reduction in $p'$ when adding $p$ at tolerance $\tau_p$ to the design $\mc D_{j-1}$ is then given by the expected value over the model response $Y_p$ and the discretization noise $\nu$ of the difference between the current error indicator and the error indicator resulting from training set $D(p,\tau_p, y)$:
+For a point $p \in \Omega$, a tolerance $\tau_p\in \R^+$ and a value $y\in \mc Y$, we write $D_j(p,\tau_p, y) = D(\mc D_{j-1} ) \cup \{(p, \tau_p, y)\}$ for the training data obtained by adding the point $p$ at tolerance $\tau_p$ and value $y$ to the available training data $D(\mc D_{j-1})$. \newline
+The expected error reduction in $p'$ when adding $p$ at tolerance $\tau_p$ to the design $\mc D_{j-1}$ is then given by the expected value over the model response $Y_p$ and the discretization noise $\nu$ of the difference between the current error indicator and the error indicator resulting from training set $D_j(p,\tau_p, y)$:
 \begin{equation}\label{eq:alpha-LR-general}
     \alpha_{\mc D_{j-1}, \text{LR}}(p, p') = 
-    \bb E _{ (Y_p, \nu) \sim \mc U( \mc PI_p \times  [-\tau_p, \tau_p] ^{ \text{dim} \mc Y } )} 
+    \bb E _{ (Y_p, \nu) \sim \mc U\left( \mc PI_p \times  [-\tau_p, \tau_p] ^{ \text{dim} \mc Y } \right)} 
     \left[ 
-        e_{D(\mc D_{j-1}), \text{LR}}(p')- e_{D(p,\tau_p, Y_p + \nu ), \text{LR}}(p')
+        e_{D(\mc D_{j-1}), \text{LR}}(p')- e_{D_j(p,\tau_p, Y_p + \nu ), \text{LR}}(p')
     \right].
 \end{equation}
 Note that $\alpha_{\mc D_{j-1}, \text{LR}}$ is always non negative, as the predictive interval $\mc PI_{p'}$ can only shrink when adding a new point to the design and $e_{D, \text{LR}}(p)$ decreases as the size of $\mc PI_{p'}$ decreases. \medbreak
 
 For the independent noise case, we can explicitly compute the expected value in~\eqref{eq:alpha-LR}, obtaining a closed-form expression for $\alpha_{\mc D_{j-1}, \text{LR}}$ given by the following proposition.
 \begin{restatable}[Expected error reduction]{prp}{EER} \label{prp:EER}
-    Let $p, p' \in \Omega$ and $\tau_p \in \R^+$, let $D = \{ (p_i, \tau_i, y_i) \}_{i=1}^n$ be a training set, and let the hypothesis of Proposition~\ref{prp:LR-PI} hold. \newline
+    Let $p, p' \in \Omega$ and $\tau_p \in \R^+$, let $D (\mc D)= \{ (p_i, \tau_i, y_i) \}_{i=1}^n$ be a training set resulting from the design $\mc D$, and let the hypothesis of Proposition~\ref{prp:LR-PI} hold. \newline
     Let $L^{(1)}, \dots L^{(\text{dim} \mc Y)}$ be the Lipschitz constants used in the LR surrogate.
     Then, the expected error reduction in $p'$ is given by \begin{equation}\label{eq:alpha-LR}
-        \alpha_{D, \text{LR}}(p, p') =  \frac{1}{4 \sqrt{3} \tau_p } \sum_{j=1}^{\text{dim}\mc Y} \frac{EUI(p,p')^{(j)} - ELI(p,p')^{(j)}}{UB^{(j)}(p) - LB^{(j)}(p)} ,
+        \alpha_{\mc D, \text{LR}}(p, p') =  \frac{1}{4 \sqrt{3} \tau_p } \sum_{j=1}^{\text{dim}\mc Y} \frac{EUI^{(j)}(p,p') - ELI^{(j)}(p,p')}{UB^{(j)}(p) - LB^{(j)}(p)} ,
     \end{equation}
     where $m_{\mc Y}$ is the Lebesgue measure over $\mc Y$ and the expected upper improvement $EUI$ and expected lower improvement $ELI$ in the $j$-th component are given by
     \begin{equation*}
         \makebox[\textwidth][c]{$
-        EUI(p,p')^{(j)}  = 
+        EUI^{(j)}(p,p')  = 
         \begin{cases}
-            2\tau_p(c_1^j (UB^{(j)}(p) -LB^{(j)}(p)) + \dfrac{1}{2} (LB^{(j)}(p)^2 - UB^{(j)}(p)^2)) &
+            \tau_p\left(UB^{(j)}(p) -LB^{(j)}(p)\right)\left( 2 c_1^j  - UB^{(j)}(p) - LB^{(j)}(p)\right) &
             \text{if } \ UB^{(j)}(p) \leq c_1^j - \tau_p  
             \\[3ex]
 
-            \dfrac{1}{6}((c_1^j - LB^{(j)}(p) + \tau_p)^3 - (c_1^j - LB^{(j)}(p) - \tau_p)^3)&
+            \dfrac{1}{6}\left(\left(c_1^j - LB^{(j)}(p) + \tau_p\right)^3 - \left(c_1^j - LB^{(j)}(p) - \tau_p\right)^3\right)&
             \begin{aligned}
                 \text{if } & \ c_1^j + \tau_p < UB^{(j)}(p) \\
                 &\text{ and } LB^{(j)}(p) \leq c_1^j - \tau_p
             \end{aligned}
             \\[4ex]
 
-            \dfrac{1}{6}(c_1^j+\tau_p-LB^{(j)}(p))^3 &
+            \dfrac{1}{6}\left(c_1^j+\tau_p-LB^{(j)}(p)\right)^3 &
             \begin{aligned}
                 \text{if } & \ c_1^j + \tau_p < UB^{(j)}(p) \\
                 &\text{ and } c_1^j - \tau_p < LB^{(j)}(p) \leq c_1^j + \tau_p
             \end{aligned}
             \\[4ex]
 
-            \dfrac{1}{6}((c_1^j - LB^{(j)}(p) + \tau_p)^3 - (c_1^j - UB^{(j)}(p) + \tau_p)^3) &
+            \dfrac{1}{6}\left(\left(c_1^j - LB^{(j)}(p) + \tau_p\right)^3 - \left(c_1^j - UB^{(j)}(p) + \tau_p\right)^3\right) &
             \begin{aligned}
                 \text{if } & \ c_1^j - \tau_p < UB^{(j)}(p) \leq c_1^j + \tau_p \\
                 &\text{ and } c_1^j - \tau_p < LB^{(j)}(p) \leq c_1^j + \tau_p
@@ -298,11 +298,11 @@ For the independent noise case, we can explicitly compute the expected value in~
             \\[4ex]
 
             \begin{aligned}
-                2\tau_p(c_1^j (c_1^j - \tau_p -LB^{(j)}(p)) &+ \dfrac{1}{2} (LB^{(j)}(p)^2 - (c_1^j-\tau_p)^2)) -\\
-                &- \dfrac{1}{6} ( (c_1^j -UB^{(j)}(p) + \tau_p)^3 -8\tau_p^3)
+                2\tau_p\bigg(c_1^j \left(c_1^j - \tau_p -LB^{(j)}(p)\right) &+ \dfrac{1}{2} \left(LB^{(j)}(p)^2 - \left(c_1^j-\tau_p\right)^2\right)\bigg) -\\
+                &- \dfrac{1}{6} \left( \left(c_1^j -UB^{(j)}(p) + \tau_p\right)^3 -8\tau_p^3\right)
             \end{aligned}&
             \begin{aligned}
-                \text{if } & \ UB^{(j)}(p) \leq c_1^j + \tau_p \\
+                \text{if } & \ c_1^j - \tau_p < UB^{(j)}(p) \leq c_1^j + \tau_p \\
                 &\text{ and } LB^{(j)}(p) \leq c_1^j - \tau_p
             \end{aligned}
             \\[5ex]
@@ -314,40 +314,40 @@ For the independent noise case, we can explicitly compute the expected value in~
     and 
     \begin{equation*}
         \makebox[\textwidth][c]{$
-        ELI(p,p')^{(j)}  = 
+        ELI^{(j)}(p,p')  = 
         \begin{cases}
-            2\tau_p(c_2^j (UB^{(j)}(p) -LB^{(j)}(p)) - \dfrac{1}{2} (LB^{(j)}(p)^2 - UB^{(j)}(p)^2)) &
-            \text{if } \ LB^{(j)}(p) \geq - c_2^j + \tau_p  
+            \tau_p \left(UB^{(j)}(p) -LB^{(j)}(p)\right) \left(- 2 c_2^j - UB^{(j)}(p) - LB^{(j)}(p)\right) &
+            \text{if } \ LB^{(j)}(p) \geq \tau_p - c_2^j  
             \\[3ex]
 
-            \dfrac{1}{6}((c_2^j + UB^{(j)}(p) - \tau_p)^3 - (c_2^j + LB^{(j)}(p) + \tau_p)^3)&
+            \dfrac{1}{6}\left(\left(c_2^j + UB^{(j)}(p) - \tau_p\right)^3 - \left(c_2^j + LB^{(j)}(p) + \tau_p\right)^3\right)&
             \begin{aligned}
                 \text{if } & \ - c_2^j - \tau_p > LB^{(j)}(p) \\
-                &\text{ and } UB^{(j)}(p) \geq - c_2^j + \tau_p
+                &\text{ and } UB^{(j)}(p) \geq \tau_p - c_2^j
             \end{aligned}
             \\[4ex]
 
-            -\dfrac{1}{6}(c_2^j+\tau_p+UB^{(j)}(p))^3 &
+            -\dfrac{1}{6}\left(c_2^j+\tau_p+UB^{(j)}(p)\right)^3 &
             \begin{aligned}
                 \text{if } & \ - c_2^j - \tau_p > LB^{(j)}(p) \\
-                &\text{ and } - c_2^j + \tau_p > UB^{(j)}(p) \geq - c_2^j - \tau_p
+                &\text{ and } \tau_p - c_2^j > UB^{(j)}(p) \geq - c_2^j - \tau_p
             \end{aligned}
             \\[4ex]
 
-            \dfrac{1}{6}((c_2^j + LB^{(j)}(p) + \tau_p)^3 - (c_2^j + UB^{(j)}(p) + \tau_p)^3) &
+            \dfrac{1}{6}\left(\left(c_2^j + LB^{(j)}(p) + \tau_p\right)^3 - \left(c_2^j + UB^{(j)}(p) + \tau_p\right)^3\right) &
             \begin{aligned}
-                \text{if } & \ - c_2^j + \tau_p > LB^{(j)}(p) \geq - c_2^j - \tau_p \\
-                &\text{ and } - c_2^j + \tau_p > UB^{(j)}(p) \geq - c_2^j - \tau_p
+                \text{if } & \ \tau_p - c_2^j > LB^{(j)}(p) \geq - c_2^j - \tau_p \\
+                &\text{ and } \tau_p - c_2^j > UB^{(j)}(p) \geq - c_2^j - \tau_p
             \end{aligned}
             \\[4ex]
 
             \begin{aligned}
-                2\tau_p(c_2^j (-c_2^j + \tau_p -UB^{(j)}(p)) &- \dfrac{1}{2} (UB^{(j)}(p)^2 - (c_2^j-\tau_p)^2)) +\\
-                &+ \dfrac{1}{6} ( (c_2^j +LB^{(j)}(p) + \tau_p)^3 -8\tau_p^3)
+                2\tau_p\bigg(c_2^j \left(-c_2^j + \tau_p -UB^{(j)}(p)\right) &- \dfrac{1}{2} \left(UB^{(j)}(p)^2 - \left(c_2^j-\tau_p\right)^2\right)\bigg) +\\
+                &+ \dfrac{1}{6} \left( \left(c_2^j +LB^{(j)}(p) + \tau_p\right)^3 -8\tau_p^3\right)
             \end{aligned}&
             \begin{aligned}
-                \text{if } & \ LB^{(j)}(p) \geq - c_2^j - \tau_p \\
-                &\text{ and } UB^{(j)}(p) \geq - c_2^j + \tau_p
+                \text{if } & \ \tau_p -c_2^j > LB^{(j)}(p) \geq - c_2^j - \tau_p \\
+                &\text{ and } UB^{(j)}(p) \geq \tau_p - c_2^j
             \end{aligned}
             \\[5ex]
             0 & 
@@ -389,7 +389,7 @@ We once again consider the independent noise component setting to derive a compu
     \qquad = \frac{1}{2\sqrt{3}} \sum_{j=1}^{\text{dim}\mc Y} 
     \left( \min_{i=1,\dots,n}\left\{ Y_{p_i} + \nu_i + \tau_{i}^{(j)} + L^{(j)} \| p - p_i \|_\Theta \right\}- \max_{i=1,\dots,n} \left\{ Y_{p_i} + \nu_i - \tau_i^{(j)} - L^{(j)} \| p - p_i \|_\Theta \right\} \right),
 \end{gather*} 
-where the first equality is given by Equation~\eqref{eq:loc-err-LR} and in the second we substituted to $LB^{(j)}(p)$ and $UB^{(j)}(p)$ their formulas as given by Equations~\eqref{LR-bounds}.\newline
+where the first equality is given by Equation~\eqref{eq:loc-err-LR} and in the second we substituted to $LB^{(j)}(p)$ and $UB^{(j)}(p)$ their formulas as given by Equations~\eqref{eq:LR-bounds}.\newline
 Due to the monotonicity of the expected value, the expected value of the minimum of $n$ random variables is less or equal to the minimum of the expected values, and similarly for the maximum. 
 By this, it holds that 
 \begin{align*}
