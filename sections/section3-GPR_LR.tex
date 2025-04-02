@@ -45,9 +45,9 @@ Gaussian process regression relies on two assumptions:
     \item[(GPR-model)] the forward model $y$ is a realization of a GP $Y \sim GP(m, k)$;
     \item[(GPR-data)] the observations are contaminated by Gaussian noise independent from $Y$, i.e. 
     \[ 
-        y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
+        y_i = y(p_i) + \nu_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
     \] 
-    holds, where $e_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $e_{D,i}$ is independent from $Y$.
+    holds, where $\nu_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $\nu_{D,i}$ is independent from $Y$.
 \end{itemize}  
 The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model itself. 
 The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section.
@@ -67,7 +67,7 @@ The analytical expression for the posterior GP is given by the following theorem
 Although this result is foundational for GPR, its complete proof is rarely explicitly stated.~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which we will present explicitly in Appendix~\ref{app:GPR}.
 
 \begin{restatable}[GP posterior]{theorem}{GPpost} \label{thm:GP-posterior}
-    Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $e_{D,1},\dots,e_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
+    Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $\nu_{D,1},\dots,\nu_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
     Then the posterior GP $Y \mid D$ is a GP over $\mc Y$ with mean function $m_D$ and kernel $k_D$, where
     \begin{gather}
         m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \label{eq:predictive-mean} \\
@@ -87,7 +87,7 @@ As we are not interested in the full GP posterior but only in the point-wise pre
 \end{cor}
 
 The core of GPR is now outlined, but for practical use a few more remarks are necessary. \newline
-First, note that the covariance between the noise terms $e_{D,i}, \ e_{D,k}$ is assumed to be known in Theorem~\ref{thm:GP-posterior}, but in practice information about correlations is scarce or absent. Thus, usually a block diagonal structure is assumed 
+First, note that the covariance between the noise terms $\nu_{D,i}, \ \nu_{D,k}$ is assumed to be known in Theorem~\ref{thm:GP-posterior}, but in practice information about correlations is scarce or absent. Thus, usually a block diagonal structure is assumed 
 \begin{equation} \label{eq:GPR-noise-corr}
     \Sigma_D(\mc T)^2 = \text{diag}(\Sigma_D(\tau_1)^2, \ldots, \Sigma_D(\tau_n)^2),
 \end{equation}
@@ -117,16 +117,16 @@ Note that more complex RBF kernels can be obtained by altering the norm $\| \cdo
 The RBF kernel leads to a $\mc C^\infty$ mean prediction and is usually adopted as a default choice whenever the underlying function can be assumed to be rather smooth. \newline
 The Matérn kernel allows for less-regular predictions. Its general expression is given by
 \[
-k_{(\nu, \lambda)}(p, p') = \frac{2^{1-\nu}}{\Gamma(\nu)} \left( \frac{\sqrt{2\nu} \|p - p'\|}{\lambda} \right)^\nu K_\nu \left( \frac{\sqrt{2\nu} \|p - p'\|}{\lambda} \right),
+k_{(\gamma, \lambda)}(p, p') = \frac{2^{1-\gamma}}{\Gamma(\gamma)} \left( \frac{\sqrt{2\gamma} \|p - p'\|}{\lambda} \right)^\gamma K_\gamma \left( \frac{\sqrt{2\gamma} \|p - p'\|}{\lambda} \right),
 \]
-where $\Gamma$ is the Gamma function $K_\nu$ is a modified Bessel function~\cite[sec. 9.6]{AbramowitzStegun1964};
-for $\nu = n + \frac{1}{2}$ with $n\in \bb N$, the expression simplifies to 
+where $\Gamma$ is the Gamma function $K_\gamma$ is a modified Bessel function~\cite[sec. 9.6]{AbramowitzStegun1964};
+for $\gamma = n + \frac{1}{2}$ with $n\in \bb N$, the expression simplifies to 
 \[
      k_{n+\frac{1}{2}, \lambda}(p, p')=\exp \left(-{\frac {{\sqrt {2n+1}}\|p - p'\|}{\lambda }}\right){\frac {n!}{(2n)!}}\sum _{i=0}^{n}{\frac {(n+i)!}{i!(n-i)!}}\left({\frac {2{\sqrt {2n+1}}\|p - p'\|}{\lambda }}\right)^{n-i}.
 \]
-The regularity of the predictive mean depends on the parameter $\nu$: the mean prediction is $\nu + \frac{1}{2}$-times weakly differentiable.
-Most commonly, $\nu$ is set to $\frac{3}{2}, \frac{5}{2}$ or $\frac{7}{2}$, as $\nu = \frac{1}{2}$ leads to a non-differentiable mean prediction, and for $\nu > \frac{7}{2}$ the high regularity favors the adoption of a RBF kernel.
-Note that for $\nu \rightarrow \infty$ the Matérn kernel converges to the RBF kernel. \medbreak
+The regularity of the predictive mean depends on the parameter $\gamma$: the mean prediction is $\gamma + \frac{1}{2}$-times weakly differentiable.
+Most commonly, $\gamma$ is set to $\frac{3}{2}, \frac{5}{2}$ or $\frac{7}{2}$, as $\gamma = \frac{1}{2}$ leads to a non-differentiable mean prediction, and for $\gamma > \frac{7}{2}$ the high regularity favors the adoption of a RBF kernel.
+Note that for $\gamma \rightarrow \infty$ the Matérn kernel converges to the RBF kernel. \medbreak
 
 The treatment of hyperparameters constitutes an estimation problem.
 For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the data given the hyperparameters $\Lambda = \lambda$ is given by
@@ -156,15 +156,15 @@ The two assumptions are the following:
     holds for every $j = 1, \dots, \text{dim}\mc Y$;
     \item[(LR-data)] the observations are contaminated by independent and centered uniform noise, i.e. 
     \[ 
-        y_i = y(p_i) + e_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D
+        y_i = y(p_i) + \nu_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D
     \] 
-    holds, where $e_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[e_{D,i}] = 0$ and $e_{D,i}$ is independent from $e_{D,k}$ for every $k \neq i$.
+    holds, where $\nu_{D,i} \sim \mc U(I_{\tau_i})$ for some convex $I_{\tau_i} \subset \mc Y$, with $\bb E[\nu_{D,i}] = 0$ and $\nu_{D,i}$ is independent from $\nu_{D,k}$ for every $k \neq i$.
 \end{itemize}  
 The first assumption requires fixing a basis for $\mc Y$ and a norm on $\Theta$; despite this, the assumption is weaker than \textit{(GPR-model)}, as it does not require any level of smoothness for $y$ but Lipschitz continuity. \newline
 Issues may arise due to the global nature of the Lipschitz constants $L^{(j)}$, as a model exhibiting different Lipschitz constants in different regions of the parameter space might require a great number of training points to be well-represented by LR. 
 Moreover when the Lipschitz constants are unknown, their estimation is sensitive to noise.
 
-The second assumption does not allow for correlated noise terms $e_{D,i}$, $e_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their independence, as in Equation~\ref{eq:GPR-noise-corr}. 
+The second assumption does not allow for correlated noise terms $\nu_{D,i}$, $\nu_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their independence, as in Equation~\ref{eq:GPR-noise-corr}. 
 In the context of this work, \textit{(LR-data)} entails that the discretization error is uniformly distributed in a region $I_\tau$, i.e. 
 \[
     H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc U(I_\tau),

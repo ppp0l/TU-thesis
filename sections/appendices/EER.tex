@@ -30,7 +30,7 @@ which we insert in the expression of $\alpha_{\mc D, \text{LR}}(p, p')$ to obtai
 BY observing that as $\mc PI_p$ is an interval all the components of $(Y_p,\nu)$ are independent, and that both $UB_D^{(j)}$ depends on the $j$-th component of the training data only, we can write 
 \begin{flalign*}
     &\bb E _{ (Y_p, \nu) \sim \mc U\left( \mc PI_p \times  [-\tau_p, \tau_p] ^{ \text{dim} \mc Y } \right)} \left[  \left( UB_{D(\mc D)}^{(j)}(p') - UB_{D(p,\tau_p, Y_p + \nu )}^{(j)}(p') \right)\right] = && \\
-    & \qquad\qquad =\bb E _{ \left(Y_p^{(j)}, \nu^{(j)}\right) \sim \mc U\left( \left[UB^{(j)}_{D(\mc D)}(p), LB^{(j)}_{D(\mc D)}(p)\right] \times  [-\tau_p, \tau_p] \right)} \left[  \left( UB_{D(\mc D)}^{(j)}(p') - UB_{D(p,\tau_p, Y_p + \nu )}^{(j)}(p') \right)\right] = &&\\
+    & \qquad\qquad =\bb E _{ \left(Y_p^{(j)}, \nu^{(j)}\right) \sim \mc U\left( \left[LB^{(j)}_{D(\mc D)}(p), UB^{(j)}_{D(\mc D)}(p)\right] \times  [-\tau_p, \tau_p] \right)} \left[  \left( UB_{D(\mc D)}^{(j)}(p') - UB_{D(p,\tau_p, Y_p + \nu )}^{(j)}(p') \right)\right] = &&\\
     & \qquad\qquad = \frac{1}{2\tau_p \left(  UB^{(j)}_{D(\mc D)}(p)- LB^{(j)}_{D(\mc D)}(p) \right) } \int_{UB^{(j)}_{D(\mc D)}(p)}^{LB^{(j)}_{D(\mc D)}(p)} \int_{-\tau_p}^{\tau_p} UB_{D(\mc D)}^{(j)}(p') - UB_{D(p,\tau_p, y + n )}^{(j)}(p') \,dn \, dy &&\\
     & \qquad\qquad \eqcolon \frac{ EUI^{(j)}(p,p')}{2\tau_p \left(  UB^{(j)}_{D(\mc D)}(p)- LB^{(j)}_{D(\mc D)}(p) \right) }  &&,
 \end{flalign*}
@@ -50,7 +50,7 @@ Note that as $UB^{(j)}_{D(\mc D)}(p) \geq LB^{(j)}_{D(\mc D)}(p)$, some more ine
 \pv{the intuition why these cases work is not explicit, a picture may be added}
 \textbf{Case 1:} $UB^{(j)}(p) \leq c_1^j - \tau_p $. \smallskip \newline
 As $UB^{(j)}(p) +\tau_p \leq c_1^j$, we have \[
-    \max \left( 0, c_1^j - y - n \right) = c_1^j - y - n \ \text{ for all } \ (y,n) \in \left[UB^{(j)}_{D(\mc D)}(p), LB^{(j)}_{D(\mc D)}(p)\right] \times [-\tau_p, \tau_p],
+    \max \left( 0, c_1^j - y - n \right) = c_1^j - y - n \ \text{ for all } \ (y,n) \in \left[LB^{(j)}_{D(\mc D)}(p), UB^{(j)}_{D(\mc D)}(p)\right] \times [-\tau_p, \tau_p],
 \] 
 thus 
 \begin{flalign*}
@@ -93,9 +93,9 @@ In this case Equation~\eqref{eq:EER-proof-2} renders it convenient to write the 
     EUI^{(j)}(p,p') &= \int_{LB^(j)_{D(\mc D)}(p)}^{UB^{(j)}_{D(\mc D)}(p)} \int_{-\tau_p}^{c_1^j - y}  c_1^j - y - n \,dn \, dy = && \\
     &= \int_{LB^{(j)}_{D(\mc D)}(p)}^{UB^{(j)}_{D(\mc D)}(p)} \left( c_1^j - y \right) \cdot \left( c_1^j - y + \tau_p \right) - \frac{1}{2} \left( \left( c_1^j - y \right)^2 - \tau_p^2 \right) \, dy = && \\
     &= \int_{LB^{(j)}_{D(\mc D)}(p)}^{UB^{(j)}_{D(\mc D)}(p)} \frac{1}{2} \left( c_1^j - y  + \tau_p\right)^2  \, dy = && \\
-    &= \frac{1}{6 } \left(\left( c_1^j - LB^{(j)}_{D(\mc D)}(p) + \tau_p  \right)^3 - \left( c_1^j - UB^{(j)}_{D(\mc D)}(p) - \tau_p  \right)^3 \right) 
+    &= \frac{1}{6 } \left(\left( c_1^j - LB^{(j)}_{D(\mc D)}(p) + \tau_p  \right)^3 - \left( c_1^j - UB^{(j)}_{D(\mc D)}(p) - \tau_p  \right)^3 \right), &&
 \end{flalign*}
-\medskip
+which implies the equality in the statement.\medskip
 %case 3 on paper
 
 \textbf{Case 5:} $ c_1^j - \tau_p < UB^{(j)}(p) \leq c_1^j + \tau_p $ and $ LB^{(j)}(p) \leq c_1^j - \tau_p$. \smallskip \newline
@@ -106,13 +106,13 @@ In this case, in order to solve the integral we have to split the domain in two:
     &= 2\tau_p \left( c_1^j \left(c_1^j - \tau_p - LB^{(j)}_{D(\mc D)}(p) \right) + \frac{1}{2} \left(LB^{(j)}_{D(\mc D)}(p)^2 - (c_1^j - \tau_p)^2 \right) \right) - && \\
     & \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad  - \frac{1}{6 } \left(\left( c_1^j - UB^{(j)}_{D(\mc D)}(p) + \tau_p  \right)^3 - 8 \tau_p^3 \right) &&
 \end{flalign*}
-\medskip
+holds, dealing the desired equality. \medskip
 %case 4 on paper
 
 \textbf{Case 6:} $c_1^j + \tau_p  < LB^{(j)}(p)$. \smallskip \newline
 As $LB^{(j)}(p) -\tau_p > c_1^j$, we have that 
 \[
-    \max \left( 0, c_1^j - y - n \right) = 0 \ \text{ for all } \ (y,n) \in \left[UB^{(j)}_{D(\mc D)}(p), LB^{(j)}_{D(\mc D)}(p)\right] \times [-\tau_p, \tau_p],
+    \max \left( 0, c_1^j - y - n \right) = 0 \ \text{ for all } \ (y,n) \in \left[LB^{(j)}_{D(\mc D)}(p), UB^{(j)}_{D(\mc D)}(p)\right] \times [-\tau_p, \tau_p],
 \]
 so the integral is zero as stated\medskip
 

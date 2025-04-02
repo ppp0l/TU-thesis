@@ -175,15 +175,15 @@ It depends on the default tolerance parameter $\tau_p$, which can be either a fi
 \[ \tau_p = \frac{1}{\text{dim}\mc Y} \sum_{i=1}^{\text{dim}\mc Y} \sqrt{ \big (k_{D(\mc D_{j-1})}(p,p) \big )_{i,i}}. \]  \medbreak
 
 In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma^2_D(\tau)$ from the evaluations of the forward model.\newline
-As the model evaluations are performed through Adaptive FE, for each data point $(p_i, \tau_i, y_i) \in D$ we will have a sequence of provisory evaluations 
+As the model evaluations are performed through Adaptive FE, for each data point $(p_i, \tau_i, y_i) \in D$ we will have a sequence of estimated residuals 
 \begin{equation}\label{eq:eval-seq}
-     y_{i,1}, \dots, y_{i,r_i} = y_i
+     n_{i,1}, \dots, n_{i,r_i}
 \end{equation} 
-    with decreasing estimated error levels 
+    corresponding to decreasing estimated error levels 
 \begin{equation} \label{eq:tol-seq}
         \tau_{i,1} > \dots > \tau_{i,r_i} = \tau_i
 \end{equation}
- corresponding to the sequence of FE refinements.
+given by the sequence of FE refinements necessary to obtain $y_i$.
 We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2004b}. 
 Such an estimator is adopted do to its efficiency in contexts where the amount of data and the dimensionality of the covariance matrix are of comparable sizes. \newline
 Given some centered i.i.d. data $x_1,\dots, x_s$ in $\R^d$, a linear shrinkage estimator for the covariance matrix $\Sigma^2 \in \R^{d\times d}$ of the generating distribution is given by the convex combination of the empirical covariance matrix \[
@@ -203,23 +203,23 @@ We first assume that $\Sigma^2_D(\tau)$ scales quadratically with the tolerance 
 \[
 \Sigma^2_D(\tau) = \tau^2 \Sigma^2_D(1),
 \]
-and second, as we expect the final evaluation $y_i$ to be significantly less noisy than most of the provisory evaluations $y_{i,j}$, i.e. $\tau_i \ll \tau_{i,j}$, we assume the final residual to be zero, i.e. $y(p_i) = y_i$.
+and second we assume that the residual estimates $n_{i,j}$ are faithful realizations of the discretization noise $\nu_D$.
 Under these assumptions it holds that 
 \[
-\eta_{i,j} \coloneq \frac{1}{\tau_{i,j}} ( y_{i,j} - y_i) \text{ is a realization of } \nu_{i,j} \sim \mc N (0, \Sigma^2_D(1))
+\tilde n_{i,j} \coloneq \frac{1}{\tau_{i,j}} n_{i,j} \text{ is a realization of } \eta_{i,j} \sim \mc N (0, \Sigma^2_D(1))
 \]
 for every $ i=1,\dots,n $ and $ j=1,\dots,r_i$. \newline
-While assuming $\nu_{i,j}$ to be independent from $\nu_{h,k}$ for $i\neq h$ can be a reasonable approximation, the residuals in a same evaluation sequence will most likely be correlated.
+While assuming $\eta_{i,j}$ to be independent from $\eta_{h,k}$ for $i\neq h$ can be a reasonable approximation, the residuals in a same evaluation sequence will most likely be correlated.
 This leads us to consider a correlation-adjusted sample covariance matrix  
 \begin{equation}
-    \hat S = \frac{1}{s_\text{eff}} \sum_{i=1}^n\sum_{j=1}^{r_i} \eta_{i,j} \cdot \eta_{i,j}^T,
+    \hat S = \frac{1}{s_\text{eff}} \sum_{i=1}^n\sum_{j=1}^{r_i} \tilde n_{i,j} \cdot \tilde n_{i,j}^T,
 \end{equation} 
-where $s_{\text{eff}}$ is the effective sample size of $\{\eta_{i,j}\}_{i,j}$. \newline
+where $s_{\text{eff}}$ is the effective sample size of $\{\tilde  n_{i,j}\}_{i,j}$. \newline
 Then, the linear shrinkage estimator for the noise covariance $\Sigma^2_D(1)$ is given by
 \[
     \hat \Sigma_D^2 = \delta \hat S + (1-\delta) I_{\text{dim}\mc Y},
 \]
-where we adopted the identity matrix $I_{\text{dim}\mc Y}$ as the fixed matrix $\Sigma_0$ of Equation~\eqref{eq:shrinkage-estimator-gen} and the parameter $\delta$ is given by the formula~\eqref{eq:shrinkage-delta} with the substitution of $\{x_i\}$ by $\{\eta_{i,j}\}$, of $S$ by $\hat S$ and of $s$ by $s_{\text{eff}}$.\newline
+where we adopted the identity matrix $I_{\text{dim}\mc Y}$ as the fixed matrix $\Sigma_0$ of Equation~\eqref{eq:shrinkage-estimator-gen} and the parameter $\delta$ is given by the formula~\eqref{eq:shrinkage-delta} with the substitution of $\{x_i\}$ by $\{\tilde n_{i,j}\}$, of $S$ by $\hat S$ and of $s$ by $s_{\text{eff}}$.\newline
 This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)$
 \begin{equation}\label{eq:shrinkage-estimator}
     \hat{\Sigma}_D^2(\tau) = \tau^2 \hat \Sigma_D^2,

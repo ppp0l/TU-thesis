@@ -30,7 +30,7 @@ For a training set $D = \{(p_i,y_i,\tau_i)\}_{i=1}^n$, with $y_i = y_{\tau_i}(p_
 GPR assumes a Gaussian process prior $\mc{G} \mc P (\mu, k)$ for the unknown ground truth $y$, with $\mu : \mc P \rightarrow \mc Y$ being some mean function and $k: \mc P \times \mc P \rightarrow \mc Y^* $ being a covariance kernel.
 Moreover, it assumes that the error on the numerical evaluations $y_\tau$ is a realization of some normally distributed noise, i.e. 
 \begin{equation}\label{eq:GPR-noise}
-    y_\tau(p) \ \text{ is a realization of } \ y(p) + e_D,  \ \text{ with } \ e_D \sim \mc N (0, \Sigma_D(\tau)^2),    
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_D,  \ \text{ with } \ \nu_D \sim \mc N (0, \Sigma_D(\tau)^2),    
 \end{equation}
 for some covariance matrix $\Sigma_D(\tau)^2$ which depends on the tolerance $\tau$, with a greater tolerance corresponding to larger variance components.
 Thanks to this assumptions, it obtains a predictive Gaussian distribution for unseen values of $y$, and computable analytical formulas for the mean and the variance are given.
@@ -39,7 +39,7 @@ LR does not need any prior distributional assumptions on $y$, but instead assume
 The Lipschitz constant can be assumed or estimated from data.
 Further, the numerical evaluation error is assumed to be the effect of uniformly distributed noise,  
 \begin{equation}\label{eq:LR-noise}
-    y_\tau(p) \ \text{ is a realization of } \ y(p) + e_D,  \ \text{ with } \ e_D \sim U(S_\tau )    
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_D,  \ \text{ with } \ \nu_D \sim U(S_\tau )    
 \end{equation}
 where $S_\tau$ is an open, connected and centered subset of $\mc Y$ which depends on $\tau$.
 With these assumptions, LR provides a predictive uniform distribution for unseen values of $y$, guaranteeing a mean prediction and hard bounds.
