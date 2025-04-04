@@ -97,3 +97,8 @@ As for the scope of this work it is not necessary to work in full generality, fr
 ML/MAP\medskip
 
 MCMC (mention effective size sampling)\medskip
+
+Among other MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
+Ensemble Sampling is a MCMC technique introduced by~\cite{GoodmanWeare} which guarantees invariancy with respect to affine transformation of the parameter space by utilizing multiple correlated chains. 
+The effectiveness of sampling crucially depends on the proposal function, which in the case of Ensemble samplers are also known as moves.
+As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 

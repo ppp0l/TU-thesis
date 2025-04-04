@@ -25,7 +25,7 @@ For training data $D$, we write \begin{align*}
     p \mapsto \bb P( y(p) \mid D).
 \end{align*}
 
-In the next two section, we introduce two techniques which provide a stochastic surrogate model: Gaussian process regression (GPR) and Lipschitz regression (LR).
+In the next two sections, we introduce two techniques which provide a stochastic surrogate model: Gaussian process regression (GPR) and Lipschitz regression (LR).
 
 \subsection{Gaussian process regression}\label{sec:GPR}
 Gaussian process regression (GPR) is a non-parametric regression technique which relies on probabilistic assumptions and is closely related to support vector machines and kernel methods.
@@ -101,17 +101,19 @@ To ease the hyperparameters optimization problem and improve computational effic
 k_\lambda(p, p') = g_\lambda(p - p') \ \text{ for every } \ p, p' \in \Theta
 \]
 for some $g_\lambda:\Theta \rightarrow \R$.
-For dim$\mc Y > 1$, it is common to model the correlation between inputs and outputs separately~\cite{AlvarezRosascoLawrence2012}; this results in what is known as a separable kernel \[
+For dim$\mc Y > 1$, it is common to model the correlation between inputs and outputs separately~\cite{AlvarezRosascoLawrence2012}; this results in what is known as a separable kernel 
+\begin{equation}\label{eq:separable-kernel}
     k_\lambda(p, p') = \kappa_{\lambda_i}(p, p') K_{\lambda_o}
-\] for $\lambda = (\lambda_i, \lambda_o)$, with $\kappa_{\lambda_i}: \Omega \times \Omega \rightarrow \R$ and $K_{\lambda_o} \in R^{m\times m}$ being a scalar kernel and a symmetric positive definite matrix.
+\end{equation}
+for $\lambda = (\lambda_i, \lambda_o)$, with $\kappa_{\lambda_i}: \Omega \times \Omega \rightarrow \R$ and $K_{\lambda_o} \in R^{m\times m}$ being a scalar kernel and a symmetric positive definite matrix.
 $\kappa_{\lambda_i}$ models the correlation between different inputs and $K_{\lambda_o}$ models the correlation between output components.
 
 The possible choices for families of kernels are vast and it is important to note that sums and products of kernels are again kernels, allowing for the construction of complex kernel structures by the combination of elementary kernels~\cite{Duvenaud}.
 Among such elementary kernels, particularly relevant are the Radial Basis Function (RBF) kernel and the Matérn kernel. \newline
 The expression of the RBF kernel, also known as squared exponential kernel, is given by
-\[
-k_{\lambda}(p, p') = \exp\left(-\frac{\|p - p'\|_\Theta^2}{2\lambda^2}\right),
-\]
+\begin{equation}\label{eq:RBF-kernel}
+    k_{\lambda}(p, p') = \exp\left(-\frac{\|p - p'\|_\Theta^2}{2\lambda^2}\right),
+\end{equation}
 with $\lambda$ being a length-scale parameter. 
 Note that more complex RBF kernels can be obtained by altering the norm $\| \cdot \|_\Theta$, and for a parametrized norm this leads to what is known as Automatic Relevance Determination (ARD).
 The RBF kernel leads to a $\mc C^\infty$ mean prediction and is usually adopted as a default choice whenever the underlying function can be assumed to be rather smooth. \newline
@@ -135,9 +137,9 @@ For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the
 \]
 with $k(P,P)$ and $\Sigma_D(\mc T)$ as given in Theorem~\ref{thm:GP-posterior};
 this results in the hyperparameters' likelihood given the data,
-\[
-    L(\lambda) = \pi_{(Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda} \big ( (y_1,\dots,y_n) \mid \Lambda = \lambda \big ).
-\]
+\begin{equation} \label{eq:marginal-likelihood}
+    L(\lambda) = \pi_{(Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda} \big ( (y_1,\dots,y_n) \mid \Lambda = \lambda \big ).    
+\end{equation}
 To solve the problem, one either adopts a point estimate, given usually by ML or MAP, or marginalizes the GPR prediction over the hyperparameter posterior distribution by sampling. 
 While marginalizing propagates the uncertainty in the hyperparameters, it is computationally considerably more expensive: due to this reason a point estimate is most commonly employed and one talks about hyperparameter optimization. Gradient-based methods are utilized in the problem's solution. \medbreak
 

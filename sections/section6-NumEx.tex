@@ -1,3 +1,74 @@
 \section{Numerical experiments}\label{sec:exp}
-\subsection{General setup}\label{sec:setup}
-\subsection{Finite element example}\label{sec:FEexp}
+
+In this section, we present numerical experiments to demonstrate the performance of~\ref{algo:AL} under different conditions. 
+A Python implementation, available at (...) along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
+
+The experiments aim at testing the proposed strategy on low to moderate-dimensional parameter spaces.
+The scope of these examples can be articulated in three senses:
+\begin{enumerate}
+    \item comparing the training strategy as compared to other strategies under the same computational budget and for the same surrogate model;
+    \item comparing the performance of $LR$ surrogates to the more established $GPR$ surrogate models across different training strategies;
+    \item comparing the effect on GPR of discretization noise estimation as given by Equation~\eqref{eq:shrinkage-estimator} in Section~\ref{sec:GPAL}.
+\end{enumerate}
+While the first and the last points can be evaluated more easily, the second point is more difficult to evaluate as it requires a fair comparison between the two kinds of surrogate models.
+Consequentely for point 2, we will exploit the available ground-truth in the analytical examples, while for the FE example we will resort to a qualitative comparison. \medskip
+
+The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the general setup across the experiments and provide implementation details; in Section~\ref{sec:2dexp}, we present an analytical example with 2D parameter space based on the Laplace equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6D parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a finite element example based on elastomechanics; finally, in Section~\ref{sec:concl}, we summarize the conclusions drawn from the experiments.
+
+\subsection{General setup and implementation}\label{sec:setup}
+
+In all experiments, the measured quantity is directly obtained from pointwise evaluations $f(\theta)$ of the equation's solution $f$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
+\[
+    H(f(\cdot; p)) = \left( f(\theta_j)\right)_{j=1,\ldots, \text{dim} \mc Y} \ \text{ for some ordering } \ \theta_1, \ldots, \theta_{|\mc S|} \ \text{ of the sensors } \ \mc S.
+\]
+In the analytical examples $f(p) \in \R$, while for the FE example $f(p)\in \R^3$: in the latter case, only the $z$-component of the displacement is measured. \medskip
+
+For the analytical examples the analytical formula of the solution is available and no discretization is necessary.
+This allows us to evaluate the forward model $y(p)$ with close to zero cost, rendering it possible to represent the ground-truth posterior and to perform repeated runs of the algorithm. 
+On the downside, this requires us to simulate the discretization error; we do so by adding by adding pseudorandom noise $\nu$ with the appropriate distribution to forward model evaluations $y(p)$. \newline
+When training GPR surrogates, we consider zero mean Gaussian noise $\nu \sim \mc N (0, \tau^2 \Sigma_T^2)$ when simulating $y_\tau(p)$, where \[
+\big(\Sigma_T\big)_{ij} = \sigma\big( \|\theta_i - \theta_j\|_{\mc Y} \big) \ \text{ for } \ \theta_i, \theta_j \in \mc S
+\]
+for a decreasing function $\sigma$ such that $\sigma(0)=1$.
+Such a setup allows us to evaluate the effect of the discretization noise on the GPR surrogate model.\newline
+When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \tau]^{\text{dim} \mc Y})$ so that $I_\tau$ is an interval and the assumptions of propositions~\ref{prp:LR-PI},~\ref{prp:LR-likelihood} and~\ref{prp:EER} are met. \medskip 
+
+The choice of analytical forward models has been taken as it allows to evaluate the actual error and compare convergence rates, reduces the time required by the simulation, and renders it possible to test different model costs without having to implement different numerical models. \medskip 
+
+The Gaussian process surrogate model uses a GPyTorch~\cite{GPyTorchPaper} base model, set to work with double-precision floating-point numbers.
+We consider a separable RBF kernel 
+\[
+    k_{(\mathbf{L}, \lambda)}(p, p') =  \exp ( - \norm{p - p'}^2_{L} ) \ K_\lambda,
+\]
+as introduced by equations~\eqref{eq:separable-kernel} and~\eqref{eq:RBF-kernel}, with $\lambda = (\mathbf{s}, \mathbf{C}) $ and
+\[
+K_\lambda = \text{diag}(\mathbf{s}) + \mathbf{CC}^T,
+\] 
+where $\mathbf{s} \in \R^{\text{dim} \mc Y}$ is a scaling vector and $\mathbf{C} \in \R^{\text{dim} \mc Y \times 2}$ is a rank 2 matrix which models the correlation among components.
+GPyTorch's Adam is employed to optimize the hyperparameters on the marginal likelihood~\eqref{eq:marginal-likelihood}. \medskip
+
+To sample the posterior, we consider the \texttt{emcee}~\cite{emceePaper} implementation of Ensemble Sampling with the DIME move as introduced in Section~\ref{sec:IP-sol}. 
+The posterior plots are then realized using the \texttt{corner}~\cite{corner} package. \medskip
+
+The two discrete optimization problems to determine evaluation accuracies and tolerances are solved through the SciPy optimizer \texttt{scipy.optimize.minimize}. Local maxima of~\eqref{eq:acq-fun-disc} are found using the L-BFGS-B algorithm~\cite{ZhuBirdNocedal}. Problem~\eqref{prob:discrete-tol} is solved by applying a coordinate transformation in order to linearize the work constraint and then by utilizing the Sequential Least Squares Quadratic Programming algorithm. In both cases, we adopt a multi-start approach by selecting a number of initial points through a low-discrepancy sequence. \medskip
+
+Unlike the experiments in~\cite{VillaniArconesUngerWeiser2025}, where various setups for the budget fractionating and the FE cost depending on the fraction $\frac{l}{r}$ were considered, in this work we fix them and do not investigate their interplay.
+We consider uniform budget fractionating, spending the same amount of computational resources for Problem~\eqref{prob:incremental-doe} at each iteration, and we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example. \medskip
+
+
+\subsection{2D analytical example - Laplace equation}\label{sec:2dexp}
+
+
+
+\subsection{6D analytical example - Diffusion equation}\label{sec:6dexp}
+
+
+
+\subsection{Finite element example - Elastomechanics}\label{sec:FEexp}
+
+
+
+\subsection{Conclusions}\label{sec:concl}
+
+
+\cite{Dinkel2024}
