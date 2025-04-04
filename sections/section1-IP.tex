@@ -2,7 +2,7 @@
 Inverse Problems (IP) deal with the identification of some unknown parameter or function in a model through observations of the portion of reality that the model is intended to represent. \newline
 A first approach to IP is that of Classical Inverse Problems, where the problem is treated in a deterministic framework, questions of well-posedness are tackled, and the solution is a point estimate of the unknown. 
 This framework can be expanded to a statistical approach to IP, where stochastic behavior of the observations is taken into consideration and some probabilistic tools such as the parameters' likelihood are introduced.
-Finally, in the Bayesian approach to IP the problem's unknowns are assumed to have random behaviour, and probabilistic tools are utilized intensively. 
+Finally, in the Bayesian approach to IP the problem's unknowns are assumed to have random behavior, and probabilistic tools are utilized intensively. 
 In the Bayesian treatment, the problem is usually well-posed, but its solution is a probability distribution, requiring a more careful and complex numerical handling.\medskip
 
 The main reference for this section is Tim Sullivan's Introduction to Uncertainty Quantification~\cite{Sullivan2015}, and other sources will be quoted when utilized. \newline
@@ -15,14 +15,14 @@ If a unique $p*$ in $\Theta$ such that
 \begin{equation}\label{eq:IP0}
     y(p*) = y^m
 \end{equation}
-exists, the IP admits a unique solution: but this case is an exception rather than a rule, expecially when the observation $y^m$ is corrupted by noise.
+exists, the IP admits a unique solution: but this case is an exception rather than a rule, especially when the observation $y^m$ is corrupted by noise.
 
 A number of techniques have been developed to address the numerous issues which arise in an IP.
 First, the problem can be reformulated as a least squares problem: for some norm $\| \cdot \| _\mc Y$ on $\mc Y$, Problem~\ref{eq:IP0} is generalized to a minimization problem
 \begin{equation}\label{eq:IP1}
     \min_{p\in \Theta} \| y(p) - y^m \|_\mc Y.
 \end{equation}
-Under regularity conditions such as $\Theta$ and $\mc Y$ being Banach spaces and $y$ being a continuous map, this formulation cannot yet guarantee neither existance, nor unicity, nor stability of a solution $p*$ for every $y^m \in \mc Y$. Nonetheless, Problem~\ref{eq:IP1} is more general as it allows for solutions even if $y^{-1}(\{y^m\} )= \emptyset$, and on the practical side suggests the adoption of optimization techniques to solve IPs.
+Under regularity conditions such as $\Theta$ and $\mc Y$ being Banach spaces and $y$ being a continuous map, this formulation cannot yet guarantee neither existence, nor unicity, nor stability of a solution $p*$ for every $y^m \in \mc Y$. Nonetheless, Problem~\ref{eq:IP1} is more general as it allows for solutions even if $y^{-1}(\{y^m\} )= \emptyset$, and on the practical side suggests the adoption of optimization techniques to solve IPs.
 
 A second and often compatible approach is that of regularization techniques. This involves introducing additional information or constraints to stabilize the solution and make the problem well-posed. Regularization can be performed by the substitution of $y$ with some more treatable operator, or in the case of Variational Regularization by the formulation of a different minimization problem. Often, a regularization approach can be understood both from an operator approximation and a variational perspective: this applies to Tychonoff regularization, which can be seen as the addition of a stabilizing term to Problem~\ref{eq:IP1}
 \begin{equation}\label{eq:Tycho}
@@ -43,7 +43,7 @@ Statistical IPs, likelihood and LS
 
 \subsection{Bayesian Inverse Problems}\label{sec:BIP}
 
-A natural developement of the statistical approach to Inverse Problems are Bayesian Inverse Problems (BIPs). 
+A natural development of the statistical approach to Inverse Problems are Bayesian Inverse Problems (BIPs). 
 In the Bayesian setting, the unknown solution $p*$ of the IP is treated as a random variable $P$ and the solution of the IP then becomes the conditional distribution $\bb P_{P \mid Y^m=y^m} $ of $P$ given $Y^m=y^m$.
 
 In full generality, the following result guarantees the possibility of formulating BIPs for arbitrary dimensionality:
@@ -62,7 +62,7 @@ In full generality, the following result guarantees the possibility of formulati
     Such map is known as the \textbf{regular conditional probability} of $P$ given $Y^m$.
 \end{thm}
 
-This results guarantees the well-definedness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a likelihood. 
+This results guarantees the well-definiteness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a likelihood. 
 This is provided by Bayes' rule, which in generality is given by the following result from~\cite[Theorem 14]{DashtiStuart2017}:
 
 \begin{thm}[Bayes' rule]

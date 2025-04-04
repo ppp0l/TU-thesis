@@ -203,10 +203,10 @@ The following proposition allows us to define a predictive interval of possible 
     which implies \[
         f(p_i)^{(j)} \in \left[ v^{(j)} - L^{(j)} \|p-p_i\|_\Theta, v^{(j)} + L^{(j)} \|p-p_i\|_\Theta \right].
     \]
-    By the arbitrariety of $j$, $f(p_i) \in Cone_{p,v,\underline L}(p_i) $ and as by hypothesis $f(p_i) \in y_i + I_{\tau_i}$, we have \[
+    By the arbitrariness of $j$, $f(p_i) \in Cone_{p,v,\underline L}(p_i) $ and as by hypothesis $f(p_i) \in y_i + I_{\tau_i}$, we have \[
     Cone_{p,v,\underline L}(p_i) \cap  \big ( y_i + I_{\tau_i} \big ) \neq \emptyset.
     \] 
-    The arbitrariety of $i$ implies the statement. \newline
+    The arbitrariness of $i$ implies the statement. \newline
     For the converse direction, let $\tilde y_1, \dots, \tilde y_n$ be as in the second part of the statement.
     We write $\tilde y_{n+1} = v$ and $p_{n+1} = p$ and then define
     \begin{equation}\label{eq:lips-interp}
@@ -215,7 +215,7 @@ The following proposition allows us to define a predictive interval of possible 
             p' \mapsto \frac{1}{2} \left[\min_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} + L^{(j)} \| p' - p_k \|_\Theta \right\}+ \max_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} - L^{(j)} \| p' - p_k \|_\Theta \right\} \right]_{j=1}^{\text{dim} \mc Y}.
         \end{gathered}
     \end{equation}
-    Such $f$ satisfies the Lipschitz condition with global Lipschitz constants $\underline L$ as it scales at most linearly with the distance $\| \cdot \|$; moreover, $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$.
+    Such $f$ satisfies the Lipschitz condition with global Lipschitz constants $\underline L$ as it scales at most linearly with the distance $\| \cdot \|_\Theta$; moreover, $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$.
     In fact, let $i \in \{ 1, \dots, n+1\}$: if $i<n+1$, by Condition~\eqref{eq:lips-cond1.2} we can expand Condition~\eqref{eq:lips-cond2} to $k=n+1$ obtaining
     \begin{equation}\label{eq:cone-cond}
         \tilde y_i \in Cone_{p_k, \tilde y_k,\underline L}(p_i) \ \text{ for all } k = 1, \dots, n+1;
@@ -232,7 +232,7 @@ The following proposition allows us to define a predictive interval of possible 
     \[
         \min_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} + L^{(j)} \|p_i - p_k \|_\Theta \right\} =  \max_{k=1,\dots,n+1} \left\{ \tilde y_k^{(j)} - L^{(j)} \|p_i - p_k \|_\Theta \right\} = \tilde y_i^{(j)}.
     \]
-    By the arbitrariety of $j$, it holds that $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$. \newline
+    By the arbitrariness of $j$, it holds that $f(p_i) = \tilde y_i$ for every $i = 1, \dots, n+1$. \newline
     By this, we proved that there exists a Lipschitz function $f$ with global Lipschitz constants $\underline L$ such that $f(p_i) = \tilde y_i \in y_i + I_\tau$ for every $i = 1, \dots, n$ and $f(p) = v$.
 \end{proof}
 \begin{rmk}
@@ -249,7 +249,7 @@ By the above proposition, it holds
 and we call $\mc P I_p$ the predictive interval in $p$.
 To simplify the notation, the dipendence from the training data $D$, the noise model and the constants $\underline L$ is omitted.
 \begin{rmk}
-    In Proposition~\ref{prp:lips}, Condition~\eqref{eq:lips-cond2} only serves to ensure that $\mc PI_p$ is non-empty for every $p$ in $\Theta$, i.e. that the training data is compatible with the Lipschitz assumption and an underlying globally Lipschitz function generating the data can exist. \newline
+    In Proposition~\ref{prp:lips}, Condition~\eqref{eq:lips-cond2} only serves to ensure that $\mc PI_{p'}$ is non-empty for every other $p'$ in $\Theta$, i.e. that the training data is compatible with the Lipschitz assumption and an underlying globally Lipschitz function generating the data can exist. \newline
     The interesting condition for a point $p$ is Condition~\eqref{eq:lips-cond1}, which we use for the definition of the predictive interval $\mc PI_p$ and guarantees that $\mc PI_p$ includes all and only the feasible values in $p$ of Lipschitz functions compatible with the data.
 \end{rmk}
 \begin{rmk}
@@ -267,7 +267,7 @@ The Lipschitz Regression predictive distribution is then defined by taking a uni
     with the predictive interval $\mc PI_p$ is given by Equation~\eqref{eq:LR-PI-general}
 \end{dfn}
 
-For noise terms $e_{D,i}$ with independent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
+For noise terms $\nu_{D,i}$ with independent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
 \begin{prp}\label{prp:LR-PI}
     Let $I_{\tau_i} = \otimes_{j=1}^{\text{dim}\mc Y} [ -\tau_i^{(j)}, \tau_i^{(j)} ]$ for every $i = 1, \dots, n$.
     Then the LR predictive interval $\mc PI_p$ is an interval given by
@@ -338,7 +338,7 @@ For the independent noise components setting, the minimal value of the Lipschitz
     \[
         | y^{(j)}(p_i) - y^{(j)}(p_k) | = | y_i^{(j)} - y_k^{(j)} +  y^{(j)}(p_i) - y_i^{(j)} - y^{(j)}(p_k) + y_k^{(j)} |  \geq | y_i^{(j)} - y_k^{(j)} | - \tau_i^{(j)} - \tau_k^{(j)},
     \]
-    which by the arbitrariety of $i$ and $k$ implies Equation~\eqref{eq:LR-const}. \newline
+    which by the arbitrariness of $i$ and $k$ implies Equation~\eqref{eq:LR-const}. \newline
     For the second part, let $j$ be such that $L^{(j)} = L^{(j)}_{\min}$ and let $i,k$ be the training points realizing the maximum in Equation~\eqref{eq:LR-const}, with $y^{(j)}_i > y^{(j)}_k$. \newline
     We prove second part of the statement by using Proposition~\ref{prp:lips} and Proposition~\ref{prp:LR-PI} : let $t \in [0,1]$ and $p = t \cdot p_i + (1 - t) \cdot p_k$, then by the first cited result we have that $y(p) \in \mc PI_p$. 
     By the second cited result, taking the $j$-th component of the predictive interval deals

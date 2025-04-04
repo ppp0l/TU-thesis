@@ -95,7 +95,7 @@ Marginalizing the likelihood over this predictive distribution leads to a margin
         &\stackrel{(4)}{=} \int_{\mc Y} \pi_{Y_p} (y) \int_{A-y} \pi_{N}(n) \, dn \, dy \stackrel{(5)}{=} \int_{\mc Y} \pi_{Y_p} (y) \int_{A} \pi_{N}(\tilde n - y) \, d\tilde n \, dy \stackrel{(6)}{=} &&\\
         & \stackrel{(6)}{=} \int_{A} \int_{\mc Y} \pi_{Y_p} (y) \pi_{N}(\tilde n - y) \, dy \, d\tilde n \stackrel{(7)}{=}\int_{A} \bb E_{Y_p} \Big [ \pi_{N}(\tilde n - Y_p) \Big ] \, d\tilde n, &&
     \end{flalign*}
-    where Equality~(1) used the parameter-to-observation relation, Equality~(2) used an equivalent reformulation of the set to be measured, Equality~(3) used the definition of the joint distribution of $Y_p$ and $N$, Equality~(4) used Fubini Theorem and the independence of $Y_p$ and $N$, Equality~(5) used the change of variable $\tilde n = n + y$, Equality~(6) switched the order of integration by Fubini Theorem, and Equality~(7) used the definition of expected value. \newline
+    where Equality~(1) used the parameter-to-observation relation, Equality~(2) used an equivalent reformulation of the set to be measured, Equality~(3) used the definition of the joint distribution of $Y_p$ and $N$, Equality~(4) used Fubini's Theorem and the independence of $Y_p$ and $N$, Equality~(5) used the change of variable $\tilde n = n + y$, Equality~(6) switched the order of integration by Fubini's Theorem, and Equality~(7) used the definition of expected value. \newline
     This chain of equalities deals \[
         \pi_{Y^m}(y) = \bb E_{Y_p} \Big [ \pi_{N}(y - Y_p) \Big ].
     \]
@@ -104,12 +104,12 @@ Marginalizing the likelihood over this predictive distribution leads to a margin
         \pi_{Y^m} (y^m) &= \bb E_{Y_p} \Big [ \pi_{N}(y - Y_p) \Big ] \stackrel{(1)}{=} \int_{\mc Y } \frac{1_{\mc PI_p}(y)}{m_\mc Y (\mc PI_p)} \pi_{N}(y^m - y) \ dy \stackrel{(2)}{=} \frac{1}{m_\mc Y (\mc PI_p)} \int_{\mc P I_p  - y^m} \pi_{N}(e )  \ de \stackrel{(3)}{=} &&\\
         & \stackrel{(3)}{=} \frac{1}{m_\mc Y (\mc PI_p)} \mathbb P \Big ( N \in   \mc PI_p - y^m \Big  )&&,
     \end{flalign*}
-    where Equality~(1) used the expression of the predictive distribution $\pi_{Y_p}$ given by Definition~\ref{dfn:LR}, Equality~(2) used the change of variable $e = y - y^m$ and the defiition of indicator function, and Equality~(3) used the definition of the probability density function with $N$. \newline
+    where Equality~(1) used the expression of the predictive distribution $\pi_{Y_p}$ given by Definition~\ref{dfn:LR}, Equality~(2) used the change of variable $e = y - y^m$ and the definition of indicator function, and Equality~(3) used the definition of the probability density function with $N$. \newline
     As the likelihood $L_{D, \text{LR}}(p)$ is the density of $Y^m$ at $y^m$ as a function of $p$, the statement follows.
 \end{proof}
 
-The efficience in computing the likelihood~\eqref{eq:LR-likelihood} depends on the distribution of the measurement noise $N$ and the shape of $\mc P I_p  $.
-For Gaussian measurement noise $N$ with indipendent components and $\mc PI_p$ being a rectangle, the likelihood can be computed as the product of differences of Gaussian cumulative distribution functions, as stated in the next proposition.
+The efficiency in computing the likelihood~\eqref{eq:LR-likelihood} depends on the distribution of the measurement noise $N$ and the shape of $\mc P I_p  $.
+For Gaussian measurement noise $N$ with independent components and $\mc PI_p$ being a rectangle, the likelihood can be computed as the product of differences of Gaussian cumulative distribution functions, as stated in the next proposition.
 
 \begin{prp}
     In the hypothesis of Proposition~\ref{prp:LR-likelihood}, let  $N \sim \mc N (0, \Sigma^2_N)$ be Gaussian with $\Sigma_N = \text{diag} (\sigma_1, \ldots, \sigma_m)$, and let $\mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right] $.
