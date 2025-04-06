@@ -4,7 +4,7 @@ In this section, we present numerical experiments to demonstrate the performance
 Among the three presented experiment, the first two use an analytical solution of the underlying PDE, while the third one is based on actual FE simulations of a PDE.
 The choice of analytical forward models allows to evaluate the actual error and compare convergence rates and reduces the time required by realizations of~\ref{algo:AL}. \medskip 
 
-The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the objectives of the experiments and general setup across them; Section~\ref{sec:implementation} provides implementation details; in Section~\ref{sec:2dexp}, we present an analytical example with 2D parameter space based on the Laplace equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6D parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a FE example based on elastomechanics with 2D parameter space; finally, in Section~\ref{sec:concl}, we summarize the conclusions drawn from the experiments.
+The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the objectives of the experiments and general setup across them; Section~\ref{sec:implementation} provides implementation details; in Section~\ref{sec:3dexp}, we present an analytical example with 3D parameter space based on the Laplace equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6D parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a FE example based on elastomechanics with 2D parameter space; finally, in Section~\ref{sec:concl}, we summarize the conclusions drawn from the experiments.
 
 \subsection{Objectives and general setup}\label{sec:setup}
 
@@ -41,8 +41,8 @@ with $\sigma$ a decreasing function such that $\sigma(0)=1$.
 Such a setup allows us to evaluate the effect of the discretization noise on the GPR surrogate model.\newline
 When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \tau]^{\text{dim} \mc Y})$ so that $I_\tau$ is an interval and the assumptions of propositions~\ref{prp:LR-PI},~\ref{prp:LR-likelihood} and~\ref{prp:EER} are met. \medskip 
 
-For the analytical examples, we will perform and average repeated runs of the algorithm with the same budget but different random seeds and different measurement values, in order to compensate for the lack of discretization noise and to evaluate the sensitivity of the algorithms to randomness.
-Details about the number of runs and of measurements will be given in the respective sections. 
+For the analytical examples, we will perform and average repeated runs of the algorithm with the same budget but different random seeds, in order to compensate for the lack of discretization noise and to evaluate the sensitivity of the algorithms to randomness.
+Details about the number of runs will be given in the respective sections. 
 
 \subsection{Implementation details}\label{sec:implementation}
 A Python implementation of~\ref{algo:AL}, available at (...) along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
@@ -68,19 +68,61 @@ In all cases, we adopt a multi-start approach by selecting a number of initial p
 To sample the posterior, we consider the \texttt{emcee}~\cite{emceePaper} implementation of Ensemble Sampling with the DIME move~\cite{Boehl} as introduced in Section~\ref{sec:IP-sol}. 
 The posterior plots are then realized using the \texttt{corner} package~\cite{corner}. \medskip
 
-While the interface for the experiments is also realized in Python, the FE model is implemented in C++17 through the \texttt{Kaskade 7} Finite Element toolbox~\cite{GoetschelWeiserSchiela2012,GoetschelSchielaWeiser2021}.\medskip
+While the interface for the experiments is also realized in Python, the FE model is implemented in C++17 through the \texttt{Kaskade 7} Finite Element toolbox~\cite{GoetschelSchielaWeiser2021}.\medskip
 
 The rest of the implementation has been developed by the author and relies in particular on the \texttt{numpy} package~\cite{numpy}, while the \texttt{matplotlib} package~\cite{matplotlib} has been employed for the generation of plots. 
 
 
 
-\subsection{2D analytical example - Laplace equation}\label{sec:2dexp}
+\subsection{3D analytical example - Laplace equation}\label{sec:3dexp}
 
+The first numerical experiment involves the distributional Laplace equation on $\R^3$
+\[
+ \Delta f = \delta_{x_0}
+\] 
+with a Dirac's delta source centered in some $x_0 \in \R^3$ and decaying to zero at infinity
+\[
+\lim_{\| x \| \to \infty} f(x; x_0) = 0.
+\]
+As a solution, we consider Green's function for the 3D Laplace equation
+\[
+f(x; x_0) =  \frac{1}{2 \|x-x_0\|_2},
+\]
+where a multiplicative constant has been added for numerical stability reasons. \medskip
 
+To formulate an IP, $x_0$ is assumed to be an unknown parameter and we aim at identifying it by measurements of $f(x;x_0)$ in sensors $x \in \mc S$ for 
+\[
+    \mc S = \left\{
+        \begin{pmatrix}
+            \cos( i \frac{\pi}{3}) \sin( j \frac{\pi}{2}) \\
+            \sin( i \frac{\pi}{3}) \sin( j \frac{\pi}{2}) \\ 
+            \cos( j \frac{\pi}{2})
+        \end{pmatrix} 
+        \in \R^3 \ \Big| \ i \in \{0,1,2,3,4,5\}, \ j \in \{0,1,2\}
+     \right\},
+\]
+resulting in 14 sensors on the unit sphere and consequently a 14-dimensional measurement space $\mc Y = \R^{14}$. \newline
+The parameter space is assumed to be $\Omega = \left[-\frac{1}{2}, \frac{1}{2}\right]^3$ and a Normal prior $\mc N (0, \frac{1}{6}I_3)$ is considered. \medskip
+
+We generate measurements by adding pseudorandom noise $N \sim \mc N (0, \sigma^2 I_{14})$, with $\sigma = 10^{-2}$ to the exact forward model evaluations $y(p)$ for some $p$. 
+We consider 5 different measurements corresponding to 5 different $p$ randomly extracted from the prior distribution and, as the discretization error is simulated, we perform 5 runs of each training strategy with different random seeds for each measurement.
+\medskip
 
 \subsection{6D analytical example - Diffusion equation}\label{sec:6dexp}
 
-
+The second numerical experiment involves the diffusion equation on $\R^3$
+\[
+f_t = \Delta f
+\]
+with initial conditions given by two Dirac's delta of opposite sign centered in some $x_p$ and $x_n$:
+\[
+f (0,x; x_p, x_n) = \delta_{x_p}(x) - \delta_{x_n}(x).
+\]
+We consider the difference of fundamental solutions of the diffusion equation centered in $x_p$ and $x_n$ as a solution of the above problem
+\[
+f(t,x; x_p, x_n) = (4 \pi t)^{-\frac{3}{2}} \left( \exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right)- \exp \left( - \frac{\norm{x-x_n}_2^2}{4t}\right) \right).
+\]
+We treat $x_p, x_n$ as unknown parameters and want to identify them by measuring $u(t,x;x_p, x_n)$ for certain $t,x$. As a parameter space, $\Omega = [-1,1]^6$ is considered and a Normal prior $\mc N (0, \frac{1}{4}I_6)$.
 
 \subsection{2D Finite Element example - Elastomechanics}\label{sec:FEexp}
 
