@@ -40,13 +40,13 @@ int main(int argc, char *argv[])
   std::string material, storageScheme("A");
   
   if (getKaskadeOptions(argc,argv,Options
-    ("L",                L,                3.,          "length of the elastic beam")
+    ("L",                L,                4.,          "length of the elastic beam")
     ("W",                W,                0.2,        "width/ of the elastic beam")
     ("refinements",      refinements,      0,          "number of uniform grid refinements")
     ("order",            order,            1,          "finite element ansatz order")
     ("material",         material,         "steel",    "type of material")
     ("linearStrain",     linearStrain,     true,       "true= linear strain tensor, false=nonlinear strain tensor")
-    ("aTolx",            aTolx,            1e-5,       "relative error tolerance for embedded error estimator")
+    ("aTolx",            aTolx,            1e-4,       "absolute error tolerance for embedded error estimator")
     ("solver",           solver,           0,          "0=UMFPACK, 1=PARDISO 2=MUMPS 3=SUPERLU 4=UMFPACK32/64 5=UMFPACK64")
     ("verbose",        verbose,          0,          "amount of reported details")
     ("vtk",              vtk,              false,       "write solution to VTK file")
@@ -166,19 +166,21 @@ int main(int argc, char *argv[])
     std::unique_ptr<SymmetricPreconditioner<X,X>> mg;
 
     if (order==1)
-      mg = moveUnique(makeBPX(Amat,gridManager));
+    {
+      throw std::invalid_argument("order 1 not supported\n");
+      return -1;
+    } 
+    
+    
+    H1Space<Grid> p1Space(gridManager,gridManager.grid().leafGridView(),1);
+    if (storageScheme=="A")
+      mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseInverseStorageTag<double>(),gridManager.grid().maxLevel()));
+    else if (storageScheme=="L")
+      mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseCholeskyStorageTag<double>(),gridManager.grid().maxLevel()));
     else
     {
-      H1Space<Grid> p1Space(gridManager,gridManager.grid().leafGridView(),1);
-      if (storageScheme=="A")
-        mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseInverseStorageTag<double>(),gridManager.grid().maxLevel()));
-      else if (storageScheme=="L")
-        mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseCholeskyStorageTag<double>(),gridManager.grid().maxLevel()));
-      else
-      {
-        std::cerr << "unknown storage scheme provided\n";
-        return -1;
-      }
+      std::cerr << "unknown storage scheme provided\n";
+      return -1;
     }
 
     Pcg<X,X> pcg(sa,*mg,term,verbose);
@@ -204,7 +206,7 @@ int main(int argc, char *argv[])
     // VariableSet::VariableSet xx may be used beyond the do...while loop	
     xx.data = x.data;
     iter++; 
-    if (iter>2) 
+    if (iter>10) 
     {
       std::cout << "*** Maximum number of iterations exceeded ***" << std::endl;
       break;

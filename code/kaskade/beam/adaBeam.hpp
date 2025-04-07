@@ -102,14 +102,14 @@ public:
       Vector up(0.); up[dim-1] = 1.;                    // unit upward pointing vector
       auto n = (*faceIt)->centerUnitOuterNormal();      // unit outer normal of local face
       
-      Vector force(0.); force[dim-1] = -1.e7;
+      Vector force(0.); force[dim-1] = -1.e8;
       
-      if (n*left > 0.9)           // clamp beam on the left
+      if ( (n*left > 0.95) or (n*left < -0.95) )        // clamp beam on the left and right
       {
-        alpha = 1e14;
+        alpha = 1e16;
         beta  = 0.;
       }
-      else if( n*up > 0.9 )       // apply downward force on top
+      else if( n*up > 0.95 )       // apply downward force on top
       {
         alpha = 0.;
         beta  = force;

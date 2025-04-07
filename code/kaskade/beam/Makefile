@@ -7,3 +7,7 @@ INCLUDE = $(DUNEINC) $(UGINC) $(FUSIONINC) $(BOOSTINC) $(UMFPACKINC) $(MUMPSINC)
 
 adaBeam: adaBeam.o $(KASKADE7)/libs/libkaskade.a
 	$(CXX) $(FLAGS) $< $(KASKADE7)/libs/umfpack_solve.o $(ALLLIBS) $(INCLUDE) $(LINKFLAGS) -o $@
+
+clean:
+	rm -f *.o adaBeam
+	
