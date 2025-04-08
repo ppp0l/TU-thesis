@@ -44,6 +44,19 @@ def d2_model(x, dom = None) :
     
     return ret
 
+def d3_laplace(x, sensors) :
+    
+    x2 = np.sum(x**2, axis = 1, keepdims=True)
+    sens2 = np.sum(sensors**2, axis = 1, keepdims=True) 
+    xsensT = x.dot(sensors.transpose())
+    dist_sq = x2 + sens2.transpose() - 2 *xsensT
+    dist_sq[dist_sq <0] = 0
+    dist = np.sqrt( dist_sq )
+
+    return 1/(2*dist)
+
+
+
 def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dom = None) :
     dim = 3
     

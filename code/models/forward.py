@@ -22,6 +22,21 @@ class forward_model() :
             case 2 :
                 self.forward = af.d2_model
                 self.dout = 2
+            case 3 :
+                self.dout = 14
+                # sensors generation
+                nlat= 6
+                nlon = 4
+                i = np.array(list(range(nlat)))
+                j = np.array(list(range(nlon)))
+                latitude = np.reshape([np.cos(2*i*math.pi/nlat), np.sin(2*i*math.pi/nlat)], (2,1,nlat))
+                longitude = np.reshape([np.sin(j*math.pi/(nlon-1)), np.cos(j*math.pi/(nlon-1))], (2, nlon,1))
+                
+                sensors= np.array( [latitude[0]*longitude[0], latitude[1]*longitude[0], np.ones((1,6)) *longitude[1]], dtype=np.float16)
+                self.sensors = np.unique(np.reshape(sensors, (3, -1)).T, axis = 0).astype(float)
+
+                self.forward = self.d3_model
+                
             case 4 :
                 self.dout = 12
                 theta = np.linspace(0, 2*math.pi, self.dout+1)[:self.dout]
@@ -51,3 +66,7 @@ class forward_model() :
         
     def d4_model(self, x, dom = None) :
         return af.stationary_heat_eq(x, self.sensors)
+
+    def d3_model(self, x) :
+        return af.d3_laplace(x, self.sensors)
+        
