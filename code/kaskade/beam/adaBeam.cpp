@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   std::string material, storageScheme("A");
   
   if (getKaskadeOptions(argc,argv,Options
-    ("L",                L,                4.,          "length of the elastic beam")
+    ("L",                L,                3.,          "length of the elastic beam")
     ("W",                W,                0.2,        "width/ of the elastic beam")
     ("refinements",      refinements,      0,          "number of uniform grid refinements")
     ("order",            order,            1,          "finite element ansatz order")

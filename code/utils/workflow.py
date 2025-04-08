@@ -6,10 +6,30 @@ Created on Thu Jul 11 15:32:49 2024
 @author: pvillani
 """
 import csv
+import json
 import os
 import numpy as np
 import ast
 import torch
+
+def process_configuration(configuration):
+    """
+    Helper function processing the configuration dictionary to adjust types of certain entries.
+    """
+
+    for key, value in configuration["IP_config"].items():
+        if isinstance(value, list):
+            # Convert list to numpy array
+            configuration["IP_config"][key] = np.array(value)
+
+    configuration["training_config"]["n_init"] = int(configuration["training_config"]["n_init"])
+    configuration["training_config"]["n_it"] = int(configuration["training_config"]["n_it"])
+    configuration["training_config"]["points_per_it"] = int(configuration["training_config"]["points_per_it"])
+
+    configuration["sampling_config"]["n_walkers"] = int(configuration["sampling_config"]["n_walkers"])
+    configuration["sampling_config"]["sample_every"] = int(configuration["sampling_config"]["sample_every"])
+    configuration["sampling_config"]["init_samples"] = int(configuration["sampling_config"]["init_samples"])
+    configuration["sampling_config"]["final_samples"] = int(configuration["sampling_config"]["final_samples"])
 
 class Manager() :
     def __init__(self, path : str, dimension : int, try_per_param : int = 5):
@@ -20,59 +40,49 @@ class Manager() :
 
         self.dimension = dimension
         
-    def read_parameters(self, type_res = "full"):
+    def read_configuration(self, type_res = "AGP"):
         
         config_path = self.path+f'/data/d{self.dimension}'
         
-        with open(config_path+'/configurations.csv', 'r', newline='') as file:
-            parameter_reader = csv.DictReader(file, delimiter=',', quoting = csv.QUOTE_NONNUMERIC)
+        with open(config_path+'/config.json', 'r', newline='') as file:
+            configurations = json.load(file)
             
             
-            for i,parameters in enumerate(parameter_reader):
+            for i,configuration in enumerate(configurations):
                 
-                # if i == 0 : continue
-                # if i>1 and parameters["target"] != "L2" :
-                #     continue
-                
-                res_path= self.path+f'/outputs/d{self.dimension}{parameters["target"]}/FE{parameters["FE cost"]}'
+                res_path= self.path+f'/outputs/d{self.dimension}'
                 # parametri sono numerati
-                parameters['number'] = i
-                parameters['results path'] = res_path
-                parameters['value'] = np.array(ast.literal_eval(parameters['value']))
-                parameters["n_init"] = int(parameters["n_init"])
-                if "sensors" in parameters :
-                    parameters['sensors'] = np.array(ast.literal_eval(parameters['sensors']))
-
-                if "meas_time" in parameters :
-                    parameters['meas_time'] = np.array(ast.literal_eval(parameters['meas_time']))
-
+                configuration['number'] = i
+                configuration['res_path'] = res_path
 
                 if not os.path.exists(res_path):
                     os.makedirs(res_path)
                 
                 if not os.path.exists(res_path + os.sep + type_res + f'_res_{i}.csv' ):
                     # se non abbiamo mai fatto andare questo parametro, andata
-                    parameters['seed'] = 0
-                    self.configuration = parameters
-                    return parameters
+                    configuration['seed'] = 0
+                    process_configuration(configuration)
+                    self.configuration = configuration
+                    return configuration
                 
                 with open(res_path + os.sep + type_res + f'_res_{i}.csv' , 'r', newline='') as res_file :
                     num_lines = sum(1 for line in res_file) -1
                     if num_lines < self.try_per_param :
                         # se questo parametro e' andato meno di tot volte, andata
-                        parameters['seed'] = num_lines
-                        self.configuration = parameters
-                        return parameters
+                        configuration['seed'] = num_lines
+                        process_configuration(configuration)
+                        self.configuration = configuration
+                        return configuration
         
-        raise ValueError('All parameters in configurations.csv were tested enough times. Add more!')
+        raise ValueError('All configurations in config.json were tested enough times. Add more!')
     
     def save_results(self, results, type_res):
-        parameters = self.configuration
+        configuration = self.configuration
         
-        num = parameters['number']
-        seed = parameters['seed']
+        num = configuration['number']
+        seed = configuration['seed']
 
-        res_file_path = parameters['results path'] + '/' + type_res + f'_res_{num}.csv'
+        res_file_path = configuration['res_path'] + '/' + type_res + f'_res_{num}.csv'
 
         res_dict = {round(results['W'][i]) : results['target'][i] for i in range(len(results['W']))}
         if not os.path.exists(res_file_path ):
@@ -105,12 +115,15 @@ class Manager() :
             for line in data:
                 writer.writerow(line)
 
-    def state_saver(self, type_res, nit, W, model, samples = None) :
-        parameters = self.configuration
 
-        state_path = self.path+f'/data/d{self.dimension}{parameters["target"]}/states/FE{parameters["FE cost"]}'
-        num = parameters['number']
-        seed = parameters['seed']
+
+# TODO : state management not updated at all
+    def state_saver(self, type_res, nit, W, model, samples = None) :
+        configuration = self.configuration
+
+        state_path = self.path+f'/data/d{self.dimension}'
+        num = configuration['number']
+        seed = configuration['seed']
 
         state_path += f'/num{num}_{seed}'
 
@@ -143,54 +156,13 @@ class Manager() :
         tr_file = state_path + f'/it{nit}_{type_res}_training_set.pth'
         torch.save(tr_dict, tr_file)
         
-        
-    def save_other_metric(self, metric, type_res) :
 
-        print("Saving other metric...")
-        
-        parameters = self.configuration
-        
-        num = parameters['number'] % 5
-        res_path = parameters['results path'] + os.sep + ".other_metric"
-        
-        if not os.path.exists(res_path):
-            os.makedirs(res_path)
-
-        res_file_path =  res_path + os.sep + type_res + '.csv'
-        
-        value, _ = metric(other = True)
-        
-        if not os.path.exists(res_file_path ):
-            data = [[value]]
-        else :
-            with open(res_file_path, 'r', newline='') as res_file :
-                reader = csv.reader(res_file, delimiter=',', quoting = csv.QUOTE_NONNUMERIC )
-                data = list(reader)
-                
-            if len(data) > num:
-                data[num].append(value)
-            else : 
-                len_d = len(data)
-                for i in range(len_d, num) :
-                    data.append(dict())
-                data.append([value])
-        
-        with open(res_file_path, 'w', newline='') as res_file :
-            writer = csv.writer(res_file, delimiter = ',', quoting = csv.QUOTE_NONNUMERIC)
-
-            for line in data:
-                writer.writerow(line)
-
-        print("Done")
-        
-
-    
     def state_loader(self, model, type_res, initial = False) :
-        parameters = self.configuration
+        configuration = self.configuration
 
-        state_path = self.path+f'/data/d{self.dimension}{parameters["target"]}/states/FE{parameters["FE cost"]}'
-        num = parameters['number']
-        seed = parameters['seed']
+        state_path = self.path+f'/data/d{self.dimension}'
+        num = configuration['number']
+        seed = configuration['seed']
 
         state_path += f'/num{num}_{seed}'
 
