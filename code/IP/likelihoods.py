@@ -10,10 +10,11 @@ from scipy.stats import norm
 
 class base_likelihood() :
     
-    def __init__(self, y_m, var, model):
+    def __init__(self, y_m, std, model):
         
         self.y_m = y_m
-        self.var = var
+        self.std = std
+        self.var = std**2
         self.model = model
 
     def prob(self, p) :
