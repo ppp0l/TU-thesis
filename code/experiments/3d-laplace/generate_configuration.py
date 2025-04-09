@@ -43,7 +43,7 @@ pred = fm.predict(gt)
 
 # adaptive training parameters
 sample_every = 3
-n_it = sample_every * 10
+n_it = sample_every * 5
 points_per_it = 1
 n_init = 5
 default_tol_fixed = 0.001
@@ -77,7 +77,7 @@ for i in range(n_meas):
             "n_walkers": 32,
             "sample_every": sample_every,
             "init_samples": 200,
-            "final_samples": 1000,
+            "final_samples": 700,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,

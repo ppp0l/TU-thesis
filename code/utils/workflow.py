@@ -116,12 +116,10 @@ class Manager() :
                 writer.writerow(line)
 
 
-
-# TODO : state management not updated at all
-    def state_saver(self, type_res, nit, W, model, samples = None) :
+    def state_saver(self, type_res, nit, W, training_set, model, samples) :
         configuration = self.configuration
 
-        state_path = self.path+f'/data/d{self.dimension}'
+        state_path = self.path+f'/data/d{self.dimension}/'+type_res
         num = configuration['number']
         seed = configuration['seed']
 
@@ -131,42 +129,33 @@ class Manager() :
             os.makedirs(state_path)
 
         # save checkpoint parameters
-        with open(state_path + '/' + type_res + '_checkpoint_data.csv', 'a', newline='') as file :
+        with open(state_path + '/checkpoint_data.csv', 'a', newline='') as file :
             writer = csv.writer(file, delimiter = ',', quoting =csv.QUOTE_NONNUMERIC)
             writer.writerow([nit,W])
 
-        # if we have some samples, save them
-        if nit > 0 :
-            if type_res == 'lhs' :
-                pass
-            else:   
-                with open(state_path + f'/it{nit}_{type_res}_samples.npy', 'wb') as file:
-                    np.save(file, samples)
+        # save samples
+        with open(state_path + f'/it{nit}_samples.npy', 'wb') as file:
+            np.save(file, samples)
 
         # save current state of GP
-        GP_file = state_path + f'/it{nit}_{type_res}_model.pth'
-        torch.save(model.state_dict(), GP_file)
+        model_file = state_path + f'/it{nit}_model.pth'
+        torch.save(model.state_dict(), model_file)
 
         # save training set
-        tr_dict = {
-            'tr_p' : model.training_p,
-            'tr_y' : model.training_y,
-            'errs' : model.errors
-        }
-        tr_file = state_path + f'/it{nit}_{type_res}_training_set.pth'
-        torch.save(tr_dict, tr_file)
+        tr_file = state_path + f'/it{nit}_training_set.pth'
+        torch.save(training_set, tr_file)
         
 
     def state_loader(self, model, type_res, initial = False) :
         configuration = self.configuration
 
-        state_path = self.path+f'/data/d{self.dimension}'
+        state_path = self.path+f'/data/d{self.dimension}/'+type_res
         num = configuration['number']
         seed = configuration['seed']
 
         state_path += f'/num{num}_{seed}'
 
-        with open(state_path + '/' +  type_res + '_checkpoint_data.csv', 'r', newline='') as file :
+        with open(state_path + '/checkpoint_data.csv', 'r', newline='') as file :
             reader = csv.reader(file, delimiter = ',', quoting =csv.QUOTE_NONNUMERIC)
             
             for row in reader :
@@ -174,29 +163,20 @@ class Manager() :
                 if initial :
                     break
             nit = int(pars[0])
-            W = pars[1]
-    
-            
+            W = pars[1]            
         
-        GP_file = state_path + f'/it{nit}_{type_res}_model.pth'
-        GP_state_dict = torch.load(GP_file)
+        model_file = state_path + f'/it{nit}_model.pth'
+        state_dict = torch.load(model_file)
 
-        tr_file = state_path + f'/it{nit}_{type_res}_training_set.pth'
+        tr_file = state_path + f'/it{nit}_training_set.pth'
         tr_set = torch.load(tr_file)
-        train_p = tr_set['tr_p']
-        train_y = tr_set['tr_y']
-        errors = tr_set['errs']
+        train_p = tr_set['train_p']
+        train_y = tr_set['train_y']
+        errors = tr_set['errors']
 
         model.fit( train_p, train_y, noise = errors**2)
-        model.load_state_dict(GP_state_dict)
+        model.load_state_dict(state_dict)
         
-        if nit > 0 :
-            if type_res == 'lhs' :
-                samples = None
-            else:   
-                with open(state_path + f'/it{nit}_{type_res}_samples.npy', 'rb') as file:
-                    samples = np.load(file)
-        else :
-            samples = None
-
+        with open(state_path + f'/it{nit}_samples.npy', 'rb') as file:
+            samples = np.load(file)
         return nit, W, samples

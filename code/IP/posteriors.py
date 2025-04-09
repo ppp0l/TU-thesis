@@ -53,8 +53,11 @@ class Posterior:
         if self.sampler_start is None :
             raise ValueError("Initial position of sampler not defined, burn in or provide one.")
         
-        self.sampler.run_mcmc(self.sampler_start, n_steps, progress=True)
+        self.sampler.reset()
+        
+        self.sampler.run_mcmc(self.sampler_start, n_steps)
         self.sampler_start = self.sampler.get_last_sample()
+        chain = self.sampler.get_chain(flat= True)
 
-        return self.sampler.get_chain(flat= True)
+        return chain
 
