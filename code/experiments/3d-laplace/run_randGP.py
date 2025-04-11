@@ -21,6 +21,7 @@ from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
 dim = 3
+run_type = "randGP"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -31,14 +32,14 @@ path = args.path
 workflow_manager = Manager(path, dim)
 
 # loads configuration parameters
-configuration = workflow_manager.read_configuration()
+configuration = workflow_manager.read_configuration(run_type)
 IP_config = configuration["IP_config"]
 
 value = IP_config["measurement"]
 ground_truth = IP_config["ground_truth"]
 
 # sets seed
-reproducibility_seed(seed = configuration["seed"])
+reproducibility_seed(seed = configuration["seed"]+6)
 
 ### actual task
 

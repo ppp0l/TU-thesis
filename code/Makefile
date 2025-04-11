@@ -21,7 +21,12 @@ laplace_config: experiments/3d-laplace/generate_configuration.py
 laplace_exp: laplace_config
 		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 26) ; do \
 		python experiments/3d-laplace/run_AGP.py $(FLAGS); \
-		python experiments/3d-laplace/LHSGP.py $(FLAGS); \
+		python experiments/3d-laplace/run_LHSGP.py $(FLAGS); \
 		python experiments/3d-laplace/run_posAdGP.py $(FLAGS); \
 		python experiments/3d-laplace/run_randGP.py $(FLAGS); \
+		done
+
+laplace_LHS : laplace_config
+		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
+		python experiments/3d-laplace/run_LHSGP.py $(FLAGS); \
 		done

@@ -23,6 +23,7 @@ from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
 dim = 3
+run_type = "LHSGP"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -33,7 +34,7 @@ path = args.path
 workflow_manager = Manager(path, dim)
 
 # loads configuration parameters
-configuration = workflow_manager.read_configuration()
+configuration = workflow_manager.read_configuration("LHSGP")
 IP_config = configuration["IP_config"]
 
 value = IP_config["measurement"]
@@ -153,7 +154,7 @@ for i in range(n_it) :
     print("Evaluating model...")
     print()
     # evaluate model
-    new_vals, new_errs = fm.predict(new_pts, new_tols)
+    new_vals, new_errs = forward.predict(new_pts, new_tols)
     
     print("Done.")
     print()
