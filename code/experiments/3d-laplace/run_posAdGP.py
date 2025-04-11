@@ -4,8 +4,6 @@ created on: 2025/01/19
 @author: pvillani
 """
 import argparse
-import gc
-
 from utils.workflow import Manager
 
 import numpy as np
@@ -14,7 +12,7 @@ from models.forward import forward_model as fm
 from models.GP_models.MTSurrogate import MTModel
 
 from IP.priors import GaussianPrior
-from IP.likelihoods import base_likelihood, GP_likelihood
+from IP.likelihoods import GP_likelihood
 from IP.posteriors import Posterior 
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
@@ -55,9 +53,9 @@ param_space = {
 forward = fm(dim, "N", dom = param_space)
 
 # create prior
-mean = IP_config["prior_mean"]
-std = IP_config["prior_std"]
-prior = GaussianPrior(mean, std, param_space)
+prior_mean = IP_config["prior_mean"]
+prior_std = IP_config["prior_std"]
+prior = GaussianPrior(prior_mean, prior_std, param_space)
 
 meas_std = IP_config["measurement_std"]
 
@@ -89,4 +87,4 @@ n_walkers = sampling_config["n_walkers"]
 initial_pos = lhs(param_space["min"], param_space["max"], n_walkers)
 approx_posterior.initialize_sampler(n_walkers, initial_pos)
 
-run("posAdGP", training_set, surrogate, forward, approx_posterior, workflow_manager)
+run(run_type, training_set, surrogate, forward, approx_posterior, workflow_manager)

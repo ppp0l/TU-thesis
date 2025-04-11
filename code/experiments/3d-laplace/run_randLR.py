@@ -1,26 +1,20 @@
-"""
-created on: 2025/01/19
-
-@author: pvillani
-"""
 import argparse
-
 from utils.workflow import Manager
 
 import numpy as np
 
 from models.forward import forward_model as fm
-from models.GP_models.MTSurrogate import MTModel
+from models.lipschitz import lipschitz_regressor
 
 from IP.priors import GaussianPrior
-from IP.likelihoods import GP_likelihood
+from IP.likelihoods import lipschitz_likelihood
 from IP.posteriors import Posterior 
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
 dim = 3
-run_type = "AGP"
+run_type = "randLR"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -38,7 +32,7 @@ value = IP_config["measurement"]
 ground_truth = IP_config["ground_truth"]
 
 # sets seed
-reproducibility_seed(seed = configuration["seed"])
+reproducibility_seed(seed = configuration["seed"]+6)
 
 ### actual task
 
@@ -65,12 +59,12 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol_ada = training_config["default_tol_ada"]
+default_tol = training_config["default_tol_fixed"]
 
 # create surrogate
-surrogate = MTModel(num_tasks = forward.dout)
+surrogate = lipschitz_regressor(dim=3, dout=forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
-train_y, errors = forward.predict(train_p, tols = default_tol_ada * np.ones(n_init))
+train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
@@ -80,7 +74,7 @@ surrogate.fit(train_p, train_y, errors**2)
 
 
 # create approximate likelihood and posterior
-approx_likelihood = GP_likelihood(value, meas_std, surrogate)
+approx_likelihood = lipschitz_likelihood(value, meas_std, surrogate)
 approx_posterior = Posterior(approx_likelihood, prior)
 
 
@@ -88,5 +82,6 @@ sampling_config = configuration["sampling_config"]
 n_walkers = sampling_config["n_walkers"]
 initial_pos = lhs(param_space["min"], param_space["max"], n_walkers)
 approx_posterior.initialize_sampler(n_walkers, initial_pos)
+
 
 run(run_type, training_set, surrogate, forward, approx_posterior, workflow_manager)

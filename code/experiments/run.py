@@ -3,6 +3,13 @@ import gc
 import numpy as np
 
 
+import AL.L2_GP
+import AL.exp_err_red
+import AL.position.GP
+import AL.position.lips
+import AL.tolerance
+import AL.tolerance.GP
+import AL.tolerance.lips
 from utils.workflow import Manager
 
 from models.surrogate import Surrogate
@@ -10,12 +17,41 @@ from models.forward import forward_model
 
 from IP.posteriors import Posterior
 
-from AL.L2_GP import L2_approx
-from AL.position.GP import solve_pos_prob
-from AL.tolerance.GP import solve_acc_prob
-
+import AL
 from utils.plots import corner_plot
 
+def L1_target(surrogate, samples):
+
+    _, LB, UB = surrogate.predict(samples, return_bds=True)
+
+    return AL.exp_err_red.L1_err(LB, UB).mean()
+
+def L2_target(surrogate, samples):
+
+    _, std = surrogate.predict(samples, return_std=True)
+
+    return AL.L2_GP.L2_approx(std**2).mean()
+
+def solve_pos_prob( points_per_it, param_space, default_tol, surrogate, samples, FE_cost):
+
+    if "GP" in str(type(surrogate)) :
+        _, std_samples = surrogate.predict(samples, return_std=True)
+        std_samples = std_samples.mean(axis = 0)
+        return AL.position.GP.solve_pos_prob(points_per_it, param_space, default_tol, surrogate, samples, std_samples, FE_cost,)
+    
+    else :
+
+        return AL.position.lips.solve_pos_prob(points_per_it, param_space, default_tol, surrogate, samples)
+    
+def solve_acc_prob(candidates, W, surrogate, samples, FE_cost):
+
+    if "GP" in str(type(surrogate)) :
+        _, std_samples = surrogate.predict(samples, return_std=True)
+        std_samples = std_samples.mean(axis = 0)
+        return AL.tolerance.GP.solve_acc_prob(candidates, W, surrogate, samples, std_samples, FE_cost)
+    else :
+
+        return AL.tolerance.lips.solve_acc_prob(candidates, W, surrogate, samples, FE_cost)
 
 def run(run_type : str, 
         training_set : dict,
@@ -23,28 +59,27 @@ def run(run_type : str,
         fm : forward_model,
         posterior : Posterior,
         workflow_manager : Manager,
-        true_posterior : Posterior = None
         ) :
     
     match run_type :
         case "AGP" :
-            run_adaptive(training_set, surrogate, fm, posterior, workflow_manager, run_type,)
+            run_adaptive(training_set, surrogate, fm, posterior, workflow_manager, run_type, L2_target)
         case "ALR" :
-            run_adaptive(training_set, surrogate, fm, posterior, workflow_manager, run_type)
+            run_adaptive(training_set, surrogate, fm, posterior, workflow_manager, run_type, L1_target)
         case "posAdGP" :
-            run_fixed_tolerance(training_set, surrogate, fm, posterior, workflow_manager, run_type)
+            run_fixed_tolerance(training_set, surrogate, fm, posterior, workflow_manager, run_type, L2_target)
         case "posAdLR" :
-            run_fixed_tolerance(training_set, surrogate, fm, posterior, workflow_manager, run_type)
+            run_fixed_tolerance(training_set, surrogate, fm, posterior, workflow_manager, run_type, L1_target)
         case "randGP" :
-            run_random(training_set, surrogate, fm, posterior, workflow_manager, run_type)
+            run_random(training_set, surrogate, fm, posterior, workflow_manager, run_type, L2_target)
         case "randLR" :
-            run_random(training_set, surrogate, fm, posterior, workflow_manager, run_type)
+            run_random(training_set, surrogate, fm, posterior, workflow_manager, run_type, L1_target)
         case _ :
             raise ValueError(f"Unknown run type: {run_type}")
 
     
 
-def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str ):
+def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str, target):
     configuration = workflow_manager.configuration
 
     param_space = fm.dom
@@ -98,13 +133,11 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         # monitor convergence
         W = np.sum(errors**(-FE_cost))
 
-        _, std = surrogate.predict(shortened_samples, return_std=True)
-
-        curr_L2 = L2_approx(std**2).mean()
+        curr_target = target(surrogate, shortened_samples)
 
         # save results
         if i%sample_every == 0 :
-            workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+            workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
             training_set["train_p"] = train_p
             training_set["train_y"] = train_y
             training_set["errors"] = errors
@@ -113,14 +146,14 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print("Rietriving candidates...")
         print()
         # position problem
-        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, std, FE_cost )
+        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, FE_cost )
         print("Done.")
         print()
 
         print("Optimizing tolerances...")
         print()
         # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, std, FE_cost)
+        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
         print("Done.")
         print()
 
@@ -150,14 +183,13 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print("Done.")
         print()
 
-        _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = L2_approx(std**2).mean()
+        new_target = target(surrogate, shortened_samples)
 
 
         print()
         print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L2}")
-        print(f"Current L2 approx value: {new_L2}")
+        print(f"Precedent target approx value: {curr_target}")
+        print(f"Current target approx value: {new_target}")
         print(f"Points in the training set: {len(train_p)}")
         print()
 
@@ -178,14 +210,13 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     # monitor convergence
     W = np.sum(errors**(-FE_cost))
 
-    _, std = surrogate.predict(shortened_samples, return_std=True)
-    curr_L2 = L2_approx(std**2).mean()
+    curr_target = target(surrogate, shortened_samples)
 
     # save results
-    workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+    workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
     workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
 
-def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str ):
+def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str , target):
     configuration = workflow_manager.configuration
 
     param_space = fm.dom
@@ -239,11 +270,11 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
 
         _, std = surrogate.predict(shortened_samples, return_std=True)
 
-        curr_L2 = L2_approx(std**2).mean()
+        curr_target = target(surrogate, shortened_samples)
 
         # save results
         if i%sample_every == 0 :
-            workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+            workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
             training_set["train_p"] = train_p
             training_set["train_y"] = train_y
             training_set["errors"] = errors
@@ -252,7 +283,7 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         print("Rietriving candidates...")
         print()
         # position problem
-        new_pts = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, std, FE_cost )
+        new_pts = solve_pos_prob( points_per_it, param_space, default_tol, surrogate, shortened_samples, FE_cost )
         print("Done.")
         print()
 
@@ -277,14 +308,12 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         print("Done.")
         print()
 
-        _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = L2_approx(std**2).mean()
-
+        new_target = target(surrogate, shortened_samples)
 
         print()
         print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L2}")
-        print(f"Current L2 approx value: {new_L2}")
+        print(f"Precedent target approx value: {curr_target}")
+        print(f"Current target approx value: {new_target}")
         print(f"Points in the training set: {len(train_p)}")
         print()
 
@@ -304,15 +333,14 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
 
     # monitor convergence
     W = np.sum(errors**(-FE_cost))
-
-    _, std = surrogate.predict(shortened_samples, return_std=True)
-    curr_L2 = L2_approx(std**2).mean()
+    
+    curr_target = target(surrogate, shortened_samples)
 
     # save results
-    workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+    workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
     workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
 
-def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str ):
+def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str, target):
     configuration = workflow_manager.configuration
 
     dim = fm.dim
@@ -365,12 +393,10 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         # monitor convergence
         W = np.sum(errors**(-FE_cost))
 
-        _, std = surrogate.predict(shortened_samples, return_std=True)
-
-        curr_L2 = L2_approx(std**2).mean()
+        curr_target = target(surrogate, shortened_samples)
 
         # save results
-        workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+        workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
         training_set["train_p"] = train_p
         training_set["train_y"] = train_y
         training_set["errors"] = errors
@@ -405,14 +431,13 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         print("Done.")
         print()
 
-        _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = L2_approx(std**2).mean()
+        new_target = target(surrogate, shortened_samples)
 
 
         print()
         print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L2}")
-        print(f"Current L2 approx value: {new_L2}")
+        print(f"Precedent target approx value: {curr_target}")
+        print(f"Current target approx value: {new_target}")
         print(f"Points in the training set: {len(train_p)}")
         print()
 
@@ -433,11 +458,10 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
     # monitor convergence
     W = np.sum(errors**(-FE_cost))
 
-    _, std = surrogate.predict(shortened_samples, return_std=True)
-    curr_L2 = L2_approx(std**2).mean()
+    curr_target = target(surrogate, shortened_samples)
 
     # save results
-    workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+    workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
     workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
     
 
@@ -520,19 +544,19 @@ def run_adaptive_test(training_set : dict, surrogate : Surrogate, fm : forward_m
 
         _, std = surrogate.predict(shortened_samples, return_std=True)
 
-        curr_L2 = L2_approx(std**2).mean()
+        curr_L2 = AL.L2_GP.L2_approx(std**2).mean()
 
         print("Rietriving candidates...")
         print()
         # position problem
-        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, std, FE_cost )
+        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples,  FE_cost )
         print("Done.")
         print()
 
         print("Optimizing tolerances...")
         print()
         # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, std, FE_cost)
+        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
         print("Done.")
         print()
 
@@ -570,7 +594,7 @@ def run_adaptive_test(training_set : dict, surrogate : Surrogate, fm : forward_m
         W = np.sum(errors**(-FE_cost))
 
         _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = L2_approx(std**2).mean()
+        new_L2 = AL.L2_GP.L2_approx(std**2).mean()
 
         print()
         print(f"Iteration {i}")
@@ -601,7 +625,7 @@ def run_adaptive_test(training_set : dict, surrogate : Surrogate, fm : forward_m
     W = np.sum(errors**(-FE_cost))
 
     _, std = surrogate.predict(shortened_samples, return_std=True)
-    curr_L2 = L2_approx(std**2).mean()
+    curr_L2 = AL.L2_GP.L2_approx(std**2).mean()
 
     corner_plot(
         [cleaned_samples, cleaned_true[:len(cleaned_samples)]], 

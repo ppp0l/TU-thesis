@@ -1,8 +1,3 @@
-"""
-created on: 2025/01/19
-
-@author: pvillani
-"""
 import argparse
 import gc
 
@@ -11,18 +6,18 @@ from utils.workflow import Manager
 import numpy as np
 
 from models.forward import forward_model as fm
-from models.GP_models.MTSurrogate import MTModel
+from models.lipschitz import lipschitz_regressor
 
 from IP.priors import GaussianPrior
-from IP.likelihoods import GP_likelihood
+from IP.likelihoods import lipschitz_likelihood
 from IP.posteriors import Posterior 
 
-from AL.L2_GP import L2_approx
+from AL.exp_err_red import L1_err
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
 dim = 3
-run_type = "LHSGP"
+run_type = "LHSLR"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -41,6 +36,7 @@ ground_truth = IP_config["ground_truth"]
 
 # sets seed
 reproducibility_seed(seed = configuration["seed"])
+
 
 ### actual task
 
@@ -78,7 +74,7 @@ n_it = training_config["n_it"]//(sample_every)
 points = lhs(param_space["min"], param_space["max"], points_per_it*n_it+n_init)
 
 # create surrogate
-surrogate = MTModel(num_tasks = forward.dout)
+surrogate = lipschitz_regressor(dim = dim, dout = forward.dout)
 train_p = points[:n_init]
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 training_set = {
@@ -89,7 +85,7 @@ training_set = {
 surrogate.fit(train_p, train_y, errors**2)
 
 # create approximate likelihood and posterior
-approx_likelihood = GP_likelihood(value, meas_std, surrogate)
+approx_likelihood = lipschitz_likelihood(value, meas_std, surrogate)
 posterior = Posterior(approx_likelihood, prior)
 
 n_walkers = sampling_config["n_walkers"]
@@ -129,12 +125,12 @@ for i in range(n_it) :
     # monitor convergence
     W = np.sum(errors**(-FE_cost))
 
-    _, std = surrogate.predict(shortened_samples, return_std=True)
+    _, LB, UB = surrogate.predict(shortened_samples, return_bds=True)
 
-    curr_L2 = L2_approx(std**2).mean()
+    curr_L1 = L1_err(LB, UB).mean()
 
     # save results
-    workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+    workflow_manager.save_results({"W": [W], "target": [curr_L1]}, run_type)
     training_set["train_p"] = train_p
     training_set["train_y"] = train_y
     training_set["errors"] = errors
@@ -168,14 +164,14 @@ for i in range(n_it) :
     print("Done.")
     print()
 
-    _, std = surrogate.predict(shortened_samples, return_std=True)
-    new_L2 = L2_approx(std**2).mean()
+    _, LB, UB = surrogate.predict(shortened_samples, return_bds=True)
+    new_L1 = L1_err(LB, UB).mean()
 
 
     print()
     print(f"Iteration {i}")
-    print(f"Precedent L2 approx value: {curr_L2}")
-    print(f"Current L2 approx value: {new_L2}")
+    print(f"Precedent L2 approx value: {curr_L1}")
+    print(f"Current L2 approx value: {new_L1}")
     print(f"Points in the training set: {len(train_p)}")
     print()
 
@@ -196,9 +192,9 @@ shortened_samples = samples[::5]
 # monitor convergence
 W = np.sum(errors**(-FE_cost))
 
-_, std = surrogate.predict(shortened_samples, return_std=True)
-curr_L2 = L2_approx(std**2).mean()
+_, LB, UB = surrogate.predict(shortened_samples, return_bds=True)
+curr_L1 = L1_err(LB, UB).mean()
 
 # save results
-workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+workflow_manager.save_results({"W": [W], "target": [curr_L1]}, run_type)
 workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)

@@ -1,8 +1,3 @@
-"""
-created on: 2025/01/19
-
-@author: pvillani
-"""
 import argparse
 
 from utils.workflow import Manager
@@ -10,17 +5,17 @@ from utils.workflow import Manager
 import numpy as np
 
 from models.forward import forward_model as fm
-from models.GP_models.MTSurrogate import MTModel
+from models.lipschitz import lipschitz_regressor
 
 from IP.priors import GaussianPrior
-from IP.likelihoods import GP_likelihood
+from IP.likelihoods import lipschitz_likelihood
 from IP.posteriors import Posterior 
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
 dim = 3
-run_type = "AGP"
+run_type = "ALR"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -68,7 +63,7 @@ n_init = training_config["n_init"]
 default_tol_ada = training_config["default_tol_ada"]
 
 # create surrogate
-surrogate = MTModel(num_tasks = forward.dout)
+surrogate = lipschitz_regressor(dim = dim, dout = forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
 train_y, errors = forward.predict(train_p, tols = default_tol_ada * np.ones(n_init))
 training_set = {
@@ -80,7 +75,7 @@ surrogate.fit(train_p, train_y, errors**2)
 
 
 # create approximate likelihood and posterior
-approx_likelihood = GP_likelihood(value, meas_std, surrogate)
+approx_likelihood = lipschitz_likelihood(value, meas_std, surrogate)
 approx_posterior = Posterior(approx_likelihood, prior)
 
 
