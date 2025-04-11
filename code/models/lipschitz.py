@@ -20,6 +20,8 @@ class lipschitz_regressor(Surrogate) :
         
         if noise is None:
             noise = np.zeros_like(train_y)
+        elif noise.ndim == 1:
+            noise = noise.reshape(-1, 1) * np.ones((1, self.dout))
 
         self.train_x = train_x.reshape( (-1, self.dim))
         self.train_y = train_y.reshape( (-1, self.dout))
@@ -98,8 +100,10 @@ class lipschitz_regressor(Surrogate) :
         eps2 = (eps + eps.transpose((0,2,1)))
         
         L_mat = (dist_y )/dist_x - eps2/dist_x
+
+        alpha = 1.1 + np.exp(- len(x)/(self.dim**2))
         
-        L = np.nanmax(L_mat, axis = (1,2) )#*1.2
+        L = np.nanmax(L_mat, axis = (1,2) )*alpha
         
         self.L = L
         #self.L = 3

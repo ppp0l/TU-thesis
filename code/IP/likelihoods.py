@@ -13,6 +13,9 @@ class base_likelihood() :
     def __init__(self, y_m, std, model):
         
         self.y_m = y_m
+        if isinstance(std, (int, float)) :
+            std = np.ones(len(y_m)) * std
+            
         self.std = std
         self.var = std**2
         self.model = model

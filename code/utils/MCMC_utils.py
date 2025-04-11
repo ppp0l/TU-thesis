@@ -124,7 +124,11 @@ def mvt_sample(df, mean, cov, size, random):
     chi2 = random.chisquare(df, size) / df
 
     # calculate sqrt of covariance
-    svd_cov = np.linalg.svd(cov * (df - 2) / df)
+    try :
+        svd_cov = np.linalg.svd(cov * (df - 2) / df)
+    except np.linalg.LinAlgError as err:
+        print(cov)
+        raise err
     sqrt_cov = svd_cov[0] * np.sqrt(svd_cov[1]) @ svd_cov[2]
 
     return mean + snorm @ sqrt_cov / np.sqrt(chi2)[:, None]
@@ -219,6 +223,9 @@ class DIMEMove(RedBlueMove):
 
         # update AIMH proposal distribution
         newcumlweight = np.logaddexp(self.cumlweight, lweight)
+        old_prop_cov = self.prop_cov
+        old_cumlweight = self.cumlweight
+
         self.prop_cov = (
             np.exp(self.cumlweight - newcumlweight) * self.prop_cov
             + np.exp(lweight - newcumlweight) * ncov
@@ -228,6 +235,13 @@ class DIMEMove(RedBlueMove):
             + np.exp(lweight - newcumlweight) * nmean
         )
         self.cumlweight = newcumlweight + np.log(self.decay)
+
+        if np.any(np.isnan(self.prop_cov)) or np.any(np.isnan(self.prop_mean)):
+            print('this is happening')
+            self.prop_cov = np.eye(npar)
+            self.prop_mean = np.zeros(npar)
+            self.cumlweight = -np.inf
+            
 
     def get_proposal(self, x, xref, random):
         """Actual proposal function"""
@@ -249,13 +263,18 @@ class DIMEMove(RedBlueMove):
         xchnge = random.rand(nchain) <= self.aimh_prob
 
         # draw alternative candidates and calculate their proposal density
-        xcand = mvt_sample(
-            df=self.dft,
-            mean=self.prop_mean,
-            cov=self.prop_cov,
-            size=sum(xchnge),
-            random=random,
-        )
+        try :
+            xcand = mvt_sample(
+                df=self.dft,
+                mean=self.prop_mean,
+                cov=self.prop_cov,
+                size=sum(xchnge),
+                random=random,
+            )
+        except np.linalg.LinAlgError as err:
+            print(self.prop_cov)
+            print(self.prop_mean)
+            raise err
         lprop_old, lprop_new = multivariate_t.logpdf(
             np.vstack((x[None, xchnge], xcand[None])),
             self.prop_mean,
