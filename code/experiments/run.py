@@ -1,7 +1,7 @@
 import gc 
 
 import numpy as np
-
+import math
 
 import AL.L2_GP
 import AL.exp_err_red
@@ -36,7 +36,7 @@ def solve_pos_prob( points_per_it, param_space, default_tol, surrogate, samples,
 
     if "GP" in str(type(surrogate)) :
         _, std_samples = surrogate.predict(samples, return_std=True)
-        std_samples = std_samples.mean(axis = 0)
+
         return AL.position.GP.solve_pos_prob(points_per_it, param_space, default_tol, surrogate, samples, std_samples, FE_cost,)
     
     else :
@@ -99,10 +99,12 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     sample_every = sampling_config["sample_every"]
 
     default_tol = training_config["default_tol_ada"]
-    budget_ada = training_config["budget"]
-    budget_per_it = budget_ada / n_it
+    budget_ada = training_config["budget"]    
 
     FE_cost = configuration["forward_model_config"]["FE_cost"]
+    n_init = training_config["n_init"]
+
+    budget_per_it = (budget_ada - n_init * default_tol**-FE_cost)  / n_it
 
     n_init_samples = sampling_config["init_samples"]
     n_final_samples = sampling_config["final_samples"]
@@ -179,7 +181,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print("Updating surrogate...")
         print()
         # update surrogate
-        surrogate.fit(train_p, train_y, errors**2)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 
@@ -268,8 +270,6 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         # monitor convergence
         W = np.sum(errors**(-FE_cost))
 
-        _, std = surrogate.predict(shortened_samples, return_std=True)
-
         curr_target = target(surrogate, shortened_samples)
 
         # save results
@@ -304,7 +304,7 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
 
-        surrogate.fit(train_p, train_y, errors**2)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 
@@ -427,7 +427,7 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
 
-        surrogate.fit(train_p, train_y, errors**2)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 
@@ -584,7 +584,7 @@ def run_adaptive_test(training_set : dict, surrogate : Surrogate, fm : forward_m
         print()
 
         # update surrogate
-        surrogate.fit(train_p, train_y, errors**2)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 

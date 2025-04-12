@@ -82,7 +82,7 @@ training_set = {
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors**2)
+surrogate.fit(train_p, train_y, errors)
 
 # create approximate likelihood and posterior
 approx_likelihood = lipschitz_likelihood(value, meas_std, surrogate)
@@ -160,7 +160,7 @@ for i in range(n_it) :
     train_y = np.concatenate((train_y, new_vals), axis = 0)
     errors = np.concatenate((errors, new_errs), axis = 0)
 
-    surrogate.fit(train_p, train_y, errors**2)
+    surrogate.fit(train_p, train_y, errors)
     print("Done.")
     print()
 

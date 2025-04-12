@@ -247,7 +247,7 @@ class MTModel(Surrogate):
         self.kernel.double()
     
     
-    def fit(self, train_X, train_y, noise = None, **kwargs):
+    def fit(self, train_X, train_y, noise_std = None, **kwargs):
         self.check_inputs(train_X, y=train_y)
         self.dim = len(train_X[0])
         train_X = self.input_transform().forward(train_X)
@@ -256,10 +256,10 @@ class MTModel(Surrogate):
         self.train_X = train_X.to(self.device)
         self.train_y = train_y.to(self.device)
         
-        if (noise is None) :
+        if (noise_std is None) :
             self.noise = None
         else :
-            noise = self.input_transform().forward(noise)
+            noise = self.input_transform().forward(noise_std**2)
             self.noise = noise.to(self.device)
 
         # Create model
@@ -409,7 +409,7 @@ class MTModel(Surrogate):
     
     
 
-    def update(self, new_X, new_y, new_noise=None, updated_y = None, updated_noise = None):
+    def update(self, new_X, new_y, new_noise_std=None, updated_y = None, updated_noise = None):
 
         self.check_inputs(new_X, y=new_y)
         new_X = self.input_transform().forward(new_X)
@@ -433,10 +433,10 @@ class MTModel(Surrogate):
         self.train_X = torch.cat([self.train_X, new_X], dim=0)
         self.train_y = torch.cat([train_y, new_y], dim=0)
         
-        if (new_noise is None) or (self.noise is None):
+        if (new_noise_std is None) or (self.noise is None):
             self.noise=None
         else :
-            new_noise = self.input_transform().forward(new_noise)
+            new_noise = self.input_transform().forward(new_noise_std**2)
             new_noise = new_noise.to(self.device)
             
             self.noise = torch.cat([noise, new_noise], dim=0)

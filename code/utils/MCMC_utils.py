@@ -223,8 +223,6 @@ class DIMEMove(RedBlueMove):
 
         # update AIMH proposal distribution
         newcumlweight = np.logaddexp(self.cumlweight, lweight)
-        old_prop_cov = self.prop_cov
-        old_cumlweight = self.cumlweight
 
         self.prop_cov = (
             np.exp(self.cumlweight - newcumlweight) * self.prop_cov
@@ -237,7 +235,6 @@ class DIMEMove(RedBlueMove):
         self.cumlweight = newcumlweight + np.log(self.decay)
 
         if np.any(np.isnan(self.prop_cov)) or np.any(np.isnan(self.prop_mean)):
-            print('this is happening')
             self.prop_cov = np.eye(npar)
             self.prop_mean = np.zeros(npar)
             self.cumlweight = -np.inf

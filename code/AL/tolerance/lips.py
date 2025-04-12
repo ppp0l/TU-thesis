@@ -2,7 +2,6 @@ import numpy as np
 from scipy.optimize import minimize, LinearConstraint, Bounds
 
 from models.lipschitz import lipschitz_regressor
-from AL.exp_err_red import exp_upper, grad_exp_upper
 from AL.tolerance.GP import get_multistarts
 from AL.L2_GP import deps_dW
 
@@ -14,13 +13,16 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     current_accs = np.mean(lips.noise, axis = 1)
 
     target_pts = np.concatenate( (training_p, candidates), axis = 0)
-    current_precs = current_accs**(-1/cost) 
+    current_precs = current_accs**(-cost) 
 
     mean_p = lips.predict(target_pts)
     Ldist = lips.compute_Ldist(samples, oth_tr=candidates)
 
-    starts = get_multistarts(n_cands, W, current_precs)
-    current_precs = starts[0]
+    n_cands = len(candidates)    
+    current_precs = np.concatenate( (current_precs, np.zeros( n_cands) ) )
+    op_grad = acc_prob_grad(current_precs, mean_p, Ldist, lips, cost)
+
+    starts = get_multistarts(n_cands, W, current_precs, op_grad)
 
     # budget constraint, spend all of the budget
     budget_constraint = LinearConstraint( np.ones_like(current_precs), lb = np.sum(current_precs) + W, ub = np.sum(current_precs) + W)
@@ -74,7 +76,6 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
     best_candidates = candidates[best_precs[n_tr_pts:]>0]
     # recovers tolerance
     best_accs = best_precs[best_precs > 0]**(-1/cost)
-    best_accs = np.ones( (1,lips.dout)) * best_accs.reshape( (-1,1))
     
     return best_accs, best_candidates, updated[:n_tr_pts]
 

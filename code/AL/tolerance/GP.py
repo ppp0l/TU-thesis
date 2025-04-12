@@ -43,12 +43,18 @@ def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
     raw_var = GP.model.covar_module.task_covar_module.raw_var 
     constraint = GP.model.covar_module.task_covar_module.raw_var_constraint
     scale= constraint.transform(raw_var).detach().numpy()
+
+    # helps avoiding weird numbers
+    norm = L2_approx(std_samples**2).mean()
+
+    n_cands = len(candidates)
+    
+    old_precs = np.concatenate( (precs, np.zeros( n_cands) ) )
+    op_grad = acc_prob_grad(old_precs, dout, cost, ker_cand_samples, ker_cand, scale, norm )
     
     # multistarts
-    starts = get_multistarts( len(candidates), W, precs)
+    starts = get_multistarts( n_cands, W, old_precs, op_grad)
     
-    # first start is default
-    old_precs = starts[0]
 
     # budget constraint, spend all of the budget
     budget_constraint = LinearConstraint( np.ones_like(old_precs), lb = np.sum(old_precs) + W, ub = np.sum(old_precs) + W)
@@ -62,8 +68,6 @@ def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
     
     res_list = []
     
-    # helps avoiding weird numbers
-    norm = L2_approx(std_samples**2).mean()
 
     # iterate over starts
     for j, start in enumerate(starts) :
@@ -109,26 +113,43 @@ def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
     return best_accs, best_candidates, updated[:n_tr_pts]
 
 
-def get_multistarts(n_cands, W, precs) :
+def get_multistarts(n_cands, W, precs, grad) :
     """
     Multistarts for the accuracy problem.
     """
     
-    current = np.concatenate( (precs, np.zeros( n_cands) ) )
+    current = precs
     
     starts = [current]
     
-    n_old = len(precs)
+    n_old = len(precs) - n_cands
+
+    percentage = n_old//4
+    threshold = np.partition( np.abs(grad), -percentage)[-percentage]
+
+    best_indices = np.array(np.abs(grad) >= threshold)
+
+    p = 0.5
+    for index in best_indices :
+        ns = deepcopy(current)
+        ns[index] += p*W
+        starts.append(ns)
+    
+    # add some random starts
+    n_rand = n_old//4
     p = 0.7
-    new_start = deepcopy(current)
-    new_start[n_old: ] += np.full( n_cands,  p * W/n_cands)
-                
-    p = 0.4
-    new_start = deepcopy(current)
-    new_start[ : n_old ] += np.full( n_old,  p*W/n_old)
-    
-    q = 0.6
-    
+    random_indices = np.array([np.full(len(current),False) for _ in range(n_rand)])
+    rand_int = np.random.randint(0, len(current), size = (n_rand, n_old // 5 + 1))
+    for i, ints in enumerate(rand_int) :
+        random_indices[i][ints] = True
+
+    for indeces in random_indices :
+        ns = deepcopy(current)
+        ns[indeces] += p*W/np.sum(indeces)
+        starts.append(ns)
+                      
+    qs = [0.2, 0.4, 0.6]
+
     for vec in it.product([0,1], repeat = n_cands) :
         
         vec = np.array(vec, dtype = int)
@@ -136,11 +157,12 @@ def get_multistarts(n_cands, W, precs) :
         n_in = vec.sum()
         
         if n_in == 0 : continue 
+
+        for q in qs: 
+            ns = deepcopy(current)
+            ns[ n_old : ] += q*W/n_in * vec
     
-        ns = deepcopy(new_start)
-        ns[ n_old : ] += q*W/n_in * vec
-    
-        starts.append(ns)
+            starts.append(ns)
 
     return starts
 

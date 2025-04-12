@@ -173,7 +173,7 @@ class SOGPModel():
         
     
     
-    def fit(self, train_X, train_y, noise = None, **kwargs):
+    def fit(self, train_X, train_y, noise_std = None, **kwargs):
         
         self.check_inputs(train_X, y=train_y)
         train_X = self.input_transform().forward(train_X)
@@ -183,10 +183,10 @@ class SOGPModel():
         self.train_X = train_X.to(self.device)
         self.train_y = train_y.to(self.device)
         
-        if (noise is None) :
+        if (noise_std is None) :
             self.noise = None
         else :
-            noise = self.input_transform().forward(noise)
+            noise = self.input_transform().forward(noise_std**2)
             self.noise = noise.to(self.device)
 
         # Create model
@@ -324,7 +324,7 @@ class SOGPModel():
     
     
 
-    def update(self, new_X, new_y, new_noise, **kwargs):
+    def update(self, new_X, new_y, new_noise_std, **kwargs):
         
         self.check_inputs(new_X, y=new_y)
         new_X = self.input_transform().forward(new_X)
@@ -336,7 +336,7 @@ class SOGPModel():
 
         self.train_X = torch.cat([self.train_X, new_X], dim=0)
         self.train_y = torch.cat([self.train_y, new_y], dim=0)
-        self.noise = torch.cat([self.noise, new_noise], dim=0)
+        self.noise = torch.cat([self.noise, new_noise_std**2], dim=0)
 
         
         self.optimizer = None

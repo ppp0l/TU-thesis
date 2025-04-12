@@ -37,7 +37,7 @@ value = IP_config["measurement"]
 ground_truth = IP_config["ground_truth"]
 
 # sets seed
-reproducibility_seed(seed = configuration["seed"]+6)
+reproducibility_seed(seed = configuration["seed"])
 
 ### actual task
 
@@ -75,7 +75,7 @@ training_set = {
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors**2)
+surrogate.fit(train_p, train_y, errors)
 
 # create approximate likelihood and posterior
 approx_likelihood = GP_likelihood(value, meas_std, surrogate)

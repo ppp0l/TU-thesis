@@ -25,11 +25,6 @@ laplace_GP: laplace_config
 		python experiments/3d-laplace/run_posAdGP.py $(FLAGS); \
 		python experiments/3d-laplace/run_randGP.py $(FLAGS); \
 		done
-
-laplace_LHS : laplace_config
-		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
-		python experiments/3d-laplace/run_LHSGP.py $(FLAGS); \
-		done
 		
 laplace_LR : laplace_config
 		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
@@ -37,4 +32,9 @@ laplace_LR : laplace_config
 		python experiments/3d-laplace/run_LHSLR.py $(FLAGS); \
 		python experiments/3d-laplace/run_posAdLR.py $(FLAGS); \
 		python experiments/3d-laplace/run_randLR.py $(FLAGS); \
+		done
+
+missing_laplace : laplace_config
+		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
+		python experiments/3d-laplace/run_ALR.py $(FLAGS); \
 		done
