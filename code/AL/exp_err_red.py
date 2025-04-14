@@ -2,7 +2,7 @@ import numpy as np
 
 def L1_err(LB, UB) :
 
-    return np.sum(UB - LB, axis = 1)
+    return 1/(2*np.sqrt(3) ) *np.sum(UB - LB, axis = 1)
 
 def exp_upper(alpha, eps, LB, UB, componentwise = False) :
 

@@ -4,13 +4,15 @@ import json
 import argparse
 import os
 
+dim = 6
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
 args = parser.parse_args()
 path = args.path
 
-if not os.path.exists(path + "/data/d3"):
-    os.makedirs(path + "/data/d3/")
+if not os.path.exists(path + f"/data/d{dim}"):
+    os.makedirs(path + f"/data/d{dim}/")
 
 
 from models.forward import forward_model
@@ -18,15 +20,14 @@ from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
-dim = 3
-n_meas = 5
+n_meas = 4
 
 fm = forward_model(dim = dim)
 
 # IP parameters
-meas_std = 0.01
+meas_std = 0.05
 
-domain_bound = 1/2
+domain_bound = 1
 
 domain_upper_bound = np.ones(dim) * domain_bound
 domain_lower_bound = -np.ones(dim) * domain_bound
@@ -42,10 +43,10 @@ while not np.all(np.abs(gt) <= domain_bound):
 pred = fm.predict(gt)
 
 # adaptive training parameters
-sample_every = 3
+sample_every = 5
 n_it = sample_every * 5
 points_per_it = 1
-n_init = 5
+n_init = 15
 default_tol_fixed = 0.001
 default_tol_ada = 0.005
 FE_cost = 1
@@ -74,7 +75,7 @@ for i in range(n_meas):
             "budget": budget,
         },
         "sampling_config": {
-            "n_walkers": 32,
+            "n_walkers": 64,
             "sample_every": sample_every,
             "init_samples": 200,
             "final_samples": 700,
@@ -85,4 +86,4 @@ for i in range(n_meas):
     }
     configurations.append(config_dict)
 
-json.dump(configurations, open(path + "/data/d3/config.json", "w"), indent=4)
+json.dump(configurations, open(path + f"/data/d{dim}/config.json", "w"), indent=4)

@@ -4,13 +4,15 @@ import json
 import argparse
 import os
 
+dim = 3
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
 args = parser.parse_args()
 path = args.path
 
-if not os.path.exists(path + "/data/d3"):
-    os.makedirs(path + "/data/d3/")
+if not os.path.exists(path + f"/data/d{dim}"):
+    os.makedirs(path + f"/data/d{dim}/")
 
 
 from models.forward import forward_model
@@ -18,7 +20,6 @@ from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
-dim = 3
 n_meas = 5
 
 fm = forward_model(dim = dim)
@@ -85,4 +86,4 @@ for i in range(n_meas):
     }
     configurations.append(config_dict)
 
-json.dump(configurations, open(path + "/data/d3/config.json", "w"), indent=4)
+json.dump(configurations, open(path + f"/data/d{dim}/config.json", "w"), indent=4)

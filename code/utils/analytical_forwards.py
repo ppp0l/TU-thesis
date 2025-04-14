@@ -70,7 +70,7 @@ def d6_diffusion(x, sensors) :
     distp_sq = xp2 + sens2.transpose() - 2 *xp_sensT
     distn_sq = xn2 + sens2.transpose() - 2 *xn_sensT
 
-    return 30*(4*math.pi*time.T)**(-3/2) * ( np.exp( - distp_sq/(4*time.T)) - np.exp( - distn_sq/(4*time.T)) ) 
+    return 50*(4*math.pi*time.T)**(-3/2) * ( np.exp( - distp_sq/(4*time.T)) - np.exp( - distn_sq/(4*time.T)) ) 
 
 
 def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dom = None) :

@@ -18,7 +18,7 @@ laplace_config: experiments/3d-laplace/generate_configuration.py
 		$(CONDA_PY_SET) python experiments/3d-laplace/generate_configuration.py $(FLAGS)
 
 laplace_GP: laplace_config
-		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 26) ; do \
+		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
 		python experiments/run_AGP.py $(FLAGS) --dim 3; \
 		python experiments/run_LHSGP.py $(FLAGS) --dim 3; \
 		python experiments/run_posAdGP.py $(FLAGS) --dim 3; \
