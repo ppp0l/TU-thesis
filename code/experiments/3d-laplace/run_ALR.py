@@ -16,6 +16,7 @@ from experiments.run import run
 
 dim = 3
 run_type = "ALR"
+noise = "U"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -46,7 +47,7 @@ param_space = {
 }
 
 # create forward model,  sets noise type
-forward = fm(dim, "N", dom = param_space)
+forward = fm(dim, noise, dom = param_space)
 
 # create prior
 prior_mean = IP_config["prior_mean"]
