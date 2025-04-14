@@ -16,14 +16,16 @@ from AL.exp_err_red import L1_err
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
-dim = 3
 run_type = "LHSLR"
 noise = "U"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--dim", type=int, help="Dimension of the problem")
 args = parser.parse_args()
 path = args.path
+dim = args.dim
+
 
 # manages i/o
 workflow_manager = Manager(path, dim)

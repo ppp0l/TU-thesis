@@ -55,6 +55,22 @@ def d3_laplace(x, sensors) :
 
     return 1/(2*dist)
 
+def d6_diffusion(x, sensors) :
+    xp = x[:,:3]
+    xn = x[:,3:]
+
+    time = sensors[:,[3]]
+    sensors = sensors[:,:3]
+
+    xp2 = np.sum(xp**2, axis = 1, keepdims=True)
+    xn2 = np.sum(xn**2, axis = 1, keepdims=True)
+    sens2 = np.sum(sensors**2, axis = 1, keepdims=True)
+    xp_sensT = xp.dot(sensors.transpose())
+    xn_sensT = xn.dot(sensors.transpose())
+    distp_sq = xp2 + sens2.transpose() - 2 *xp_sensT
+    distn_sq = xn2 + sens2.transpose() - 2 *xn_sensT
+
+    return 30*(4*math.pi*time.T)**(-3/2) * ( np.exp( - distp_sq/(4*time.T)) - np.exp( - distn_sq/(4*time.T)) ) 
 
 
 def time_evolving_heat_eq(x, sensors, k = 1, ts = [1,2], dom = None) :

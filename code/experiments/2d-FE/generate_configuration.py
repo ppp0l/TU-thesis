@@ -9,8 +9,8 @@ parser.add_argument("--path", type=str, help="Path for data")
 args = parser.parse_args()
 path = args.path
 
-if not os.path.exists(path + "/data/d3"):
-    os.makedirs(path + "/data/d3/")
+if not os.path.exists(path + "/data/d6"):
+    os.makedirs(path + "/data/d6/")
 
 
 from models.forward import forward_model
@@ -42,8 +42,8 @@ while not np.all(np.abs(gt) <= domain_bound):
 pred = fm.predict(gt)
 
 # adaptive training parameters
-sample_every = 4
-n_it = sample_every * 6
+sample_every = 3
+n_it = sample_every * 5
 points_per_it = 1
 n_init = 5
 default_tol_fixed = 0.001

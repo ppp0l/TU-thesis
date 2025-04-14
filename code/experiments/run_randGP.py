@@ -4,7 +4,6 @@ created on: 2025/01/19
 @author: pvillani
 """
 import argparse
-
 from utils.workflow import Manager
 
 import numpy as np
@@ -19,14 +18,16 @@ from IP.posteriors import Posterior
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
-dim = 3
-run_type = "AGP"
+run_type = "randGP"
 noise = "N"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--dim", type=int, help="Dimension of the problem")
 args = parser.parse_args()
 path = args.path
+dim = args.dim
+
 
 # manages i/o
 workflow_manager = Manager(path, dim)
@@ -66,12 +67,12 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol_ada = training_config["default_tol_ada"]
+default_tol = training_config["default_tol_fixed"]
 
 # create surrogate
 surrogate = MTModel(num_tasks = forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
-train_y, errors = forward.predict(train_p, tols = default_tol_ada * np.ones(n_init))
+train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
@@ -89,5 +90,6 @@ sampling_config = configuration["sampling_config"]
 n_walkers = sampling_config["n_walkers"]
 initial_pos = lhs(param_space["min"], param_space["max"], n_walkers)
 approx_posterior.initialize_sampler(n_walkers, initial_pos)
+
 
 run(run_type, training_set, surrogate, forward, approx_posterior, workflow_manager)

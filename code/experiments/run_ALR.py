@@ -1,4 +1,5 @@
 import argparse
+
 from utils.workflow import Manager
 
 import numpy as np
@@ -13,14 +14,15 @@ from IP.posteriors import Posterior
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
-dim = 3
-run_type = "randLR"
+run_type = "ALR"
 noise = "U"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--dim", type=int, help="Dimension of the problem")
 args = parser.parse_args()
 path = args.path
+dim = args.dim
 
 # manages i/o
 workflow_manager = Manager(path, dim)
@@ -33,7 +35,7 @@ value = IP_config["measurement"]
 ground_truth = IP_config["ground_truth"]
 
 # sets seed
-reproducibility_seed(seed = configuration["seed"]+6)
+reproducibility_seed(seed = configuration["seed"])
 
 ### actual task
 
@@ -60,12 +62,12 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol = training_config["default_tol_fixed"]
+default_tol_ada = training_config["default_tol_ada"]
 
 # create surrogate
-surrogate = lipschitz_regressor(dim=3, dout=forward.dout)
+surrogate = lipschitz_regressor(dim = dim, dout = forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
-train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
+train_y, errors = forward.predict(train_p, tols = default_tol_ada * np.ones(n_init))
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
@@ -83,6 +85,5 @@ sampling_config = configuration["sampling_config"]
 n_walkers = sampling_config["n_walkers"]
 initial_pos = lhs(param_space["min"], param_space["max"], n_walkers)
 approx_posterior.initialize_sampler(n_walkers, initial_pos)
-
 
 run(run_type, training_set, surrogate, forward, approx_posterior, workflow_manager)

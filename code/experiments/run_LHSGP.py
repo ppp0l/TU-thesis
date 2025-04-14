@@ -21,14 +21,16 @@ from AL.L2_GP import L2_approx
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
-dim = 3
 run_type = "LHSGP"
 noise = "N"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--dim", type=int, help="Dimension of the problem")
 args = parser.parse_args()
 path = args.path
+dim = args.dim
+
 
 # manages i/o
 workflow_manager = Manager(path, dim)
