@@ -18,7 +18,7 @@ from gpytorch.priors import GammaPrior
 from gpytorch.likelihoods.multitask_gaussian_likelihood import _MultitaskGaussianLikelihoodBase
 from gpytorch.likelihoods.noise_models import FixedGaussianNoise
 from gpytorch.lazy import ConstantDiagLazyTensor, KroneckerProductLazyTensor
-from linear_operator.operators import KroneckerProductLinearOperator, DiagLinearOperator
+from linear_operator.operators import KroneckerProductLinearOperator, DiagLinearOperator, to_linear_operator
 
 from models.GP_models.transforms import TensorTransform
 from models.surrogate import Surrogate
@@ -32,7 +32,8 @@ from models.surrogate import Surrogate
         
 class FixedNoiseMultitaskLikelihood(_MultitaskGaussianLikelihoodBase):
     
-    def __init__(self, noise, num_tasks,
+    def __init__(self, noise, num_tasks, has_task_noise = False, 
+                 task_noise=None,
                  *args, 
                  **kwargs):
         
@@ -42,7 +43,8 @@ class FixedNoiseMultitaskLikelihood(_MultitaskGaussianLikelihoodBase):
         
         
         self.has_global_noise = True
-        self.has_task_noise = False
+        self.has_task_noise = has_task_noise
+        self.task_noise = task_noise
         
         
         
@@ -50,11 +52,14 @@ class FixedNoiseMultitaskLikelihood(_MultitaskGaussianLikelihoodBase):
         
         data_noise = self.noise_covar(*params, shape =(shape[0],), **kwargs)
         
-        eye = torch.ones(self.num_tasks, device=data_noise.device, dtype=data_noise.dtype)
+        if self.has_task_noise :
+            task_noise = to_linear_operator(self.task_noise)
+        else :
+            eye = torch.ones(self.num_tasks, device=data_noise.device, dtype=data_noise.dtype)
         
-        task_noise = DiagLinearOperator(
-            eye,
-        )
+            task_noise = DiagLinearOperator(
+                eye,
+            )
         
         return KroneckerProductLinearOperator(data_noise, task_noise)
     
@@ -75,7 +80,7 @@ class IndipendentMultiTaskGP(gpytorch.models.ExactGP):
         
         self.mean_module = gpytorch.means.MultitaskMean( gpytorch.means.ConstantMean() , N_tasks)
         
-        self.covar_module = gpytorch.kernels.MultitaskKernel( kernel, num_tasks= N_tasks, rank=0 )
+        self.covar_module = gpytorch.kernels.MultitaskKernel( kernel, num_tasks= N_tasks, rank=2 )
                                                              
 
     def forward(self, x):
@@ -179,7 +184,7 @@ class MTModel(Surrogate):
                     f"dimension 0 but are {X.shape[0]} and {y.shape[0]} respectively."
                 )
 
-    def create_model(self,):
+    def create_model(self, likelihood_has_task_noise=False, likelihood_task_noise=None):
 
         if self.num_tasks is None:
             self.num_tasks = self.train_y.shape[1]
@@ -212,7 +217,11 @@ class MTModel(Surrogate):
             #).to(self.device)
             # currently doesn't work
             # setup is that the covariance is `D \kron I` where `D` is user supplied
-            self.likelihood = FixedNoiseMultitaskLikelihood(num_tasks=self.num_tasks, noise=self.noise, rank=0)
+            self.likelihood = FixedNoiseMultitaskLikelihood(num_tasks=self.num_tasks, noise=self.noise, 
+                                                            has_task_noise=likelihood_has_task_noise, 
+                                                            task_noise=likelihood_task_noise, 
+                                                            rank=0
+                                                            )
 
         
         dims=self.train_X.shape[1]
@@ -263,7 +272,7 @@ class MTModel(Surrogate):
             self.noise = noise.to(self.device)
 
         # Create model
-        self.create_model()
+        self.create_model(**kwargs)
 
         # Switch the model to train mode
         self.model.train()

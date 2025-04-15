@@ -47,7 +47,7 @@ def solve_acc_prob(candidates, W, surrogate, samples, FE_cost):
 
     if "GP" in str(type(surrogate)) :
         _, std_samples = surrogate.predict(samples, return_std=True)
-        std_samples = std_samples.mean(axis = 0)
+        
         return AL.tolerance.GP.solve_acc_prob(candidates, W, surrogate, samples, std_samples, FE_cost)
     else :
 
