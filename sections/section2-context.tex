@@ -1,14 +1,17 @@
-\section{Inverse Problems} \label{sec:IP}
-Inverse Problems (IP) deal with the identification of some unknown parameter or function in a model through observations of the portion of reality that the model is intended to represent. \newline
+\section{Preliminaries} \label{sec:preliminaries}
+
+In the remainder of this section Section~\ref{sec:BIP} first introduces the basic concepts of Inverse Problems and then presents the Bayesian approach to IP, providing a general framework for the formulation of Bayesian Inverse Problems (BIPs) and the derivation of the posterior distribution of the unknown given the observations; Section~\ref{sec:IP-sol} presents some key techniques for the solution of IPs and their numerical treatment, with a focus on the Bayesian approach; Section~\ref{sec:PDE} introduces the basic concepts of Partial Differential Equation (PDE) models, with a focus on the Laplace equation, the diffusion equation and elastomechanic equations as they are the PDEs used in the numerical experiments of Section~\ref{sec:exp}; finally, Section~\ref{sec:AdaFE} presents the Finite Element (FE) method and its adaptive version, which is the solution method for PDEs considered throughout this work.
+
+\subsection{Bayesian Inverse Problems}\label{sec:BIP}
+
+The main reference for this section is Tim Sullivan's Introduction to Uncertainty Quantification~\cite{Sullivan2015}, and other sources will be quoted when utilized. \newline
+
+Inverse Problems (IP) deal with the identification of some unknown parameter or function in a model through observations of the portion of reality that the model is intended to represent.\newline
 A first approach to IP is that of Classical Inverse Problems, where the problem is treated in a deterministic framework, questions of well-posedness are tackled, and the solution is a point estimate of the unknown. 
 This framework can be expanded to a statistical approach to IP, where stochastic behavior of the observations is taken into consideration and some probabilistic tools such as the parameters' likelihood are introduced.
 Finally, in the Bayesian approach to IP the problem's unknowns are assumed to have random behavior, and probabilistic tools are utilized intensively. 
 In the Bayesian treatment, the problem is usually well-posed, but its solution is a probability distribution, requiring a more careful and complex numerical handling.\medskip
 
-The main reference for this section is Tim Sullivan's Introduction to Uncertainty Quantification~\cite{Sullivan2015}, and other sources will be quoted when utilized. \newline
-In the remainder of this section, Section~\ref{sec:IP-intro} introduces the basic concepts of Inverse Problems, providing a brief overview of the classical approach and the statistical approach to IP; Section~\ref{sec:BIP} introduces the Bayesian approach to IP, providing a general framework for the formulation of Bayesian Inverse Problems (BIPs) and the derivation of the posterior distribution of the unknown given the observations; finally, Section~\ref{sec:IP-sol} introduces some key techniques for the solution of IPs, with a focus on the Bayesian approach. 
-
-\subsection{Introduction to Inverse Problems}\label{sec:IP-intro}
 
 Inverse Problems deal with the problem of identifying the pre-image of an observation $y^m$ under a map \[y : \Theta \longrightarrow \mc Y \] known as the forward model; $\Theta$ is known as the parameter space and $\mc Y$ is the measurement or observation space.
 If a unique $p*$ in $\Theta$ such that
@@ -40,8 +43,6 @@ Statistical IPs, likelihood and LS
 \begin{equation}\label{eq:likelihood}
     L(p) = \pi_N(y^m - y(p))
 \end{equation}
-
-\subsection{Bayesian Inverse Problems}\label{sec:BIP}
 
 A natural development of the statistical approach to Inverse Problems are Bayesian Inverse Problems (BIPs). 
 In the Bayesian setting, the unknown solution $p*$ of the IP is treated as a random variable $P$ and the solution of the IP then becomes the conditional distribution $\bb P_{P \mid Y^m=y^m} $ of $P$ given $Y^m=y^m$.
@@ -102,3 +103,7 @@ Among other MCMC techniques, we mention Ensemble Sampling, whose implementation 
 Ensemble Sampling is a MCMC technique introduced by~\cite{GoodmanWeare} which guarantees invariancy with respect to affine transformation of the parameter space by utilizing multiple correlated chains. 
 The effectiveness of sampling crucially depends on the proposal function, which in the case of Ensemble samplers are also known as moves.
 As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
+
+\subsection{Partial differential equation models} \label{sec:PDE}
+
+\subsection{Adaptive Finite Element method} \label{sec:AdaFE}
