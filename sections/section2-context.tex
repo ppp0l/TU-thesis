@@ -4,45 +4,51 @@ In the remainder of this section Section~\ref{sec:BIP} first introduces the basi
 
 \subsection{Bayesian Inverse Problems}\label{sec:BIP}
 
-The main reference for this section is Tim Sullivan's Introduction to Uncertainty Quantification~\cite{Sullivan2015}, and other sources will be quoted when utilized. \newline
+The main reference for this section and the following is Tim Sullivan's Introduction to Uncertainty Quantification~\cite{Sullivan2015}, and other sources will be quoted when utilized. \medskip
 
 Inverse Problems (IP) deal with the identification of some unknown parameter or function in a model through observations of the portion of reality that the model is intended to represent.\newline
-A first approach to IP is that of Classical Inverse Problems, where the problem is treated in a deterministic framework, questions of well-posedness are tackled, and the solution is a point estimate of the unknown. 
-This framework can be expanded to a statistical approach to IP, where stochastic behavior of the observations is taken into consideration and some probabilistic tools such as the parameters' likelihood are introduced.
-Finally, in the Bayesian approach to IP the problem's unknowns are assumed to have random behavior, and probabilistic tools are utilized intensively. 
-In the Bayesian treatment, the problem is usually well-posed, but its solution is a probability distribution, requiring a more careful and complex numerical handling.\medskip
-
-
-Inverse Problems deal with the problem of identifying the pre-image of an observation $y^m$ under a map \[y : \Theta \longrightarrow \mc Y \] known as the forward model; $\Theta$ is known as the parameter space and $\mc Y$ is the measurement or observation space.
+Given a measurement $y^m$ in the measurement space $\mc Y$, also known as observation space, the goal of an IP is to identify the pre-image $p*$ in the parameter space $\Theta$ under a map \[y : \Theta \longrightarrow \mc Y \] known as the forward model or parameter-to-observation map.
 If a unique $p*$ in $\Theta$ such that
 \begin{equation}\label{eq:IP0}
     y(p*) = y^m
 \end{equation}
 exists, the IP admits a unique solution: but this case is an exception rather than a rule, especially when the observation $y^m$ is corrupted by noise.
 
-A number of techniques have been developed to address the numerous issues which arise in an IP.
+A number of techniques have been developed to address from an analytical perspective the numerous issues which arise in an IP.
 First, the problem can be reformulated as a least squares problem: for some norm $\| \cdot \| _\mc Y$ on $\mc Y$, Problem~\ref{eq:IP0} is generalized to a minimization problem
 \begin{equation}\label{eq:IP1}
     \min_{p\in \Theta} \| y(p) - y^m \|_\mc Y.
 \end{equation}
 Under regularity conditions such as $\Theta$ and $\mc Y$ being Banach spaces and $y$ being a continuous map, this formulation cannot yet guarantee neither existence, nor unicity, nor stability of a solution $p*$ for every $y^m \in \mc Y$. Nonetheless, Problem~\ref{eq:IP1} is more general as it allows for solutions even if $y^{-1}(\{y^m\} )= \emptyset$, and on the practical side suggests the adoption of optimization techniques to solve IPs.
 
-A second and often compatible approach is that of regularization techniques. This involves introducing additional information or constraints to stabilize the solution and make the problem well-posed. Regularization can be performed by the substitution of $y$ with some more treatable operator, or in the case of Variational Regularization by the formulation of a different minimization problem. Often, a regularization approach can be understood both from an operator approximation and a variational perspective: this applies to Tychonoff regularization, which can be seen as the addition of a stabilizing term to Problem~\ref{eq:IP1}
+A second and often compatible approach is that of regularization techniques. 
+This involves introducing additional information or constraints to stabilize the solution and make the problem well-posed. Regularization can be performed by the substitution of $y$ with some more treatable operator, or in the case of Variational Regularization by the formulation of a different minimization problem. 
+Often, a regularization approach can be understood both from an operator approximation and a variational point of view: this applies to Tychonoff regularization, which can be seen as the addition of a stabilizing term to Problem~\ref{eq:IP1}
 \begin{equation}\label{eq:Tycho}
-    \min_{p\in \Theta} \| y(p) - y^m \|_\mc Y^2 + \lambda\| p - p^0 \|_\Theta^2,
+    \min_{p\in \Theta} \big\| y(p) - y^m \big\|_\mc Y^2 + \lambda\big\| p - p^0 \big\|_\Theta^2,
 \end{equation}
 for some norm $\|\cdot\|_\Theta$ on $\Theta$, $p^0$ in $\Theta$ and $\lambda $ in $ \R^+$. \medskip
 
-
-Statistical IPs, likelihood and LS 
-
+As we will see in the next section, both these techniques can be understood by adopting a statistical perspective to IPs, which considers observations corrupted by noise with random behavior and known distribution.
+A parameter-to-observation relation is assumed, rendering the available observation $y^m$ a realization of a random variable $Y^m$ over the measurement space $\mc Y$.
+We consider an additive noise model
 \begin{equation}\label{eq:par-to-obs}
-    Y^m = y(p) + N
+    Y^m = y(p) + N,
 \end{equation}
+for noise $N$ with distribution $\bb P _N$. \newline
+Equation~\eqref{eq:par-to-obs} deals that for any $p$ in $\Theta$, the distribution of $Y^m$ given $p$, noted $\bb P_{Y^m \mid p}$, is given by 
+\[
+    \bb P_{Y^m \mid p} (A) = \bb P_N (A-y(p))
+\]
+for any Borel set $A$ in $\mc B (\mc Y)$. 
+Note that as $p$ is not a random variable, the distribution $\bb P_{Y^m \mid p}$ is not a conditional distribution and in this context the notation is meant to highlight the dependence of the distribution on the parameter $p$. \medskip
 
+For $\mc Y$ of finite dimension, the above equation can be expressed in terms of the probability density functions of $N$ and $Y^m$ with respect to the Lebesgue measure $m_\mc Y$.
+As a function of the parameter $p$, the density of $Y^m$ given $p$ is called likelihood and given by
 \begin{equation}\label{eq:likelihood}
-    L(p) = \pi_N(y^m - y(p))
+    L(p) = \pi_{Y^m \mid p} (y^m) = \pi_N(y^m - y(p)).
 \end{equation}
+The likelihood of a problem is a crucial element in statistical IPs. \medskip
 
 A natural development of the statistical approach to Inverse Problems are Bayesian Inverse Problems (BIPs). 
 In the Bayesian setting, the unknown solution $p*$ of the IP is treated as a random variable $P$ and the solution of the IP then becomes the conditional distribution $\bb P_{P \mid Y^m=y^m} $ of $P$ given $Y^m=y^m$.
@@ -63,7 +69,7 @@ In full generality, the following result guarantees the possibility of formulati
     Such map is known as the \textbf{regular conditional probability} of $P$ given $Y^m$.
 \end{thm}
 
-This results guarantees the well-definiteness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a likelihood. 
+This results guarantees the well-definiteness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a parameter-to-observation relation. 
 This is provided by Bayes' rule, which in generality is given by the following result from~\cite[Theorem 14]{DashtiStuart2017}:
 
 \begin{thm}[Bayes' rule]
@@ -83,13 +89,14 @@ This is provided by Bayes' rule, which in generality is given by the following r
 In the above theorem, $\bb P_P$ is the prior distribution of $P$ and $\bb P_{P \mid Y^m}(\cdot, y^m)$ is then the Bayesian posterior distribution of $P$ given $Y^m=y^m$.
 As in~\cite[Theorem 6.31]{Stuart2010}, under certain hypothesis over the measurement space $\mc Y$, the distribution of the noise $\bb P_N$ and the forward model $y$, one has that the conditions over $\frac{d \bb P_{Y^m\mid P}(\cdot, p)}{d\bb P_N}(y)$ hold, rendering the application of the Theorem possible. \medskip
 
-As for the scope of this work it is not necessary to work in full generality, from now on it will be assumed that the involved spaces $\Theta, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ are random vectors that admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\Theta \otimes m_\mc Y$. This allows for a more intuitive and direct formulation of the Bayesian posterior distribution of $P$ given $Y=y^m$ by exploiting the conditional probability density.
+As for the scope of this work it is not necessary to work in full generality, from now on it will be assumed that the involved spaces $\Theta, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ are random vectors that admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\Theta \otimes m_\mc Y$. 
+This allows for a more intuitive and direct formulation of the Bayesian posterior distribution of $P$ given $Y=y^m$ by exploiting the conditional probability density.
 
 \begin{thm}[Bayes' rule with Lebesgue measure]
     Let $Y = y(P) + N$ hold, with $P$ and $N$ independent and $y: \Theta \rightarrow \mc Y$ a measurable map.
-    Then the likelihood is \[
+    Then the conditional density of $Y^m$ given $P$ coincides with the likelihood~\eqref{eq:likelihood} is \[
         \pi_{Y^m\mid P = p}(y^m) = \pi_{N}(y^m - y( p) )
-    \] posterior distribution of $P$ given $Y^m=y^m$ is given by the probability density \begin{equation}\label{eq:Bayes}
+    \] and the posterior distribution of $P$ given $Y^m=y^m$ is given by the probability density \begin{equation}\label{eq:Bayes}
         \pi_{P\mid Y^m = y^m}(p) = \frac{\pi_{N}(y^m - y( p) ) \pi_P(p)}{\int_\Theta  \pi_{N}(y^m - y( p) ) \pi_P(p) \ dm_\Theta(p)},
     \end{equation}
 \end{thm}
