@@ -196,7 +196,7 @@ and some other fixed SPD matrix $\Sigma_0$, resulting in an estimator of the for
 \end{equation}
 where the parameter $\delta$ is an estimate of the value which minimizes the mean squared error of the estimator and given by 
 \begin{equation} \label{eq:shrinkage-delta}
-    \delta = \frac{1}{\big \|S - \Sigma^2_0 \big \|_F^2} \min \left( \frac{1}{s} \sum_{i=1}^{s} \big \|S - x_i \cdot x_i^T\big \|_F^2, \big \|S - \Sigma^2_0 \big\|_F^2 \right).
+    \delta = \frac{1}{\big \|S - \Sigma^2_0 \big \|_F^2} \min \left( \frac{1}{s^2} \sum_{i=1}^{s} \big \|S - x_i \cdot x_i^T\big \|_F^2, \big \|S - \Sigma^2_0 \big\|_F^2 \right).
 \end{equation}\medbreak
 
 In the present setting, we aim at estimating the noise covariance $\Sigma^2_D(\tau)$ of the discretization noise affecting the forward model evaluations at a given tolerance level $\tau$.
@@ -219,7 +219,7 @@ Thus, we can use the residuals $\tilde n_{i,j}$ to compute the empirical covaria
 where $n_{\text{tot}} = \sum_{i=1}^n r_j $ is the sample size of $\{\tilde  n_{i,j}\}_{i,j}$. \newline
 Then, the linear shrinkage estimator for the noise covariance $\Sigma^2_D(1)$ is given by
 \[
-    \hat \Sigma_D^2 = \delta \hat S + (1-\delta) I_{\text{dim}\mc Y},
+    \hat \Sigma_D^2 = \delta   I_{\text{dim}\mc Y} + (1-\delta) \hat S,
 \]
 where we adopted the identity matrix $I_{\text{dim}\mc Y}$ as the fixed matrix $\Sigma_0$ of Equation~\eqref{eq:shrinkage-estimator-gen} and the parameter $\delta$ is given by the formula~\eqref{eq:shrinkage-delta} with the substitution of $\{x_i\}$ by $\{\tilde n_{i,j}\}$, of $S$ by $\hat S$ and of $s$ by $n_{\text{tot}}$.\newline
 This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)$
