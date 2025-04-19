@@ -16,7 +16,7 @@ There exist different classes of surrogate models: an useful distinction is the 
 Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
 They provide an approximation of the forward model or the likelihood, but they do not provide by default an estimate of their own uncertainty.
 On the other hand, stochastic surrogate models are based on probabilistic assumptions and naturally provide an estimate of the uncertainty associated with their prediction.
-This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Sections~\ref{sec:GPlike} and~\ref{sec:LRlike}. \medbreak
+This is particularly useful in the context of BIPs, as the uncertainty of the surrogate model can be incorporated in to the problem's likelihood, as illustrated in Section~\ref{sec:likelihoods}. \medbreak
 
 We will adopt stochastic surrogate models, which for any $p \in \Theta$ provide a random prediction with a certain predictive distribution. 
 The surrogate model could thus be viewed as a stochastic process, but as this is not necessary for the scopes of this work, we see it as a function that to each parameter $p$ associates a probability distribution $ P( y(p) \mid D)$ in the set $\mc P (\mc Y)$ of probability distributions over $\mc Y$.
