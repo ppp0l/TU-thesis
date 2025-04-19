@@ -15,6 +15,8 @@ from IP.priors import GaussianPrior
 from IP.likelihoods import GP_likelihood
 from IP.posteriors import Posterior 
 
+from AL.cov_est import estimate_covariance
+
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 from experiments.run import run
 
@@ -72,12 +74,17 @@ default_tol = training_config["default_tol_fixed"]
 surrogate = MTModel(num_tasks = forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
+
+residuals, tolerances = forward.get_residuals()
+eval_cov = estimate_covariance(residuals, tolerances)
+
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors)
+surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+
 
 # create approximate likelihood and posterior
 approx_likelihood = GP_likelihood(value, meas_std, surrogate)

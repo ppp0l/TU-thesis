@@ -10,6 +10,7 @@ import AL.position.lips
 import AL.tolerance
 import AL.tolerance.GP
 import AL.tolerance.lips
+from AL.cov_est import estimate_covariance
 from utils.workflow import Manager
 
 from models.surrogate import Surrogate
@@ -111,6 +112,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
     
+    residuals, tolerances = fm.get_residuals()
 
     for i in range(n_it) :
         if i%sample_every == 0 :
@@ -128,6 +130,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
             else :
                 samples = samples[n_burn*n_walkers :]
             samples = np.concatenate( (samples, new_samples), axis = 0)
+
             print("Done.")
             print()
             shortened_samples = samples[::5]
@@ -149,24 +152,36 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print()
         # position problem
         candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, FE_cost )
+
         print("Done.")
         print()
 
         print("Optimizing tolerances...")
         print()
         # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
+        tols, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
+
         print("Done.")
         print()
 
-        new_tols = tolerances[len(train_p):]
-        update_tols = tolerances[:len(train_p)]
+        new_tols = tols[len(train_p):]
+        update_tols = tols[:len(train_p)]
 
         print("Evaluating model...")
         print()
         # evaluate model
         if np.any(updated) :
             train_y[updated], errors[updated] = fm.predict(train_p[updated], update_tols[updated])
+
+            upd_residuals, upd_tolerances = fm.get_residuals()
+            k = 0
+            for i, upd in enumerate(updated) :
+                if upd :
+                    residuals[i] = upd_residuals[i-k]
+                    tolerances[i] = upd_tolerances[i-k]
+                else :
+                    k+=1
+
 
         if len(new_pts) > 0:
             new_vals, new_errs = fm.predict(new_pts, new_tols)
@@ -175,13 +190,19 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
             train_y = np.concatenate((train_y, new_vals), axis = 0)
             errors = np.concatenate((errors, new_errs), axis = 0)
 
+            new_residuals, new_tolerances = fm.get_residuals()
+
+            residuals = [*residuals, *new_residuals]
+            tolerances = [*tolerances, *new_tolerances]
+
+        eval_cov = estimate_covariance(residuals, tolerances)
         print("Done.")
         print()
 
         print("Updating surrogate...")
         print()
         # update surrogate
-        surrogate.fit(train_p, train_y, errors)
+        surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
         print("Done.")
         print()
 
@@ -246,6 +267,7 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
     
+    residuals, tolerances = fm.get_residuals()
 
     for i in range(n_it) :
         if i%sample_every == 0 :
@@ -304,7 +326,14 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
 
-        surrogate.fit(train_p, train_y, errors)
+        new_residuals, new_tolerances = fm.get_residuals()
+
+        residuals = [*residuals, *new_residuals]
+        tolerances = [*tolerances, *new_tolerances]
+
+        eval_cov = estimate_covariance(residuals, tolerances)
+        
+        surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
         print("Done.")
         print()
 
@@ -368,7 +397,8 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
     n_final_samples = sampling_config["final_samples"]
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
-    
+
+    residuals, tolerances = fm.get_residuals()
 
     for i in range(n_it) :
 
@@ -427,7 +457,14 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
 
-        surrogate.fit(train_p, train_y, errors)
+        new_residuals, new_tolerances = fm.get_residuals()
+
+        residuals = [*residuals, *new_residuals]
+        tolerances = [*tolerances, *new_tolerances]
+
+        eval_cov = estimate_covariance(residuals, tolerances)
+
+        surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
         print("Done.")
         print()
 

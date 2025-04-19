@@ -18,6 +18,7 @@ from IP.likelihoods import GP_likelihood
 from IP.posteriors import Posterior 
 
 from AL.L2_GP import L2_approx
+from AL.cov_est import estimate_covariance
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
@@ -84,12 +85,16 @@ points = lhs(param_space["min"], param_space["max"], points_per_it*n_it+n_init)
 surrogate = MTModel(num_tasks = forward.dout)
 train_p = points[:n_init]
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
+
+residuals, tolerances = forward.get_residuals()
+eval_cov = estimate_covariance(residuals, tolerances)
+
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors)
+surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
 
 # create approximate likelihood and posterior
 approx_likelihood = GP_likelihood(value, meas_std, surrogate)
@@ -167,7 +172,14 @@ for i in range(n_it) :
     train_y = np.concatenate((train_y, new_vals), axis = 0)
     errors = np.concatenate((errors, new_errs), axis = 0)
 
-    surrogate.fit(train_p, train_y, errors)
+    new_residuals, new_tolerances = forward.get_residuals()
+
+    residuals = [*residuals, *new_residuals]
+    tolerances = [*tolerances, *new_tolerances]
+
+    eval_cov = estimate_covariance(residuals, tolerances)
+
+    surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
     print("Done.")
     print()
 
