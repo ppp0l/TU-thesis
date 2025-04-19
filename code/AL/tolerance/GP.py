@@ -124,7 +124,7 @@ def get_multistarts(n_cands, W, precs, grad) :
     
     n_old = len(precs) - n_cands
 
-    percentage = n_old//4
+    percentage = n_old//6
     threshold = np.partition( np.abs(grad), -percentage)[-percentage]
 
     best_indices = np.array(np.abs(grad) >= threshold)
@@ -136,7 +136,7 @@ def get_multistarts(n_cands, W, precs, grad) :
         starts.append(ns)
     
     # add some random starts
-    n_rand = n_old//4
+    n_rand = n_old//7
     p = 0.7
     random_indices = np.array([np.full(len(current),False) for _ in range(n_rand)])
     rand_int = np.random.randint(0, len(current), size = (n_rand, n_old // 5 + 1))
@@ -148,7 +148,7 @@ def get_multistarts(n_cands, W, precs, grad) :
         ns[indeces] += p*W/np.sum(indeces)
         starts.append(ns)
                       
-    qs = [0.2, 0.4, 0.6]
+    qs = [0.3, 0.7]
 
     for vec in it.product([0,1], repeat = n_cands) :
         

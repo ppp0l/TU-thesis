@@ -15,10 +15,12 @@ from itertools import product
 from skopt.sampler import Lhs
 from skopt.space import Space
 
+from scipy.linalg import sqrtm
+
 __all__ = ['reproducibility_seed', 
            'projection_on_simplex', 
-           'flat_prior', 
            'latin_hypercube_sampling',
+           'discretization_error_matrix'
            ]
 
 def reproducibility_seed(seed: int) -> None:
@@ -28,6 +30,15 @@ def reproducibility_seed(seed: int) -> None:
     np.random.seed(seed)
     torch.manual_seed(seed)
 
+def discretization_error_matrix(sensors, sigma=2):
+    sens_sq = np.sum(sensors**2, axis = 1, keepdims=True)
+    sens_sensT = sensors.dot(sensors.T)
+    dist_sq = sens_sq + sens_sq.T - 2 * sens_sensT
+
+    cov = np.exp(-sigma*dist_sq)
+
+    std = sqrtm(cov)
+    return std
     
     
 def norm_sq(x, mat, pos = True):

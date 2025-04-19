@@ -6,22 +6,25 @@ Created on Tue Dec  3 12:01:15 2024
 @author: pvillani
 """
 from utils.errors import gaussian_error, uniform_error
+from utils.utils import discretization_error_matrix
 import utils.analytical_forwards as af
 
 import numpy as np
 import math
 
 class forward_model() :
-    def __init__(self, dim, error = "N", dom = None) :
+    def __init__(self, dim, error = "N", dom = None, corr = False) :
         
         self.dim = dim
         match dim :
             case 1 :
                 self.forward = af.d1_model
                 self.dout = 1
+                self.eval_std = np.eye(self.dout)
             case 2 :
                 self.forward = af.d2_model
                 self.dout = 2
+                self.eval_std = np.eye(self.dout)
             case 3 :
                 self.dout = 14
                 # sensors generation
@@ -36,6 +39,11 @@ class forward_model() :
                 self.sensors = np.unique(np.reshape(sensors, (3, -1)).T, axis = 0).astype(float)
 
                 self.forward = self.d3_model
+
+                if corr and error == "N" :
+                    self.eval_std = discretization_error_matrix(self.sensors)
+                else :
+                    self.eval_std = np.eye(self.dout)
                 
             case 4 :
                 self.dout = 12
@@ -88,7 +96,13 @@ class forward_model() :
                 times = [0.3, 0.5]
 
                 self.sensors = np.concatenate( [np.append(sensors, t *np.ones((len(sensors),1)), axis = 1) for t in times], axis = 0)         
-                self.forward = self.d6_model           
+                self.forward = self.d6_model  
+
+                if corr and error == "N" :
+                    self.eval_std = discretization_error_matrix(self.sensors)
+                else :
+                    self.eval_std = np.eye(self.dout)
+                         
 
             case _ :
                 raise NotImplementedError("only 1d case as for now")
@@ -105,13 +119,64 @@ class forward_model() :
         n_pts = len(p)
         
         val = self.forward(p, **kwargs)
-        
+
         val = val.reshape( (n_pts, -1))
+
         if np.all(tols > 0):
-            return self.discr_err(val, tols), tols
+            noise_std = tols.reshape((n_pts, 1,1))
+            noise_std = np.kron(noise_std, np.eye(self.dout))
+            noise_std = noise_std @ self.eval_std 
+
+            resp = self.discr_err(val, noise_std)
+
+            self.true_err = val-resp
+            self.last_tols = tols
+
+            return resp, tols
         else:
             return val
         
+    def get_residuals(self):
+        """
+        Simulates residuals in FE evaluations for testing the covariance estimation in the GP model.
+        """
+        n_pts = len(self.last_tols)
+
+        residuals = []
+
+        tolerances = []
+        
+        for i in range(n_pts):
+            curr_tol = self.last_tols[i]
+
+            tol_levels = -int(np.floor(np.log(curr_tol)))
+            if tol_levels < 1 :
+                tol_levels = 1
+            elif tol_levels > 10 :
+                tol_levels = 10
+            tols = np.exp( - np.array( list(range(tol_levels)) ) -1 )
+            tols = tols * curr_tol / np.exp(-tol_levels)
+
+            tolerances.append(tols)
+
+            true_err = self.true_err[i]
+
+            res = np.random.normal(size = (tol_levels, self.dout, 1))
+            res = self.eval_std @ res
+            res = res.reshape((tol_levels, -1))
+            res = res * tols.reshape((-1,1))
+
+            weights = np.linspace(0.2, 1.5, tol_levels).reshape(-1,1)
+            res = (2-weights) * res + weights * true_err.reshape((1, -1))
+            res /= np.sqrt( (2-weights)**2 + weights**2 )
+
+            residuals.append(res)
+
+        return residuals, tolerances
+
+
+
+
     def d4_model(self, x, dom = None) :
         return af.stationary_heat_eq(x, self.sensors)
 

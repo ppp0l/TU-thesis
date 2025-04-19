@@ -16,7 +16,7 @@ class lipschitz_regressor(Surrogate) :
 
         self.L = 0
 
-    def fit(self, train_x, train_y, noise = None):
+    def fit(self, train_x, train_y, noise = None, **kwargs):
         
         if noise is None:
             noise = np.zeros_like(train_y)

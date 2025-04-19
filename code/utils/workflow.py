@@ -141,6 +141,14 @@ class Manager() :
         model_file = state_path + f'/it{nit}_model.pth'
         torch.save(model.state_dict(), model_file)
 
+        try: 
+            if model.model.likelihood.has_task_noise :
+                task_cov = model.model.likelihood.task_noise.detach().numpy()
+                task_cov_file = state_path + f'/it{nit}_task_cov.npy'
+                np.save(task_cov_file, task_cov)
+        except AttributeError:
+            pass
+
         # save training set
         tr_file = state_path + f'/it{nit}_training_set.pth'
         torch.save(training_set, tr_file)
@@ -174,7 +182,11 @@ class Manager() :
         train_y = tr_set['train_y']
         errors = tr_set['errors']
 
-        model.fit( train_p, train_y, noise = errors**2)
+        if os.path.exists(state_path + f'/it{nit}_task_cov.npy'):
+            task_cov = np.load(state_path + f'/it{nit}_task_cov.npy')
+            model.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=task_cov)
+        else :
+            model.fit( train_p, train_y, noise = errors)
         model.load_state_dict(state_dict)
         
         with open(state_path + f'/it{nit}_samples.npy', 'rb') as file:
