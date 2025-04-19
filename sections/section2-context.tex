@@ -41,8 +41,7 @@ Equation~\eqref{eq:par-to-obs} deals that for any $p$ in $\Theta$, the distribut
     \bb P_{Y^m \mid p} (A) = \bb P_N (A-y(p))
 \]
 for any Borel set $A$ in $\mc B (\mc Y)$. 
-Note that as $p$ is not a random variable, the distribution $\bb P_{Y^m \mid p}$ is not a conditional distribution and in this context the notation is meant to highlight the dependence of the distribution on the parameter $p$. \medskip
-
+Note that as $p$ is not a random variable, the distribution $\bb P_{Y^m \mid p}$ is not a conditional distribution and in this context the notation is meant to highlight the dependence of the distribution on the parameter $p$. \newline
 For $\mc Y$ of finite dimension, the above equation can be expressed in terms of the probability density functions of $N$ and $Y^m$ with respect to the Lebesgue measure $m_\mc Y$.
 As a function of the parameter $p$, the density of $Y^m$ given $p$ is called likelihood and given by
 \begin{equation}\label{eq:likelihood}
@@ -66,7 +65,7 @@ In full generality, the following result guarantees the possibility of formulati
                 \int_B \bb P_{P \mid Y^m}(A, Y^m(\omega)) \ d\bb P(\omega)= \int_B \ind_A(P(\omega)) \ d\bb P(\omega).
                 \] 
     \end{itemize}
-    Such map is known as the \textbf{regular conditional probability} of $P$ given $Y^m$.
+    Such map is known as the regular conditional probability of $P$ given $Y^m$ and any map satisfying the first two properties is called a Markov kernel.
 \end{thm}
 
 This results guarantees the well-definiteness of conditional probabilities in a general setting, thus allowing for the formulation of BIPs in arbitrary dimensionality, but does not provide a direct way to formulate the posterior distribution given a parameter-to-observation relation. 
@@ -89,22 +88,86 @@ This is provided by Bayes' rule, which in generality is given by the following r
 In the above theorem, $\bb P_P$ is the prior distribution of $P$ and $\bb P_{P \mid Y^m}(\cdot, y^m)$ is then the Bayesian posterior distribution of $P$ given $Y^m=y^m$.
 As in~\cite[Theorem 6.31]{Stuart2010}, under certain hypothesis over the measurement space $\mc Y$, the distribution of the noise $\bb P_N$ and the forward model $y$, one has that the conditions over $\frac{d \bb P_{Y^m\mid P}(\cdot, p)}{d\bb P_N}(y)$ hold, rendering the application of the Theorem possible. \medskip
 
-As for the scope of this work it is not necessary to work in full generality, from now on it will be assumed that the involved spaces $\Theta, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ are random vectors that admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\Theta \otimes m_\mc Y$. 
+As for the scope of this work it is not necessary to work in full generality, now and for the rest of this work on it will be assumed that the involved spaces $\Theta, \  \mc Y$ are finite dimensional Banach spaces, and that $P$ and $Y$ are random vectors that admit a joint probability density function $\pi_{P,Y}$ with respect to the Lebesgue product measure $m_\Theta \otimes m_\mc Y$. 
 This allows for a more intuitive and direct formulation of the Bayesian posterior distribution of $P$ given $Y=y^m$ by exploiting the conditional probability density.
 
 \begin{thm}[Bayes' rule with Lebesgue measure]
     Let $Y = y(P) + N$ hold, with $P$ and $N$ independent and $y: \Theta \rightarrow \mc Y$ a measurable map.
-    Then the conditional density of $Y^m$ given $P$ coincides with the likelihood~\eqref{eq:likelihood} is \[
-        \pi_{Y^m\mid P = p}(y^m) = \pi_{N}(y^m - y( p) )
+    Then the conditional density of $Y^m$ given $P$ coincides with the likelihood~\eqref{eq:likelihood}, \[
+        \pi_{Y^m\mid P = p}(y^m) = \pi_{N}(y^m - y( p) ) = L(p),
     \] and the posterior distribution of $P$ given $Y^m=y^m$ is given by the probability density \begin{equation}\label{eq:Bayes}
-        \pi_{P\mid Y^m = y^m}(p) = \frac{\pi_{N}(y^m - y( p) ) \pi_P(p)}{\int_\Theta  \pi_{N}(y^m - y( p) ) \pi_P(p) \ dm_\Theta(p)},
+        \pi_{P\mid Y^m = y^m}(p) = \frac{\pi_{N}(y^m - y( p) ) \pi_P(p)}{\pi_{Y^m}(y^m)},
     \end{equation}
+    where $\pi_{Y^m}(y^m)$ is the marginal density of $Y^m$ given by
+    \[
+        \pi_{Y^m}(y^m) = \int_\Theta  \pi_{N}(y^m - y( p) ) \pi_P(p) \ dm_\Theta(p).
+    \]
 \end{thm}
 
-\subsection{Solution of Inverse Problems}\label{sec:IP-sol}
-ML/MAP\medskip
+\subsection{Solutions of Inverse Problems}\label{sec:IP-sol}
 
-MCMC (mention effective size sampling)\medskip
+What it means to solve an IP depends on its formulation and on the objectives that the solution serves.   
+The least-squares formulation~\eqref{eq:IP1}, the regularization approach~\eqref{eq:Tycho} and non-Bayesian statistical IPs usually rely on point estimates; the Bayesian formulation instead can also provide a posterior distribution of the unknown given the observations. \medskip
+
+In a statistical framework, the likelihood~\eqref{eq:likelihood} can be utilized to obtain a point estimate of the unknown $p*$ by Maximum Likeihood (ML) estimation
+\begin{equation}\label{eq:ML}
+    p^* = \arg \max_{p \in \Theta} L(p),
+\end{equation}
+which maximizes the likelihood of the observations $y^m$ given the parameter $p$.
+As the likelihood often decays rapidly it is common to minimize the negative log-likelihood instead, solving the mathematically equivalent but numerically more stable problem \[
+    p^* = \arg \min_{p \in \Theta} -\log L(p).
+\]
+For normal centered noise $N \sim \mc N(0, \Sigma^2)$, the negative log-likelihood is given by
+\[
+    -\log L(p) = \frac{1}{2} \| y^m - y(p) \|_{\Sigma^{-2}}^2 + \text{const}
+\]
+where $\| \cdot \|_{\Sigma^{-2}}$ is the norm induced by the inverse of the covariance matrix $\Sigma^2$ of the noise $N$ and $\text{const}$ is a constant term independent of $p$. 
+By inserting the above expression in the minimization problem, we see that the ML estimate is equivalent to the minimization of the least-squares problem~\eqref{eq:IP1} with the choice of the norm $\| \cdot \|_{\Sigma^{-2}}$ on $\mc Y$.
+By this, the statistical approach naturally provides both a justification and an interpretation for least-squares in IPs; the same happens to regularization techniques, but to see that we need to consider the Bayesian approach. \newline
+Within the Bayesian framework, a point estimate can be obtained by Maximum A Posteriori (MAP) estimation which maximizes the posterior density~\eqref{eq:Bayes} of the unknown $P$ given the observations $Y^m=y^m$
+\[
+    p^* = \arg \max_{p \in \Theta} \pi_{P\mid Y^m = y^m}(p) = \arg \max_{p \in \Theta} L(p) \pi_P(p),
+\]
+where in the second equality we omitted the denominator $\pi_{Y^m}(y^m)$ as it is independent of $p$.
+For normal centered noise $N \sim \mc N(0, \Sigma^2)$ and normal prior $P \sim \mc N(p_0, \Sigma_p^2)$, if we take the negative logarithm of $\pi_{P\mid Y^m = y^m}(p)$ and omit the constants, we can rewrite the MAP problem as
+\[
+    p^* = \arg \min_{p \in \Theta} \|y^m - y(p) \|_{\Sigma^{-2}}^2 + \|p - p_0 \|_{\Sigma_p^{-2}}^2.
+\] 
+This, for $\|\cdot \|_\mc Y = \|\cdot \|_{\Sigma^{-2}}$ and $\|\cdot \|_\Theta = \|\cdot \|_{ \lambda \Sigma_p^{-2}}$ is exactly the Least-Squares problem with Tychonoff regularization~\eqref{eq:Tycho}, allowing us to interpret the regularization term as an expression of prior beliefs over the parameter $p$ and the parameter $\lambda$ as a measure of confidence in the prior.
+\medskip
+
+
+While the point estimates can be significantly cheaper to compute, they do not provide a full characterization of the uncertainty in the solution by themselves.
+To obtain a representation of the posterior distribution~\eqref{eq:Bayes} of the parameter $P$ given the observations $Y^m=y^m$, we consider Markov Chain Monte Carlo (MCMC) sampling.
+MCMC techniques usually require a greater number of evaluations of the likelihood function and consequently of the forward model, but then provide a set of correlated samples from $\pi_{P\mid Y^m = y^m}$.\newline
+The first MCMC technique to be introduced was the Metropolis-Hastings (MH) algorithm, which we will present briefly as it includes key concepts that are also present in other MCMC techniques, while being rather simple.
+\todo[inline]{add reference to MH paper}
+MH consists of the following algorithm:
+
+\par\noindent\rule[1mm]{\textwidth}{0.4pt}
+\phantomsection \makeatletter\def\@currentlabel{Algorithm }\makeatother\label{algo:MH}
+\large{\textbf{Algorithm 1 - Metropolis-Hastings.} } \normalsize
+\par\noindent\rule[2mm]{\textwidth}{0.2pt}
+\textbf{Require:} $\bb P$ target distribution with density $\pi(p)$, a Markov kernel $\mc K$ with density $q(p \mid p ' )$, initial state $p_0$, $N$ samples to draw.
+\par\noindent\rule[2mm]{\textwidth}{0.2pt}
+For $i =1, \dots, N$ do: 
+\begin{enumerate}
+    \item Draw proposal $p_n$ from $\mc K (\cdot, p_{n-1})$
+    \item Set acceptance threshold: \[ \alpha = \frac{\pi(p_n) q(p_{n-1} \mid p_n )}{\pi(p_{n-1}) q(p_n \mid p_{n-1} )} \]
+    \item Draw $u$ from $\mathcal{U}([0,1])$
+    \item If $u > \alpha$ then reject: $p_n \leftarrow p_{n-1}$
+\end{enumerate}
+\textbf{Return} $p_1, \dots, p_N$.
+\par\noindent\rule[3.5mm]{\textwidth}{0.4pt}
+
+Similarly to Importance Sampling, MH relies on a proposal distribution $\mc K(\cdot, p)$ to generate samples; the rejection step then guarantees that the target distribution is invariant with respect to the sample chain $\{p_i\}$.
+The proposal kernel $\mc K$ is crucial both for guaranteeing the convergence of the chain to the target distribution and for the efficiency of the sampling process. \newline
+\todo[inline]{magari proprietà necessarie a convergenza e menzione a parte successiva per diagnostics/ess/gelman rubin}
+We observe that, as the target distribution's density is utilized to compute the acceptance threshold $\alpha$ only through a ratio, it needs to be known up to a normalizing constant: this is crucial for the application in BIPs, where the normalizing constant is given by the marginal density $\pi_{Y^m}(y^m)$ which is usually unknown and difficult to compute.
+This property is fortunately shared by all MCMC techniques.
+
+
+ (mention effective size sampling and convergence diagnostics)\medskip
 
 Among other MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
 Ensemble Sampling is a MCMC technique introduced by~\cite{GoodmanWeare} which guarantees invariancy with respect to affine transformation of the parameter space by utilizing multiple correlated chains. 
