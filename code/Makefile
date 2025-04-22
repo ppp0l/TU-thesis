@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 
 env = AGP-env
-OUTPATH = /data/numerik/people/pvillani/thesis
+OUTPATH = /data/numerik/people/pvillani/thesis/prova
 
 FLAGS = --path $(OUTPATH)
 

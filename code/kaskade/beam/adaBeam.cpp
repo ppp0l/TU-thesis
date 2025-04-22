@@ -10,6 +10,7 @@
 #include "fem/embedded_errorest.hh"
 #include "fem/iterate_grid.hh"
 #include "io/vtk.hh"
+#include "io/vtkreader.hh"
 #include "linalg/direct.hh"
 #include "linalg/apcg.hh"                   // Pcg preconditioned CG method
 #include "mg/additiveMultigrid.hh"          // makeBPX MG preconditioner
@@ -29,60 +30,84 @@ int main(int argc, char *argv[])
 {
   using namespace boost::fusion;
 
+  std::string default_cuboid_path = "/data/numerik/people/pvillani/thesis/data/d2/grids/default_cuboid.vtu";
 
-  Timings& timer=Timings::instance();
-  timer.start("total computing time");
-  std::cout << "Start elastic beam tutorial program." << std::endl;
   
-  int maxit, order, refinements, solver, verbose, materialList;
-  bool vtk, linearStrain;
-  double atol, L, W, aTolx;
-  std::string material, storageScheme("A");
+  int maxit, order, refinements, max_refinements, solver;
+  bool vtk_out, verbose, save_mesh;
+  double atol, L, W, E, nu, tolx;
+  std::string storageScheme("A"), meshfile, datapath;
   
   if (getKaskadeOptions(argc,argv,Options
-    ("L",                L,                3.,          "length of the elastic beam")
+    ("L",                L,                4.,         "length of the elastic beam")
     ("W",                W,                0.2,        "width/ of the elastic beam")
+    ("nu",               nu,               0.3,        "Poisson's ratio")
+    ("E",                E,                2.1e11,     "Young's modulus")
+    ("tolx",             tolx,             1e-4,       "absolute error tolerance for embedded error estimator")
     ("refinements",      refinements,      0,          "number of uniform grid refinements")
-    ("order",            order,            1,          "finite element ansatz order")
-    ("material",         material,         "steel",    "type of material")
-    ("linearStrain",     linearStrain,     true,       "true= linear strain tensor, false=nonlinear strain tensor")
-    ("aTolx",            aTolx,            1e-4,       "absolute error tolerance for embedded error estimator")
+    ("max_refinements",  max_refinements,  10,         "maximum number of steps for adaptive mesh refinement")
+    ("order",            order,            2,          "finite element ansatz order" )
     ("solver",           solver,           0,          "0=UMFPACK, 1=PARDISO 2=MUMPS 3=SUPERLU 4=UMFPACK32/64 5=UMFPACK64")
-    ("verbose",        verbose,          0,          "amount of reported details")
-    ("vtk",              vtk,              false,       "write solution to VTK file")
+    ("verbose",          verbose,          false,      "amount of reported details")
     ("atol",             atol,             1e-8,       "absolute energy error tolerance for iterative solver")
-    ("maxit",            maxit,            100,        "maximum number of iterations")
-    ("MaterialList",     materialList,      0,         "Report the known materials in kaskade")
+    ("maxit",            maxit,            100,        "maximum number of solver iterations")
+    ("mesh",             meshfile,         "",         "input mesh file")
+    ("save_mesh",        save_mesh,        false,      "save final mesh")
+    ("datapath",         datapath,         ".",        "path to save data")
     ))
     return 1;
-
-  if(materialList>0){
-    auto materials = Elastomechanics::ElasticModulus::materials();
-    printMaterial(materials);
-  }
-
-  std::cout << "refinements of original mesh : " << refinements << std::endl;
-  std::cout << "discretization order         : " << order << std::endl;
-////  domain
+  
   constexpr int DIM = 3;
-  using Grid = Dune::UGGrid<DIM>;
 
-  timer.start("computing time for grid creation & refinement");
+  int n_meas = 5;
+
+  Dune::FieldVector<double,DIM> sensors[n_meas] = {
+    Dune::FieldVector<double,DIM>({L/4, W/2, W}), // top left
+    Dune::FieldVector<double,DIM>({L/2, W/2, W}), // top middle
+    Dune::FieldVector<double,DIM>({3*L/4, W/2, W}), // top right
+    Dune::FieldVector<double,DIM>({3*L/8, W/2, 0.0}), // low left
+    Dune::FieldVector<double,DIM>({5*L/8, W/2, 0.0}) // low right
+  };
+
+  double meas[n_meas] = {0.0};
+  double error_level = 0.0;
+  double residuals[max_refinements] [n_meas] = {0.0};
+  double tolerances[max_refinements] = {0.0};
+
+  if (refinements > 0)
+    if (verbose)   
+      std::cout << "refinements of original mesh : " << refinements << std::endl;
+
+  if (verbose)
+    std::cout << "discretization order         : " << order << std::endl;
+////  domain
+  using Grid = Dune::UGGrid<DIM>;
 
   // set dimensions of the bar
   Dune::FieldVector<double,DIM> x0(0.0), dx(W); dx[0] = L; 
   Dune::FieldVector<double,DIM> dh(0.2); dh[0] = 0.6;
 
 ////  grid
-  GridManager<Grid> gridManager( createCuboid<Grid>(x0, dx, dh, true) );
+  std::string mesh_path;
+  if (meshfile.empty())
+  {
+    mesh_path = default_cuboid_path;
+  }
+  else
+  {
+    mesh_path = meshfile;
+  };
+
+  VTKReader vtk(mesh_path);
+  GridManager<Grid> gridManager(vtk.createGrid<Grid>());
+
   // mesh refinement
   gridManager.globalRefine(refinements);
+  
+  
   gridManager.enforceConcurrentReads(true);
 
-  timer.stop("computing time for grid creation & refinement");
-
 ///// spaces 
-  timer.start("computing time for functional setup");
 
   using Spaces = boost::fusion::vector<H1Space<Grid> const*>;
   
@@ -108,38 +133,43 @@ int main(int argc, char *argv[])
   // using CoefficientVectors = VarSetDesc::CoefficientVectorRepresentation<0,1>::type;
 
   // Create the variational functional.
-  Functional F(ElasticModulus::material(material));
+  ElasticModulus modulus = ElasticModulus();
+  modulus.setYoungPoisson(E,nu);
+  Functional F(modulus);
 
-  timer.stop("computing time for functional setup");
 
   constexpr int neq = Functional::TestVars::noOfVariables;
   constexpr int nvars = Functional::AnsatzVars::noOfVariables;
-  std::cout << "no of variables = " << nvars << std::endl;
-  std::cout << "no of equations = " << neq   << std::endl;
+  if (verbose)
+  {
+    std::cout << "no of variables = " << nvars << std::endl;
+    std::cout << "no of equations = " << neq   << std::endl;
+  }
   
   Assembler assembler(spaces);
   
   size_t nnz  = assembler.nnz(0,neq,0,nvars);
   size_t size = variableSet.degreesOfFreedom(0,nvars);
-  if ( verbose>0) std::cout << "init mesh: nnz = " << nnz << ", dof = " << size << std::endl;
+  if ( verbose) std::cout << "init mesh: nnz = " << nnz << ", dof = " << size << std::endl;
 
   std::vector<std::pair<double,double> > tolX(nvars);
   double rTolx = 0;
   for (int i=0; i<tolX.size(); ++i) {
-    tolX[i] = std::make_pair(aTolx,rTolx);
+    tolX[i] = std::make_pair(tolx,rTolx);
   }
-  std::cout << std::endl << "Accuracy: atol = " << aTolx << ",  rtol = " << rTolx << std::endl;
+  if (verbose) 
+    std::cout << std::endl << "Accuracy: atol = " << tolx << ",  rtol = " << rTolx << std::endl;
 
   bool accurate = false;
   int refSteps = -1;
   int iter=0;
   // just to use beyond loop
   VariableSet::VariableSet xx(variableSet);
+
   do {
     refSteps++;
 
     // construct Galerkin representation
-    timer.start("computing time for assemble " + std::to_string(iter));
 
     VariableSet::VariableSet x(variableSet);
     
@@ -148,9 +178,6 @@ int main(int argc, char *argv[])
     CoefficientVectors solution = variableSet.zeroCoefficientVector();
     CoefficientVectors rhs(assembler.rhs());
 
-    timer.stop("computing time for assemble " + std::to_string(iter));
-
-    timer.start("computing time for solve " + std::to_string(iter));
     using X = Dune::BlockVector<Dune::FieldVector<double,DIM>>;
     DefaultDualPairing<X,X> dp;
     using Matrix = NumaBCRSMatrix<Dune::FieldMatrix<double,DIM,DIM>>;
@@ -173,24 +200,17 @@ int main(int argc, char *argv[])
     
     
     H1Space<Grid> p1Space(gridManager,gridManager.grid().leafGridView(),1);
-    if (storageScheme=="A")
-      mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseInverseStorageTag<double>(),gridManager.grid().maxLevel()));
-    else if (storageScheme=="L")
-      mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseCholeskyStorageTag<double>(),gridManager.grid().maxLevel()));
-    else
-    {
-      std::cerr << "unknown storage scheme provided\n";
-      return -1;
-    }
-
+    
+    mg = moveUnique(makePBPX(Amat,h1Space,p1Space,DenseInverseStorageTag<double>(),gridManager.grid().maxLevel()));
+    
     Pcg<X,X> pcg(sa,*mg,term,verbose);
     pcg.apply(xi,component<0>(rhs),res);
-    std::cout << "PCG iterations: " << res.iterations << "\n";
+    if (verbose) 
+      std::cout << "PCG iterations: " << res.iterations << "\n";
+
     xi *= -1;
     component<0>(x) = xi;
-    timer.stop("computing time for solve " + std::to_string(iter));
 
-    timer.start("computing time for refinement " + std::to_string(iter));
     VariableSet::VariableSet e = x;
     projectHierarchically(e);
     e -= x;    
@@ -198,33 +218,80 @@ int main(int argc, char *argv[])
     accurate = embeddedErrorEstimator(variableSet,e,x,IdentityScaling(),tolX,gridManager,verbose);
     nnz = assembler.nnz(0,1,0,1);;
     size_t size = variableSet.degreesOfFreedom(0,1);
-    if (verbose>0) 
+    if (verbose) 
       std::cout << "new mesh: nnz = " << nnz << ", dof = " << size << std::endl;
-    
-    timer.stop("computing time for refinement " + std::to_string(iter));
 
     // VariableSet::VariableSet xx may be used beyond the do...while loop	
     xx.data = x.data;
-    iter++; 
-    if (iter>10) 
+
+    error_level = 0;
+    for (int i=0; i<n_meas; i++)
     {
-      std::cout << "*** Maximum number of iterations exceeded ***" << std::endl;
+      residuals[refSteps][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[2]; 
+      error_level += residuals[refSteps][i];
+    }
+    error_level = error_level/n_meas;
+    tolerances[refSteps] = error_level;
+
+    if (verbose)
+      std::cout << "refinement step " << refSteps << ": error = " << error_level << std::endl;
+    
+    iter++; 
+    if (iter>max_refinements) 
+    {
+      std::cout << "*** Maximum number of refinement steps exceeded ***" << std::endl;
       break;
     }
     
     
   } while (not accurate);
   
+  
+  for (int i=0; i<n_meas; i++)
+  {
+    meas[i] = component<0>(xx).value(GlobalPosition<Grid>(sensors[i]))[2];
+  }
+  // save meas
+  std::ofstream measfile;
+  measfile.open (datapath+"/measurements.csv");
+  for (int i=0; i<n_meas; i++)
+  {
+    measfile << meas[i] << ",";
+  }
+  measfile.close();
+
+  // save tolerances
+  std::ofstream tolfile;
+  tolfile.open (datapath+"/tolerances.csv");
+  for (int i=0; i<refSteps; i++)
+  {
+    tolfile << tolerances[i] << ",";
+  }
+  tolfile.close();
+
+  // save residuals
+  std::ofstream resfile;
+  resfile.open (datapath+"/residuals.csv");
+  for (int i=0; i<refSteps; i++)
+  {
+    for (int j=0; j<n_meas; j++)
+    {
+      resfile << residuals[i][j] << ",";
+    }
+    resfile << std::endl;
+  }
+  resfile.close();
 
 
-  timer.start("postprocessing time");
   //Postprocessing 
   L2Space<Grid> l2Space(gridManager,gridManager.grid().leafGridView(),0);
+
 
   L2Space<Grid>::Element_t<DIM> normalStress(l2Space);
   interpolateGlobally<PlainAverage>(normalStress,makeFunctionView(h1Space, [&] (auto const& evaluator)
   {
-    auto modulus = ElasticModulus::material(material);
+    ElasticModulus modulus = ElasticModulus();
+    modulus.setYoungPoisson(E,nu);
     HyperelasticVariationalFunctional<Elastomechanics::MaterialLaws::StVenantKirchhoff<DIM>,StrainTensor>
     energy(modulus);
 
@@ -237,29 +304,23 @@ int main(int argc, char *argv[])
    auto vsd = makeVariableSetDescription(makeSpaceList(&l2Space, &h1Space),
                                         boost::fusion::make_vector(Variable<SpaceIndex<0>,Components<3>>("NormalStress"),
                                                                    Variable<SpaceIndex<1>,Components<3>>("Displacement")));
+
   auto data = vsd.variableSet();
   component<0>(data) = normalStress;
   component<1>(data) = component<0>(xx);
 
-  // output of solution in VTK format for visualization,
-  // the data are written as ascii stream into file elasto.vtu,
-  // possible is also binary
-  if (vtk)
+  if (verbose)
   {
-    ScopedTimingSection ts("computing time for file i/o",timer);
-    std::string outStr("elasto_");
-    if(linearStrain)
-      outStr.append("linear_p=");
-    else
-      outStr.append("nonlinear_p=");
-    writeVTK(data,outStr+paddedString(order,1),IoOptions().setOrder(order).setPrecision(16));
+    std::cout << "Measured displacements = ";
+    for (int i=0; i<n_meas; i++)
+    {
+      std::cout << meas[i] << " ";
+    }
+    std::cout << std::endl;
   }
-  timer.stop("postprocessing time");
-  timer.stop("total computing time");
-  if (verbose>0)
-    std::cout << timer;
-    
-  std::cout << "You successfully ran the elastic beam tutorial program." << std::endl;
+  if (save_mesh)
+    writeVTK( component<0>(xx),datapath+"/mesh", IoOptions().setOrder(order).setPrecision(16),"u");
+  
   
   return 0;
 }
