@@ -49,11 +49,11 @@ def estimate_covariance(residuals : List[np.ndarray], tolerances: List[np.ndarra
     """
     data = []
     for i in range(len(residuals)):
-        residuals[i] = residuals[i]/ tolerances[i].reshape( (-1,1))
-        data = data + residuals[i].tolist()
+        res_i = residuals[i]/ tolerances[i].reshape( (-1,1))
+        data = data + res_i.tolist()
 
     data = np.array(data)
-    
+
     cov = shrinkage_estimator(data)
 
     return torch.tensor(cov, dtype=torch.float64)

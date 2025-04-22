@@ -22,4 +22,6 @@ def gaussian_error(mean, std) :
 def uniform_error(mean, bound) :
     if len(np.shape(bound) ) <2 :
         bound = np.outer(bound, np.ones(len(mean[0])))
+    if len(np.shape(bound) ) == 3 :
+        bound = np.transpose( [bound[:,i,i ] for i in range(len(bound[0]))] )
     return np.random.uniform( mean - bound, mean + bound)

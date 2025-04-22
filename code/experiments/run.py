@@ -175,10 +175,10 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
             upd_residuals, upd_tolerances = fm.get_residuals()
             k = 0
-            for i, upd in enumerate(updated) :
+            for a, upd in enumerate(updated) :
                 if upd :
-                    residuals[i] = upd_residuals[i-k]
-                    tolerances[i] = upd_tolerances[i-k]
+                    residuals[a] = upd_residuals[a-k]
+                    tolerances[a] = upd_tolerances[a-k]
                 else :
                     k+=1
 
@@ -194,7 +194,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
             residuals = [*residuals, *new_residuals]
             tolerances = [*tolerances, *new_tolerances]
-
+            
         eval_cov = estimate_covariance(residuals, tolerances)
         print("Done.")
         print()
