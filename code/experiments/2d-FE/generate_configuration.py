@@ -15,30 +15,32 @@ if not os.path.exists(path + f"/data/d{dim}"):
     os.makedirs(path + f"/data/d{dim}/")
 
 
-from models.forward import forward_model
+from models.adaBeam import Adaptive_beam 
 from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
 n_meas = 4
 
-fm = forward_model(dim = dim)
+fm = Adaptive_beam(path)
 
 # IP parameters
 meas_std = 0.03
 
-domain_bound = 1
+domain_upper_bound = np.ones(dim)
+domain_lower_bound = np.zeros(dim)
 
-domain_upper_bound = np.ones(dim) * domain_bound
-domain_lower_bound = -np.ones(dim) * domain_bound
+domain_shift = 1/2
 
-prior_mean = np.zeros(dim)
+prior_mean = np.zeros(dim) + domain_shift
 prior_std = 1/4
 
-gt = np.random.normal(prior_mean, prior_std, (n_meas,dim))
-while not np.all(np.abs(gt) <= domain_bound):
-    out = gt[np.abs(gt) <= domain_bound]
-    gt[np.abs(gt) <= domain_bound] = np.random.normal(prior_mean, prior_std, out.shape)
+gt = np.random.normal(prior_mean - domain_shift, prior_std, (n_meas,dim))
+while not np.all(np.abs(gt) <= domain_shift):
+    out = gt[np.abs(gt) <= domain_shift]
+    gt[np.abs(gt) <= domain_shift] = np.random.normal(prior_mean, prior_std, out.shape)
+
+gt += domain_shift
     
 pred = fm.predict(gt)
 

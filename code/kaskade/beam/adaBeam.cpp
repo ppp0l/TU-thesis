@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
       throw std::invalid_argument("order 1 not supported\n");
       return -1;
     } 
+    
   
   constexpr int DIM = 3;
 

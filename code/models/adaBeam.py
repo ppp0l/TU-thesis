@@ -17,6 +17,8 @@ class Adaptive_beam :
                  adaptive : bool = True ,
                  default_tol : float = 1.e-3,
                  model_path : str = model_path,
+                 mesh : str = None,
+                 
                  ) :
         
         self.adaptive = adaptive
@@ -30,6 +32,8 @@ class Adaptive_beam :
 
         self.data_path = data_path
         self.model_path = model_path
+
+        self.mesh = mesh
 
 
     def predict(self, 
@@ -70,6 +74,9 @@ class Adaptive_beam :
             flags += f"--max_refinements 0"
 
             meshfiles = [ data_path + "/non_adaptive.vtu" for i in range(n_pts) ]
+
+        if not self.mesh is None :
+            meshfiles = [self.mesh for i in range(n_pts)]
         
         responses = np.zeros((n_pts, self.dout))
         error_levels = np.zeros(n_pts)
