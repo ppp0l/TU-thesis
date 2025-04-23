@@ -60,7 +60,7 @@ def solve_acc_prob(candidates, W, lips : lipschitz_regressor, samples, cost ) :
             best = res['fun']
             best_precs = res['x']
             best_res = res
-    print(f'Best work distribution: {best_res}')
+    # print(f'Best work distribution: {best_res}')
 
     # updated points, with threshold
     updated = (best_precs - current_precs) > 0.02*W

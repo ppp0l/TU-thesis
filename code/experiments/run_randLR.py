@@ -65,7 +65,7 @@ n_init = training_config["n_init"]
 default_tol = training_config["default_tol_fixed"]
 
 # create surrogate
-surrogate = lipschitz_regressor(dim=3, dout=forward.dout)
+surrogate = lipschitz_regressor(dim=dim, dout=forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 training_set = {

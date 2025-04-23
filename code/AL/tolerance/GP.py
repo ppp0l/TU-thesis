@@ -93,7 +93,7 @@ def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
             best = res['fun']
             best_precs = res['x']
             best_res = res
-    print(f'Best work distribution: {best_res}')
+    # print(f'Best work distribution: {best_res}')
 
     # updated points, with threshold
     updated = (best_precs - old_precs) > 0.02*W
