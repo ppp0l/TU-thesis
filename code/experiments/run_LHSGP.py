@@ -86,15 +86,12 @@ surrogate = MTModel(num_tasks = forward.dout)
 train_p = points[:n_init]
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 
-residuals, tolerances = forward.get_residuals()
-eval_cov = estimate_covariance(residuals, tolerances)
-
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+surrogate.fit(train_p, train_y, errors)
 
 # create approximate likelihood and posterior
 approx_likelihood = GP_likelihood(value, meas_std, surrogate)
@@ -172,14 +169,7 @@ for i in range(n_it) :
     train_y = np.concatenate((train_y, new_vals), axis = 0)
     errors = np.concatenate((errors, new_errs), axis = 0)
 
-    new_residuals, new_tolerances = forward.get_residuals()
-
-    residuals = [*residuals, *new_residuals]
-    tolerances = [*tolerances, *new_tolerances]
-
-    eval_cov = estimate_covariance(residuals, tolerances)
-
-    surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+    surrogate.fit(train_p, train_y, errors)
     print("Done.")
     print()
 

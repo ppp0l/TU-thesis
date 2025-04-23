@@ -75,15 +75,12 @@ surrogate = MTModel(num_tasks = forward.dout)
 train_p = lhs(param_space["min"], param_space["max"], n_init)
 train_y, errors = forward.predict(train_p, tols = default_tol * np.ones(n_init))
 
-residuals, tolerances = forward.get_residuals()
-eval_cov = estimate_covariance(residuals, tolerances)
-
 training_set = {
     "train_p": train_p,
     "train_y": train_y,
     "errors": errors,
 }
-surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+surrogate.fit(train_p, train_y, errors)
 
 
 # create approximate likelihood and posterior

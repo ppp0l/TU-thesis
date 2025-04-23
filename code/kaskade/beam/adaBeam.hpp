@@ -102,7 +102,7 @@ public:
       Vector up(0.); up[dim-1] = 1.;                    // unit upward pointing vector
       auto n = (*faceIt)->centerUnitOuterNormal();      // unit outer normal of local face
       
-      Vector force(0.); force[dim-1] = -1.e8;
+      Vector force(0.); force[dim-1] = -5.e6;
       
       if ( (n*left > 0.95) or (n*left < -0.95) )        // clamp beam on the left and right
       {

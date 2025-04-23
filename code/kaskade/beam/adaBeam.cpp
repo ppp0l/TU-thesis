@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 {
   using namespace boost::fusion;
 
-  std::string default_cuboid_path = "/data/numerik/people/pvillani/thesis/data/d2/grids/default_cuboid.vtu";
+  std::string default_cuboid_path = "/data/numerik/people/pvillani/thesis/data/d2/kaskade/default_cuboid.vtu";
 
   
   int maxit, order, refinements, max_refinements, solver;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     ("W",                W,                0.2,        "width/ of the elastic beam")
     ("nu",               nu,               0.3,        "Poisson's ratio")
     ("E",                E,                2.1e11,     "Young's modulus")
-    ("tolx",             tolx,             1e-4,       "absolute error tolerance for embedded error estimator")
+    ("tolx",             tolx,             1e-3,       "relative error tolerance for embedded error estimator")
     ("refinements",      refinements,      0,          "number of uniform grid refinements")
     ("max_refinements",  max_refinements,  10,         "maximum number of steps for adaptive mesh refinement")
     ("order",            order,            2,          "finite element ansatz order" )
@@ -51,11 +51,17 @@ int main(int argc, char *argv[])
     ("verbose",          verbose,          false,      "amount of reported details")
     ("atol",             atol,             1e-8,       "absolute energy error tolerance for iterative solver")
     ("maxit",            maxit,            100,        "maximum number of solver iterations")
-    ("mesh",             meshfile,         "",         "input mesh file")
+    ("mesh",             meshfile,         default_cuboid_path,         "input mesh file")
     ("save_mesh",        save_mesh,        false,      "save final mesh")
     ("datapath",         datapath,         ".",        "path to save data")
     ))
     return 1;
+
+    if (order==1)
+    {
+      throw std::invalid_argument("order 1 not supported\n");
+      return -1;
+    } 
   
   constexpr int DIM = 3;
 
@@ -71,8 +77,8 @@ int main(int argc, char *argv[])
 
   double meas[n_meas] = {0.0};
   double error_level = 0.0;
-  double residuals[max_refinements] [n_meas] = {0.0};
-  double tolerances[max_refinements] = {0.0};
+  double residuals[max_refinements+1] [n_meas] = {0.0};
+  double tolerances[max_refinements+1] = {0.0};
 
   if (refinements > 0)
     if (verbose)   
@@ -153,21 +159,19 @@ int main(int argc, char *argv[])
   if ( verbose) std::cout << "init mesh: nnz = " << nnz << ", dof = " << size << std::endl;
 
   std::vector<std::pair<double,double> > tolX(nvars);
-  double rTolx = 0;
+  double aTolx = 0;
   for (int i=0; i<tolX.size(); ++i) {
-    tolX[i] = std::make_pair(tolx,rTolx);
+    tolX[i] = std::make_pair(aTolx,tolx);
   }
   if (verbose) 
-    std::cout << std::endl << "Accuracy: atol = " << tolx << ",  rtol = " << rTolx << std::endl;
+    std::cout << std::endl << "Accuracy (relative tolerance): " << tolx << std::endl;
 
   bool accurate = false;
-  int refSteps = -1;
   int iter=0;
   // just to use beyond loop
   VariableSet::VariableSet xx(variableSet);
 
   do {
-    refSteps++;
 
     // construct Galerkin representation
 
@@ -190,14 +194,7 @@ int main(int argc, char *argv[])
     Dune::InverseOperatorResult res;
     X xi(component<0>(rhs).N());
 
-    std::unique_ptr<SymmetricPreconditioner<X,X>> mg;
-
-    if (order==1)
-    {
-      throw std::invalid_argument("order 1 not supported\n");
-      return -1;
-    } 
-    
+    std::unique_ptr<SymmetricPreconditioner<X,X>> mg;    
     
     H1Space<Grid> p1Space(gridManager,gridManager.grid().leafGridView(),1);
     
@@ -215,33 +212,36 @@ int main(int argc, char *argv[])
     projectHierarchically(e);
     e -= x;    
   
-    accurate = embeddedErrorEstimator(variableSet,e,x,IdentityScaling(),tolX,gridManager,verbose);
-    nnz = assembler.nnz(0,1,0,1);;
-    size_t size = variableSet.degreesOfFreedom(0,1);
-    if (verbose) 
-      std::cout << "new mesh: nnz = " << nnz << ", dof = " << size << std::endl;
-
     // VariableSet::VariableSet xx may be used beyond the do...while loop	
     xx.data = x.data;
 
     error_level = 0;
     for (int i=0; i<n_meas; i++)
     {
-      residuals[refSteps][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[2]; 
-      error_level += residuals[refSteps][i];
+      residuals[iter][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[2]; 
+      error_level += std::abs( residuals[iter][i]);
     }
     error_level = error_level/n_meas;
-    tolerances[refSteps] = error_level;
+    tolerances[iter] = error_level;
+
+    iter++; 
 
     if (verbose)
-      std::cout << "refinement step " << refSteps << ": error = " << error_level << std::endl;
+      std::cout << "Iteration" << iter << ": error = " << error_level << std::endl;
     
-    iter++; 
     if (iter>max_refinements) 
     {
-      std::cout << "*** Maximum number of refinement steps exceeded ***" << std::endl;
+      if (iter > 0)
+        std::cout << "*** Maximum number of refinement steps exceeded ***" << std::endl;
       break;
     }
+
+    accurate = embeddedErrorEstimator(variableSet,e,x,IdentityScaling(),tolX,gridManager,verbose);
+    nnz = assembler.nnz(0,1,0,1);;
+    size_t size = variableSet.degreesOfFreedom(0,1);
+    if (verbose) 
+      std::cout << "new mesh: nnz = " << nnz << ", dof = " << size << std::endl;
+
     
     
   } while (not accurate);
@@ -258,21 +258,23 @@ int main(int argc, char *argv[])
   {
     measfile << meas[i] << ",";
   }
+  measfile << error_level << std::endl;
   measfile.close();
 
   // save tolerances
   std::ofstream tolfile;
   tolfile.open (datapath+"/tolerances.csv");
-  for (int i=0; i<refSteps; i++)
+  for (int i=0; i<iter; i++)
   {
     tolfile << tolerances[i] << ",";
   }
+  tolfile << std::endl;
   tolfile.close();
 
   // save residuals
   std::ofstream resfile;
   resfile.open (datapath+"/residuals.csv");
-  for (int i=0; i<refSteps; i++)
+  for (int i=0; i<iter; i++)
   {
     for (int j=0; j<n_meas; j++)
     {

@@ -266,8 +266,6 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
     n_final_samples = sampling_config["final_samples"]
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
-    
-    residuals, tolerances = fm.get_residuals()
 
     for i in range(n_it) :
         if i%sample_every == 0 :
@@ -325,15 +323,8 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         train_p =  np.concatenate((train_p, new_pts), axis = 0)
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
-
-        new_residuals, new_tolerances = fm.get_residuals()
-
-        residuals = [*residuals, *new_residuals]
-        tolerances = [*tolerances, *new_tolerances]
-
-        eval_cov = estimate_covariance(residuals, tolerances)
         
-        surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 
@@ -398,8 +389,6 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
 
-    residuals, tolerances = fm.get_residuals()
-
     for i in range(n_it) :
 
         print("Sampling posterior...") 
@@ -457,14 +446,7 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         train_y = np.concatenate((train_y, new_vals), axis = 0)
         errors = np.concatenate((errors, new_errs), axis = 0)
 
-        new_residuals, new_tolerances = fm.get_residuals()
-
-        residuals = [*residuals, *new_residuals]
-        tolerances = [*tolerances, *new_tolerances]
-
-        eval_cov = estimate_covariance(residuals, tolerances)
-
-        surrogate.fit(train_p, train_y, errors, likelihood_has_task_noise=True, likelihood_task_noise=eval_cov)
+        surrogate.fit(train_p, train_y, errors)
         print("Done.")
         print()
 
