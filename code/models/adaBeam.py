@@ -6,11 +6,27 @@ import os
 
 model_path = "/home/numerik/pvillani/Project/lipschitz/code/kaskade/beam"
 
+def_scaling = {
+    "out" : {
+        "sum" : [0.015, 0.015, -1.e-7, 1.e-7],
+        "scale" : [-200/3, -200/3, 1.3e6, -2.e6]
+    },
+    "in" : {
+        "sum" : [-2.e11, -0.1],
+        "scale" : [2.e-11, 20/7]
+    }
+}
+
+
+
 class Adaptive_beam :
     """
     Python interface for the adaptive FE model of the beam.
     """
-    dout = 5
+    dout = 4
+
+    scale_in = def_scaling["in"]
+    scale_out = def_scaling["out"]
 
     def __init__(self,
                  data_path : str,
@@ -18,7 +34,6 @@ class Adaptive_beam :
                  default_tol : float = 1.e-3,
                  model_path : str = model_path,
                  mesh : str = None,
-                 
                  ) :
         
         self.adaptive = adaptive
@@ -35,12 +50,40 @@ class Adaptive_beam :
 
         self.mesh = mesh
 
+    def scale_parameters(self, parameters : np.ndarray, inverse : bool = False) -> np.ndarray :
+        """
+        Scale the parameter space to unit square and reverse.
+        """
+        if inverse :
+            # reverse scaling
+            parameters = parameters / self.scale_in["scale"] - self.scale_in["sum"]
+        else :
+            # scale to unit square
+            parameters = (parameters + self.scale_in["sum"]) * self.scale_in["scale"]
+
+        return parameters
+    
+    def scale_responses(self, responses : np.ndarray, inverse : bool = False) -> np.ndarray :
+        """
+        Scale the response space to unit square and reverse.
+        """
+        if inverse :
+            # reverse scaling
+            responses = responses /self.scale_out["scale"] - self.scale_out["sum"]
+        else :
+            # scale to unit square
+            responses = (responses + self.scale_out["sum"]) * self.scale_out["scale"]
+
+        return responses
+
 
     def predict(self, 
-                material_parameters : np.ndarray,
+                prediction_pts : np.ndarray,
                 tolerance : np.ndarray,
                 ) -> np.ndarray :
-        n_pts = len(material_parameters)
+        n_pts = len(prediction_pts)
+
+        material_parameters = self.scale_parameters(prediction_pts, inverse = True)
 
         E = material_parameters[:, 0] # Young's modulus
         nu = material_parameters[:, 1] # Poisson's ratio
@@ -94,12 +137,13 @@ class Adaptive_beam :
             if not os.path.exists(out_path) :
                 os.makedirs(out_path)
 
-            responses[i], error_levels[i] = self.run(runflags, out_path)
+            responses[i], error_levels[i] = self.run(runflags, out_path, tolerance[i])
+
             
         return responses, error_levels
 
         
-    def run(self, flags: str, out_path: str):
+    def run(self, flags: str, out_path: str, default_tol: float) -> tuple:
         """
         Run the adaptive beam model.
         """
@@ -112,10 +156,9 @@ class Adaptive_beam :
             with open(out_path + "/measurements.csv", "r") as f :
                 reader = csv.reader(f)
                 data = np.array(list(reader)).astype(float)
-                measurements = data[0][:-1]
-                error_level = data[0][-1]
+            measurements = data[0]
+            measurements = self.scale_responses(measurements)
 
-                #TODO : scale
         except FileNotFoundError :
             print(f"Model evaluation did not succeed")
             print("flags : " + flags)
@@ -126,18 +169,23 @@ class Adaptive_beam :
                 reader = csv.reader(f)
                 
                 residuals = list(reader)
-                # TODO : scale
-
-                self.residuals.append(residuals)
+            residuals = np.array(residuals).astype(float)
+            residuals = residuals * self.scale_out["scale"] 
 
             with open(out_path + "/tolerances.csv", "r") as f :
                 reader = csv.reader(f)
+
+                data = list(reader)
                 
-                tolerance_levels = list(reader)
-                # TODO : scale
-                self.tolerances.append(tolerance_levels)
+            tolerance_levels =  np.array(data[0]).astype(float)
+
+            error_level = tolerance_levels[-1]
+
+            self.residuals.append(residuals.tolist())
+            self.tolerances.append(tolerance_levels)
         except FileNotFoundError :
-            print("Residuals or tolerances file not found")
+            print("Residuals file not found")
+            error_level = default_tol
 
         return measurements, error_level
     

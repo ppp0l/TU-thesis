@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
   
   int maxit, order, refinements, max_refinements, solver;
-  bool vtk_out, verbose, save_mesh;
+  bool verbose, save_mesh;
   double atol, L, W, E, nu, tolx;
   std::string storageScheme("A"), meshfile, datapath;
   
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     ("W",                W,                0.2,        "width/ of the elastic beam")
     ("nu",               nu,               0.3,        "Poisson's ratio")
     ("E",                E,                2.1e11,     "Young's modulus")
-    ("tolx",             tolx,             1e-3,       "relative error tolerance for embedded error estimator")
+    ("tolx",             tolx,             1e-1,       "relative error tolerance for embedded error estimator")
     ("refinements",      refinements,      0,          "number of uniform grid refinements")
     ("max_refinements",  max_refinements,  10,         "maximum number of steps for adaptive mesh refinement")
     ("order",            order,            2,          "finite element ansatz order" )
@@ -57,27 +57,30 @@ int main(int argc, char *argv[])
     ))
     return 1;
 
-    if (order==1)
-    {
-      throw std::invalid_argument("order 1 not supported\n");
-      return -1;
-    } 
+  if (order==1)
+  {
+    throw std::invalid_argument("order 1 not supported\n");
+    return -1;
+  } 
     
   
   constexpr int DIM = 3;
 
-  int n_meas = 5;
+  int n_meas = 4;
 
   Dune::FieldVector<double,DIM> sensors[n_meas] = {
-    Dune::FieldVector<double,DIM>({L/4, W/2, W}), // top left
-    Dune::FieldVector<double,DIM>({L/2, W/2, W}), // top middle
-    Dune::FieldVector<double,DIM>({3*L/4, W/2, W}), // top right
-    Dune::FieldVector<double,DIM>({3*L/8, W/2, 0.0}), // low left
-    Dune::FieldVector<double,DIM>({5*L/8, W/2, 0.0}) // low right
+    // Dune::FieldVector<double,DIM>({L/4, W/2, W}), // top left
+    // Dune::FieldVector<double,DIM>({L/2, W/2, W}), // top middle
+    // Dune::FieldVector<double,DIM>({3*L/4, W/2, W}), // top right
+    // Dune::FieldVector<double,DIM>({3*L/8, W/2, 0.0}), // low left
+    // Dune::FieldVector<double,DIM>({5*L/8, W/2, 0.0}) // low right
+    Dune::FieldVector<double,DIM>({L/2, W/2, W}), // top
+    Dune::FieldVector<double,DIM>({L/2, W/2, 0.0}), // low
+    Dune::FieldVector<double,DIM>({L/2, W, W/2}), // left
+    Dune::FieldVector<double,DIM>({L/2, 0.0, W/2}) // right
   };
 
   double meas[n_meas] = {0.0};
-  double error_level = 0.0;
   double residuals[max_refinements+1] [n_meas] = {0.0};
   double tolerances[max_refinements+1] = {0.0};
 
@@ -216,23 +219,38 @@ int main(int argc, char *argv[])
     // VariableSet::VariableSet xx may be used beyond the do...while loop	
     xx.data = x.data;
 
-    error_level = 0;
     for (int i=0; i<n_meas; i++)
     {
-      residuals[iter][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[2]; 
-      error_level += std::abs( residuals[iter][i]);
+      if (i < 2)
+        residuals[iter][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[2]; 
+      else 
+        residuals[iter][i] = component<0>(e).value(GlobalPosition<Grid>(sensors[i]))[1];
     }
-    error_level = error_level/n_meas;
-    tolerances[iter] = error_level;
+
+    ErrorestDetail::GroupedSummationCollector<EmbeddedErrorestDetail::CellByCell> sum(EmbeddedErrorestDetail::CellByCell(variableSet.indexSet));
+    scaledTwoNormSquared(join(VariableDescriptions(),VariableDescriptions()),
+                          join(e.data,x.data),variableSet.spaces,Kaskade::IdentityScaling(),sum);
+
+    int const s = variableSet.noOfVariables;
+    int const n = sum.sums.shape()[0];
+    
+    assert(sum.sums.shape()[1]==2*s);
+    
+    // Compute scaled L2 norms of solution and errors.
+    std::vector<double> norm2(s), error2(s);
+    for (int idx=0; idx<n; ++idx)
+      for (int j=0; j<s; ++j) {
+        error2[j] += sum.sums[idx][j];
+        norm2[j]  += sum.sums[idx][j+s];
+      }      
+    
+    tolerances[iter] = sqrt( error2[0]/norm2[0]);
 
     iter++; 
-
-    if (verbose)
-      std::cout << "Iteration" << iter << ": error = " << error_level << std::endl;
     
     if (iter>max_refinements) 
     {
-      if (iter > 0)
+      if (iter > 1)
         std::cout << "*** Maximum number of refinement steps exceeded ***" << std::endl;
       break;
     }
@@ -243,33 +261,34 @@ int main(int argc, char *argv[])
     if (verbose) 
       std::cout << "new mesh: nnz = " << nnz << ", dof = " << size << std::endl;
 
-    
-    
+
   } while (not accurate);
   
   
   for (int i=0; i<n_meas; i++)
   {
-    meas[i] = component<0>(xx).value(GlobalPosition<Grid>(sensors[i]))[2];
+    if (i < 2)
+      meas[i] = component<0>(xx).value(GlobalPosition<Grid>(sensors[i]))[2];
+    else
+      meas[i] = component<0>(xx).value(GlobalPosition<Grid>(sensors[i]))[1];
   }
   // save meas
   std::ofstream measfile;
   measfile.open (datapath+"/measurements.csv");
-  for (int i=0; i<n_meas; i++)
+  for (int i=0; i<n_meas-1; i++)
   {
     measfile << meas[i] << ",";
   }
-  measfile << error_level << std::endl;
+  measfile << meas[n_meas -1] << std::endl;
   measfile.close();
 
-  // save tolerances
   std::ofstream tolfile;
   tolfile.open (datapath+"/tolerances.csv");
-  for (int i=0; i<iter; i++)
+  for (int i=0; i<iter-1; i++)
   {
-    tolfile << tolerances[i] << ",";
+    tolfile << tolerances[i]<< ",";
   }
-  tolfile << std::endl;
+  tolfile << tolerances[iter-1] << std::endl;
   tolfile.close();
 
   // save residuals
@@ -277,11 +296,11 @@ int main(int argc, char *argv[])
   resfile.open (datapath+"/residuals.csv");
   for (int i=0; i<iter; i++)
   {
-    for (int j=0; j<n_meas; j++)
+    for (int j=0; j<n_meas-1; j++)
     {
       resfile << residuals[i][j] << ",";
     }
-    resfile << std::endl;
+    resfile << residuals[i][n_meas-1] << std::endl;
   }
   resfile.close();
 
