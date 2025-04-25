@@ -8,8 +8,10 @@ dim = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--tols", type=int, default=1)
 args = parser.parse_args()
-path = args.path
+tols = args.tols
+path = args.path + f"/tols{tols}"
 
 if not os.path.exists(path + f"/data/d{dim}"):
     os.makedirs(path + f"/data/d{dim}/")
@@ -44,13 +46,17 @@ pred = fm.predict(gt)
 
 # adaptive training parameters
 sample_every = 3
-n_it = sample_every * 5
+sampling_times = 5
+n_it = sample_every * sampling_times
 points_per_it = 1
 n_init = 5
 default_tol_fixed = 0.03
-default_tol_ada = 0.03
+if tols > 0:
+    default_tol_ada = [0.03, 0.03, 0.01, 0.01, 0.005]
+else:
+    default_tol_ada = [0.03, 0.03, 0.01, 0.01, 0.005]
 FE_cost = 1
-budget = (n_init + points_per_it * n_it) * (default_tol_ada)**(-FE_cost)
+budget = n_init  * (default_tol_fixed)**(-FE_cost) + points_per_it * sample_every * np.sum(np.array(default_tol_ada)**(-FE_cost))
 
 configurations = []
 for i in range(n_meas):

@@ -99,13 +99,10 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     n_it = training_config["n_it"]
     sample_every = sampling_config["sample_every"]
 
-    default_tol = training_config["default_tol_ada"]
-    budget_ada = training_config["budget"]    
+    default_tol = training_config["default_tol_fixed"]
+    ada_tols = training_config["default_tol_ada"]
 
     FE_cost = configuration["forward_model_config"]["FE_cost"]
-    n_init = training_config["n_init"]
-
-    budget_per_it = (budget_ada - n_init * default_tol**-FE_cost)  / n_it
 
     n_init_samples = sampling_config["init_samples"]
     n_final_samples = sampling_config["final_samples"]
@@ -116,6 +113,10 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
     for i in range(n_it) :
         if i%sample_every == 0 :
+            try :
+                budget_next_it = points_per_it * (ada_tols[i//sample_every])**(-FE_cost)
+            except IndexError :
+                budget_next_it = points_per_it * (ada_tols[-1])**(-FE_cost)
             print("Sampling posterior...") 
             print()
 
@@ -159,7 +160,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print("Optimizing tolerances...")
         print()
         # accuracy problem
-        tols, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
+        tols, new_pts, updated = solve_acc_prob(candidates, budget_next_it, surrogate, shortened_samples, FE_cost)
 
         print("Done.")
         print()
