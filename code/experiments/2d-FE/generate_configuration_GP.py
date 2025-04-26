@@ -8,11 +8,15 @@ dim = 2
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--eval_model", type=bool, default=False, help="Evaluate the model to generate the data or not")
 args = parser.parse_args()
 path = args.path
 
-if not os.path.exists(path + f"/data/d{dim}"):
-    os.makedirs(path + f"/data/d{dim}/")
+kaskade_path = path + f"/data/d{dim}/kaskade"
+
+if not os.path.exists(kaskade_path):
+    os.makedirs(kaskade_path+"/")
+    args.eval_model = True
 
 
 from models.adaBeam import Adaptive_beam 
@@ -20,9 +24,7 @@ from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
-n_meas = 4
-
-fm = Adaptive_beam(path)
+fm = Adaptive_beam(path, mesh = kaskade_path + "gt_mesh.vtu", adaptive = False)
 
 # IP parameters
 meas_std = 0.03
@@ -30,29 +32,29 @@ meas_std = 0.03
 domain_upper_bound = np.ones(dim)
 domain_lower_bound = np.zeros(dim)
 
-domain_shift = 1/2
+prior_mean = np.ones(dim)/2
+prior_std = 1/6
 
-prior_mean = np.zeros(dim) + domain_shift
-prior_std = 1/4
+n_meas = 1
+gt = np.array([ [2.7e11, 0.3]])
 
-gt = np.random.normal(prior_mean - domain_shift, prior_std, (n_meas,dim))
-while not np.all(np.abs(gt) <= domain_shift):
-    out = gt[np.abs(gt) <= domain_shift]
-    gt[np.abs(gt) <= domain_shift] = np.random.normal(prior_mean, prior_std, out.shape)
-
-gt += domain_shift
     
-pred = fm.predict(gt)
+if args.eval_model:
+    gt = fm.scale_parameters(gt)
+    pred = fm.predict(gt)
+    np.save(path + f"/data/d{dim}/measurements.npy", pred)
+else :
+    pred = np.load(path + f"/data/d{dim}/measurements.npy")
 
 # adaptive training parameters
-sample_every = 5
-n_it = sample_every * 5
+sample_every = 2
 points_per_it = 1
-n_init = 10
-default_tol_fixed = 0.001
-default_tol_ada = 0.005
-FE_cost = 1
-budget = (n_init + points_per_it * n_it) * (default_tol_ada)**(-FE_cost)
+n_init = 5
+default_tol = 0.03
+threshold = meas_std**2 * fm.dout / 20
+conv_ratio = 1/4
+max_iter = 5
+FE_cost = 1.5
 
 configurations = []
 for i in range(n_meas):
@@ -70,17 +72,17 @@ for i in range(n_meas):
         },
         "training_config": {
             "n_init": n_init,
-            "n_it": n_it,
             "points_per_it": points_per_it,
-            "default_tol_fixed": default_tol_fixed,
-            "default_tol_ada": default_tol_ada,
-            "budget": budget,
+            "default_tol": default_tol,
+            "max_iter": max_iter * sample_every,
+            "threshold": threshold,
+            "conv_ratio": conv_ratio,
         },
         "sampling_config": {
-            "n_walkers": 64,
+            "n_walkers": 16,
             "sample_every": sample_every,
-            "init_samples": 200,
-            "final_samples": 700,
+            "n_sample": 250,
+            "n_burn": 250,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,

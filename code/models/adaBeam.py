@@ -80,6 +80,7 @@ class Adaptive_beam :
     def predict(self, 
                 prediction_pts : np.ndarray,
                 tolerance : np.ndarray,
+                verbose : bool = False
                 ) -> np.ndarray :
         n_pts = len(prediction_pts)
 
@@ -88,33 +89,33 @@ class Adaptive_beam :
         E = material_parameters[:, 0] # Young's modulus
         nu = material_parameters[:, 1] # Poisson's ratio
 
-        # TODO : scale E and nu to the range of the model
-
         data_path = self.data_path
         flags = f""
 
+        if verbose :
+            flags += f" --verbose true "
+
         if self.adaptive :
-            flags += f"--save_mesh true"
+            flags += f"--save_mesh true "
 
             meshfiles = []
 
             for i in range(n_pts) :
                 curr_dir = data_path + f"/par{i}"
-                if os.path.exists(curr_dir) :
+                if os.path.exists(curr_dir + "/mesh.vtu") :
                     # use the mesh from the previous run
                     meshfiles.append(curr_dir + "/mesh.vtu")
                 else :
                     # create the directory
-                    os.makedirs(curr_dir)
+                    if not os.path.exists(curr_dir) :
+                        os.makedirs(curr_dir)
                     # use the default mesh
                     meshfiles.append(data_path + "/default_cuboid.vtu")
-                    
-
         else :
             # use default tolerance
             tolerance = np.full(n_pts, self.default_tol)
 
-            flags += f"--max_refinements 0"
+            flags += f"--max_refinements 0 "
 
             meshfiles = [ data_path + "/non_adaptive.vtu" for i in range(n_pts) ]
 
@@ -132,7 +133,7 @@ class Adaptive_beam :
             runflags = flags + f" --E {E[i]} --nu {nu[i]} --tolx {tolerance[i]} "
             #data paths
             out_path = data_path + f"/par{i}"
-            runflags += f"--datapath {out_path} --mesh {meshfiles[i]}"
+            runflags += f"--datapath {out_path} --mesh {meshfiles[i]} "
 
             if not os.path.exists(out_path) :
                 os.makedirs(out_path)

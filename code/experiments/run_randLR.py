@@ -4,6 +4,7 @@ from utils.workflow import Manager
 import numpy as np
 
 from models.forward import forward_model as fm
+from models.adaBeam import Adaptive_beam
 from models.lipschitz import lipschitz_regressor
 
 from IP.priors import GaussianPrior
@@ -48,7 +49,10 @@ param_space = {
 }
 
 # create forward model,  sets noise type
-forward = fm(dim, noise, dom = param_space)
+if dim == 2 :
+    forward = Adaptive_beam(path + "/data/d2/kaskade", adaptive = False)
+else :
+    forward = fm(dim, noise, dom = param_space)
 
 # create prior
 prior_mean = IP_config["prior_mean"]
