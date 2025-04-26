@@ -23,13 +23,13 @@ def process_configuration(configuration):
             configuration["IP_config"][key] = np.array(value)
 
     configuration["training_config"]["n_init"] = int(configuration["training_config"]["n_init"])
-    configuration["training_config"]["n_it"] = int(configuration["training_config"]["n_it"])
+    #configuration["training_config"]["n_it"] = int(configuration["training_config"]["n_it"])
     configuration["training_config"]["points_per_it"] = int(configuration["training_config"]["points_per_it"])
 
     configuration["sampling_config"]["n_walkers"] = int(configuration["sampling_config"]["n_walkers"])
     configuration["sampling_config"]["sample_every"] = int(configuration["sampling_config"]["sample_every"])
-    configuration["sampling_config"]["init_samples"] = int(configuration["sampling_config"]["init_samples"])
-    configuration["sampling_config"]["final_samples"] = int(configuration["sampling_config"]["final_samples"])
+    configuration["sampling_config"]["n_sample"] = int(configuration["sampling_config"]["n_sample"])
+    configuration["sampling_config"]["n_burn"] = int(configuration["sampling_config"]["n_burn"])
 
 class Manager() :
     def __init__(self, path : str, dimension : int, try_per_param : int = 5):
@@ -42,9 +42,13 @@ class Manager() :
         
     def read_configuration(self, type_res = "AGP"):
         
-        config_path = self.path+f'/data/d{self.dimension}'
+        config_file = self.path+f'/data/d{self.dimension}'
+        if "GP" in type_res :
+            config_file += '/GP_config.json'
+        else :
+            config_file += '/LR_config.json'
         
-        with open(config_path+'/config.json', 'r', newline='') as file:
+        with open(config_file, 'r', newline='') as file:
             configurations = json.load(file)
             
             

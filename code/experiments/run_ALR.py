@@ -62,7 +62,7 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol = training_config["default_tol_fixed"]
+default_tol = training_config["default_tol"]
 
 # create surrogate
 surrogate = lipschitz_regressor(dim = dim, dout = forward.dout)

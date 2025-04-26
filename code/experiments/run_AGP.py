@@ -27,10 +27,8 @@ noise = "N"
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
 parser.add_argument("--dim", type=int, help="Dimension of the problem")
-parser.add_argument("--tols", type=int, default=0)
 args = parser.parse_args()
-tols = args.tols
-path = args.path + f"/tols{tols}"
+path = args.path
 dim = args.dim
 
 # manages i/o
@@ -71,7 +69,7 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol = training_config["default_tol_fixed"]
+default_tol = training_config["default_tol"]
 
 # create surrogate
 surrogate = MTModel(num_tasks = forward.dout)

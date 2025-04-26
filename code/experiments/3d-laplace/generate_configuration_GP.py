@@ -8,10 +8,8 @@ dim = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
-parser.add_argument("--tols", type=int, default=1)
 args = parser.parse_args()
-tols = args.tols
-path = args.path + f"/tols{tols}"
+path = args.path
 
 if not os.path.exists(path + f"/data/d{dim}"):
     os.makedirs(path + f"/data/d{dim}/")
@@ -46,17 +44,13 @@ pred = fm.predict(gt)
 
 # adaptive training parameters
 sample_every = 3
-sampling_times = 5
-n_it = sample_every * sampling_times
 points_per_it = 1
 n_init = 5
-default_tol_fixed = 0.03
-if tols > 0:
-    default_tol_ada = [0.03, 0.03, 0.01, 0.01, 0.005]
-else:
-    default_tol_ada = [0.03, 0.03, 0.01, 0.01, 0.005]
+default_tol = 0.03
+threshold = meas_std**2 * fm.dout / 20
+conv_ratio = 1/4
+max_iter = 10
 FE_cost = 1
-budget = n_init  * (default_tol_fixed)**(-FE_cost) + points_per_it * sample_every * np.sum(np.array(default_tol_ada)**(-FE_cost))
 
 configurations = []
 for i in range(n_meas):
@@ -74,17 +68,17 @@ for i in range(n_meas):
         },
         "training_config": {
             "n_init": n_init,
-            "n_it": n_it,
             "points_per_it": points_per_it,
-            "default_tol_fixed": default_tol_fixed,
-            "default_tol_ada": default_tol_ada,
-            "budget": budget,
+            "default_tol": default_tol,
+            "max_iter": max_iter * sample_every,
+            "threshold": threshold,
+            "conv_ratio": conv_ratio,
         },
         "sampling_config": {
             "n_walkers": 32,
             "sample_every": sample_every,
-            "init_samples": 200,
-            "final_samples": 700,
+            "n_sample": 250,
+            "n_burn": 250,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,
@@ -92,4 +86,4 @@ for i in range(n_meas):
     }
     configurations.append(config_dict)
 
-json.dump(configurations, open(path + f"/data/d{dim}/config.json", "w"), indent=4)
+json.dump(configurations, open(path + f"/data/d{dim}/GP_config.json", "w"), indent=4)

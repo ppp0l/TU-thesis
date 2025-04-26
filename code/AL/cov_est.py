@@ -51,8 +51,7 @@ def estimate_covariance(residuals : List[np.ndarray], tolerances: List[np.ndarra
     for i in range(len(residuals)):
         res_i = residuals[i]/ tolerances[i].reshape( (-1,1))
 
-        res_i *= np.sqrt(2/np.pi) / np.mean(np.abs(res_i), axis = 1).reshape( (-1,1))
-        
+        res_i *= np.sqrt(2/np.pi) / np.mean(np.abs(res_i), axis = 0)
         data = data + res_i.tolist()
 
     data = np.array(data)

@@ -18,7 +18,6 @@ from IP.likelihoods import GP_likelihood
 from IP.posteriors import Posterior 
 
 from AL.L2_GP import L2_approx
-from AL.cov_est import estimate_covariance
 
 from utils.utils import latin_hypercube_sampling as lhs, reproducibility_seed
 
@@ -70,14 +69,16 @@ meas_std = IP_config["measurement_std"]
 training_config = configuration["training_config"]
 sampling_config = configuration["sampling_config"]
 
-default_tol = training_config["default_tol_fixed"]
+default_tol = training_config["default_tol"]
 
 n_init = training_config["n_init"]
 
 
 sample_every = sampling_config["sample_every"]
 points_per_it = sample_every * training_config["points_per_it"]
-n_it = training_config["n_it"]//(sample_every)
+n_it = training_config["max_iter"]//(sample_every)
+
+threshold = training_config["threshold"]
 
 points = lhs(param_space["min"], param_space["max"], points_per_it*n_it+n_init)
 
@@ -103,8 +104,8 @@ posterior.initialize_sampler(n_walkers, initial_pos)
 
 FE_cost = configuration["forward_model_config"]["FE_cost"]
 
-n_init_samples = sampling_config["init_samples"]
-n_final_samples = sampling_config["final_samples"]
+n_sample = sampling_config["n_sample"]
+n_burn = sampling_config["n_burn"]
 
 samples = np.array([np.zeros(dim)])
 
@@ -116,10 +117,8 @@ for i in range(n_it) :
     print("Sampling posterior...") 
     print()
 
-    n_burn = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it)**2 )
-    n_samples = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it))
     # sample posterior
-    new_samples = posterior.sample_points(n_samples)
+    new_samples = posterior.sample_points(n_sample)
 
     # update sample chains
     if n_burn * n_walkers > len(samples) :
@@ -184,13 +183,16 @@ for i in range(n_it) :
     print(f"Points in the training set: {len(train_p)}")
     print()
 
+    if new_L2 < threshold :
+        print("Convergence reached.")
+        break
     gc.collect()
 
 # export final round, save
-n_burn = n_walkers * n_samples
-n_samples = n_final_samples
+n_burn = n_walkers * n_sample
+n_sample = 2* n_sample
 # sample posterior
-new_samples = posterior.sample_points(n_samples)
+new_samples = posterior.sample_points(n_sample)
 
 # update sample chains
 samples = samples[n_burn :]

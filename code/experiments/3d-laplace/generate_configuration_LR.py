@@ -4,7 +4,7 @@ import json
 import argparse
 import os
 
-dim = 6
+dim = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
@@ -20,14 +20,14 @@ from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
-n_meas = 4
+n_meas = 5
 
 fm = forward_model(dim = dim)
 
 # IP parameters
-meas_std = 0.05
+meas_std = 0.01
 
-domain_bound = 1
+domain_bound = 1/2
 
 domain_upper_bound = np.ones(dim) * domain_bound
 domain_lower_bound = -np.ones(dim) * domain_bound
@@ -44,13 +44,13 @@ pred = fm.predict(gt)
 
 # adaptive training parameters
 sample_every = 5
-n_it = sample_every * 5
 points_per_it = 1
-n_init = 15
-default_tol_fixed = 0.001
-default_tol_ada = 0.005
+n_init = 5
+default_tol = 0.03
+threshold = meas_std * fm.dout / 10
+conv_ratio = 1/2
+max_iter = 10
 FE_cost = 1
-budget = (n_init + points_per_it * n_it) * (default_tol_ada)**(-FE_cost)
 
 configurations = []
 for i in range(n_meas):
@@ -68,17 +68,17 @@ for i in range(n_meas):
         },
         "training_config": {
             "n_init": n_init,
-            "n_it": n_it,
             "points_per_it": points_per_it,
-            "default_tol_fixed": default_tol_fixed,
-            "default_tol_ada": default_tol_ada,
-            "budget": budget,
+            "default_tol": default_tol,
+            "max_iter": max_iter * sample_every,
+            "threshold": threshold,
+            "conv_ratio": conv_ratio,
         },
         "sampling_config": {
-            "n_walkers": 64,
+            "n_walkers": 32,
             "sample_every": sample_every,
-            "init_samples": 200,
-            "final_samples": 700,
+            "n_sample": 250,
+            "n_burn": 250,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,
@@ -86,4 +86,4 @@ for i in range(n_meas):
     }
     configurations.append(config_dict)
 
-json.dump(configurations, open(path + f"/data/d{dim}/config.json", "w"), indent=4)
+json.dump(configurations, open(path + f"/data/d{dim}/LR_config.json", "w"), indent=4)

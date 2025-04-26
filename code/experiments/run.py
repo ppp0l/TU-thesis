@@ -96,34 +96,31 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     sampling_config = configuration["sampling_config"]
 
     points_per_it = training_config["points_per_it"]
-    n_it = training_config["n_it"]
+    max_iter = training_config["max_iter"]
     sample_every = sampling_config["sample_every"]
+    threshold = training_config["threshold"]
+    conv_ratio = training_config["conv_ratio"]
 
-    default_tol = training_config["default_tol_fixed"]
-    ada_tols = training_config["default_tol_ada"]
-
+    default_tol = training_config["default_tol"]
+    tol = default_tol
     FE_cost = configuration["forward_model_config"]["FE_cost"]
+    budget_next_it = points_per_it * tol**(-FE_cost)
 
-    n_init_samples = sampling_config["init_samples"]
-    n_final_samples = sampling_config["final_samples"]
+    n_sample = sampling_config["n_sample"]
+    n_burn = sampling_config["n_burn"]
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
     
     residuals, tolerances = fm.get_residuals()
 
-    for i in range(n_it) :
+    for i in range(max_iter) :
         if i%sample_every == 0 :
-            try :
-                budget_next_it = points_per_it * (ada_tols[i//sample_every])**(-FE_cost)
-            except IndexError :
-                budget_next_it = points_per_it * (ada_tols[-1])**(-FE_cost)
+            
             print("Sampling posterior...") 
             print()
 
-            n_burn = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it)**2 )
-            n_samples = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it))
             # sample posterior
-            new_samples = posterior.sample_points(n_samples)
+            new_samples = posterior.sample_points(n_sample)
 
             # update sample chains
             if n_burn * n_walkers > len(samples) :
@@ -143,16 +140,23 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
         # save results
         if i%sample_every == 0 :
+            
+            if i//sample_every >= 2 and curr_target/old_target > conv_ratio :
+                tol = tol/2
+                budget_next_it = points_per_it * tol**(-FE_cost)
+
             workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
             training_set["train_p"] = train_p
             training_set["train_y"] = train_y
             training_set["errors"] = errors
             workflow_manager.state_saver(run_type, i, W, training_set, surrogate, samples)
 
+            old_target = curr_target
+
         print("Rietriving candidates...")
         print()
         # position problem
-        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples, FE_cost )
+        candidates = solve_pos_prob(points_per_it, param_space, tol, surrogate, shortened_samples, FE_cost )
 
         print("Done.")
         print()
@@ -208,22 +212,26 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
         print()
 
         new_target = target(surrogate, shortened_samples)
-
-
+        
         print()
         print(f"Iteration {i}")
         print(f"Precedent target approx value: {curr_target}")
         print(f"Current target approx value: {new_target}")
+        print(f"Threshold: {threshold}")
+        print(f"Current default tolerance: {tol}")
         print(f"Points in the training set: {len(train_p)}")
         print()
+        if new_target < threshold :
+            print("Required accuracy level reached.")
+            break
 
         gc.collect()
     
     # export final round, save
-    n_burn = n_walkers * n_samples
-    n_samples = n_final_samples
+    n_burn = n_walkers * n_sample
+    n_sample = 2*n_sample
     # sample posterior
-    new_samples = posterior.sample_points(n_samples)
+    new_samples = posterior.sample_points(n_sample)
 
     # update sample chains
     samples = samples[n_burn :]
@@ -238,7 +246,7 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
-    workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
+    workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
 
 def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str , target):
     configuration = workflow_manager.configuration
@@ -256,27 +264,27 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
     sampling_config = configuration["sampling_config"]
 
     points_per_it = training_config["points_per_it"]
-    n_it = training_config["n_it"]
+    max_iter = training_config["max_iter"]
     sample_every = sampling_config["sample_every"]
 
-    default_tol = training_config["default_tol_fixed"]
+    threshold = training_config["threshold"]
+
+    default_tol = training_config["default_tol"]
 
     FE_cost = configuration["forward_model_config"]["FE_cost"]
 
-    n_init_samples = sampling_config["init_samples"]
-    n_final_samples = sampling_config["final_samples"]
+    n_sample = sampling_config["n_sample"]
+    n_burn = sampling_config["n_burn"]
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
 
-    for i in range(n_it) :
+    for i in range(max_iter) :
         if i%sample_every == 0 :
             print("Sampling posterior...") 
             print()
 
-            n_burn = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it)**2 )
-            n_samples = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it))
             # sample posterior
-            new_samples = posterior.sample_points(n_samples)
+            new_samples = posterior.sample_points(n_sample)
 
             # update sample chains
             if n_burn * n_walkers > len(samples) :
@@ -338,13 +346,17 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
         print(f"Points in the training set: {len(train_p)}")
         print()
 
+        if new_target < threshold :
+            print("Required accuracy level reached.")
+            break
+
         gc.collect()
     
     # export final round, save
-    n_burn = n_walkers * n_samples
-    n_samples = n_final_samples
+    n_burn = n_walkers * n_sample
+    n_sample = 2 * n_sample
     # sample posterior
-    new_samples = posterior.sample_points(n_samples)
+    new_samples = posterior.sample_points(n_sample)
 
     # update sample chains
     samples = samples[n_burn :]
@@ -359,7 +371,7 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
-    workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
+    workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
 
 def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str, target):
     configuration = workflow_manager.configuration
@@ -379,26 +391,26 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
     sample_every = sampling_config["sample_every"]
 
     points_per_it = sample_every * training_config["points_per_it"]
-    n_it = training_config["n_it"]//sample_every
+    max_iter = training_config["max_iter"]//sample_every
 
-    default_tol = training_config["default_tol_fixed"]
+    default_tol = training_config["default_tol"]
+
+    threshold = training_config["threshold"]
 
     FE_cost = configuration["forward_model_config"]["FE_cost"]
 
-    n_init_samples = sampling_config["init_samples"]
-    n_final_samples = sampling_config["final_samples"]
+    n_sample = sampling_config["n_sample"]
+    n_burn = sampling_config["n_burn"]
     n_walkers = sampling_config["n_walkers"]
     samples = np.array([np.zeros(dim)])
 
-    for i in range(n_it) :
+    for i in range(max_iter) :
 
         print("Sampling posterior...") 
         print()
 
-        n_burn = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it)**2 )
-        n_samples = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it))
         # sample posterior
-        new_samples = posterior.sample_points(n_samples)
+        new_samples = posterior.sample_points(n_sample)
 
         # update sample chains
         if n_burn * n_walkers > len(samples) :
@@ -461,13 +473,17 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
         print(f"Points in the training set: {len(train_p)}")
         print()
 
+        if new_target < threshold :
+            print("Required accuracy level reached.")
+            break
+
         gc.collect()
     
     # export final round, save
-    n_burn = n_walkers * n_samples
-    n_samples = n_final_samples
+    n_burn = n_walkers * n_sample
+    n_sample = 2* n_sample
     # sample posterior
-    new_samples = posterior.sample_points(n_samples)
+    new_samples = posterior.sample_points(n_sample)
 
     # update sample chains
     samples = samples[n_burn :]
@@ -482,178 +498,33 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
-    workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
+    workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
     
 
-def run_adaptive_test(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, true_posterior : Posterior = None, ):
-    configuration = workflow_manager.configuration
+##printing
 
-    param_space = fm.dom
-    dim = fm.dim
+    # true_samples = true_posterior.sample_points(4000)
 
-    # initial training set
-    train_p = training_set["train_p"]
-    train_y = training_set["train_y"]
-    errors = training_set["errors"]
-
-    # active learning parameters
-    training_config = configuration["training_config"]
-    sampling_config = configuration["sampling_config"]
-
-    points_per_it = training_config["points_per_it"]
-    n_it = training_config["n_it"]
-    sample_every = sampling_config["sample_every"]
-
-    default_tol = training_config["default_tol_ada"]
-    budget_ada = training_config["budget"]
-    budget_per_it = budget_ada / n_it
-
-    FE_cost = configuration["forward_model_config"]["FE_cost"]
-
-    n_init_samples = sampling_config["init_samples"]
-    n_final_samples = sampling_config["final_samples"]
-    n_walkers = sampling_config["n_walkers"]
-    samples = np.array([np.zeros(dim)])
-    
-
-    true_samples = true_posterior.sample_points(4000)
-
-    tr_mean = np.mean(true_samples, axis = 0)
-    tr_std  = np.sqrt( np.mean(true_samples**2, axis = 0 )- tr_mean**2)
-    cleaned_true = true_samples[np.all( true_samples - tr_mean < 4*tr_std, axis = 1)]
-
-    for i in range(n_it) :
-        if i%sample_every == 0 :
-            print("Sampling posterior...") 
-            print()
-
-            n_burn = int(n_init_samples + (n_final_samples -  n_init_samples)* (i/n_it)**2 )
-            n_samples = int(n_init_samples  + (n_final_samples -  n_init_samples)* (i/n_it))
-            # sample posterior
-            new_samples = posterior.sample_points(n_samples)
-
-            # update sample chains
-            if n_burn * n_walkers > len(samples) :
-                samples = np.array([np.zeros(dim)])
-            else :
-                samples = samples[n_burn*n_walkers :]
-            samples = np.concatenate( (samples, new_samples), axis = 0)
-
-            print(f'n_samples: {32 * n_samples} n_burn: {32 * n_burn}')
-            print(f"Samples: {len(samples)}")
-            print(f"new_samples : {len(new_samples)}")
-            print("Done.")
-            print()
-            shortened_samples = samples[::5]
-
-        samp_mean = np.mean(samples, axis = 0)
-        samp_std  = np.sqrt( np.mean(samples**2, axis = 0 )- samp_mean**2)
-        cleaned_samples = samples[np.all( samples - samp_mean < 4*samp_std, axis = 1)]
-
-        corner_plot(
-            [cleaned_samples, cleaned_true[:len(cleaned_samples)]], 
-            colors = ["teal", "crimson"],
-            labels = ["Adaptive approximation", "Ground truth"],
-            points = [train_p],
-            points_colors = ["black"],
-            title = f"Samples at iteration {i}",
-            domain = param_space,
-            savepath = configuration["res_path"] + f"/samples_{i}.png",
-        )
-        
-
-        _, std = surrogate.predict(shortened_samples, return_std=True)
-
-        curr_L2 = AL.L2_GP.L2_approx(std**2).mean()
-
-        print("Rietriving candidates...")
-        print()
-        # position problem
-        candidates = solve_pos_prob(points_per_it, param_space, default_tol, surrogate, shortened_samples,  FE_cost )
-        print("Done.")
-        print()
-
-        print("Optimizing tolerances...")
-        print()
-        # accuracy problem
-        tolerances, new_pts, updated = solve_acc_prob(candidates, budget_per_it, surrogate, shortened_samples, FE_cost)
-        print("Done.")
-        print()
-
-        new_tols = tolerances[len(train_p):]
-        update_tols = tolerances[:len(train_p)]
-
-        print("Evaluating model...")
-        print()
-        # evaluate model
-
-        if np.any(updated) :
-            train_y[updated], errors[updated] = fm.predict(train_p[updated], update_tols[updated])
-
-        if len(new_pts) > 0:
-            new_vals, new_errs = fm.predict(new_pts, new_tols)
-
-            train_p =  np.concatenate((train_p, new_pts), axis = 0)
-            train_y = np.concatenate((train_y, new_vals), axis = 0)
-            errors = np.concatenate((errors, new_errs), axis = 0)
-        
-        print("Done.")
-        print()
-
-        print("Updating surrogate...")
-        print()
-
-        # update surrogate
-        surrogate.fit(train_p, train_y, errors)
-        print("Done.")
-        print()
+    # tr_mean = np.mean(true_samples, axis = 0)
+    # tr_std  = np.sqrt( np.mean(true_samples**2, axis = 0 )- tr_mean**2)
+    # cleaned_true = true_samples[np.all( true_samples - tr_mean < 4*tr_std, axis = 1)]
 
 
-        # monitor convergence
-        # save results
-        W = np.sum(errors**(-FE_cost))
+    # samples = samples[n_burn :]
+    # samples = np.concatenate( (samples, new_samples), axis = 0)
 
-        _, std = surrogate.predict(samples, return_std=True)
-        new_L2 = AL.L2_GP.L2_approx(std**2).mean()
+    # samp_mean = np.mean(samples, axis = 0)
+    # samp_std  = np.sqrt( np.mean(samples**2, axis = 0 )- samp_mean**2)
+    # cleaned_samples = samples[np.all( samples - samp_mean < 4*samp_std, axis = 1)]
 
-        print()
-        print(f"Iteration {i}")
-        print(f"Precedent L2 approx value: {curr_L2}")
-        print(f"Current L2 approx value: {new_L2}")
-        print(f"Points in the training set: {len(train_p)}")
-        print()
-
-        gc.collect()
-    
-    # export final round, save
-    n_burn = n_walkers * n_samples
-    n_samples = n_final_samples
-    # sample posterior
-    new_samples = posterior.sample_points(n_samples)
-
-    # update sample chains
-    samples = samples[n_burn :]
-    samples = np.concatenate( (samples, new_samples), axis = 0)
-
-    samp_mean = np.mean(samples, axis = 0)
-    samp_std  = np.sqrt( np.mean(samples**2, axis = 0 )- samp_mean**2)
-    cleaned_samples = samples[np.all( samples - samp_mean < 4*samp_std, axis = 1)]
-
-    shortened_samples = samples[::5]
-
-    # monitor convergence
-    W = np.sum(errors**(-FE_cost))
-
-    _, std = surrogate.predict(shortened_samples, return_std=True)
-    curr_L2 = AL.L2_GP.L2_approx(std**2).mean()
-
-    corner_plot(
-        [cleaned_samples, cleaned_true[:len(cleaned_samples)]], 
-        colors = ["teal"],
-        labels = ["Ground truth", "AGP approximation"],
-        points = [train_p],
-        points_colors = ["black"],
-        title = f"Samples at iteration {i+1}",
-        domain = param_space,
-        savepath = configuration["res_path"] + f"/samples_{i+1}.png",
-    )
+    # shortened_samples = samples[::5]
+    # corner_plot(
+    #     [cleaned_samples, cleaned_true[:len(cleaned_samples)]], 
+    #     colors = ["teal"],
+    #     labels = ["Ground truth", "AGP approximation"],
+    #     points = [train_p],
+    #     points_colors = ["black"],
+    #     title = f"Samples at iteration {i+1}",
+    #     domain = param_space,
+    #     savepath = configuration["res_path"] + f"/samples_{i+1}.png",
+    # )
