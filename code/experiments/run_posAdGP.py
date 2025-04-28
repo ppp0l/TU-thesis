@@ -53,12 +53,6 @@ param_space = {
     'min' : domain_LB, 
     'max' : domain_UB,
 }
-
-# create forward model,  sets noise type
-if dim == 2 :
-    forward = Adaptive_beam(path + "/data/d2/kaskade", adaptive = False)
-else :
-    forward = fm(dim, noise, dom = param_space)
     
 # create prior
 prior_mean = IP_config["prior_mean"]
@@ -73,6 +67,13 @@ training_config = configuration["training_config"]
 n_init = training_config["n_init"]
 
 default_tol = training_config["default_tol"]
+
+# create forward model,  sets noise type
+if dim == 2 :
+    forward = Adaptive_beam(path + "/data/d2/kaskade", adaptive = False, default_tol=default_tol)
+    forward.dom = param_space
+else :
+    forward = fm(dim, noise, dom = param_space)
 
 # create surrogate
 surrogate = MTModel(num_tasks = forward.dout)

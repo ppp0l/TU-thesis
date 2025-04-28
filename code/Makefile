@@ -75,18 +75,15 @@ FE_config_LR: experiments/2d-FE/generate_configuration_LR.py
 		$(CONDA_PY_SET) python experiments/2d-FE/generate_configuration_LR.py $(FLAGS)
 
 FE_GP: FE_config_GP
-		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
+		$(CONDA_ACTIVATE); $(PYPATH); \
 		python experiments/run_AGP.py $(FLAGS) --dim 2; \
 		python experiments/run_LHSGP.py $(FLAGS) --dim 2; \
 		python experiments/run_posAdGP.py $(FLAGS) --dim 2; \
-		python experiments/run_randGP.py $(FLAGS) --dim 2; \
-		done
+		python experiments/run_randGP.py $(FLAGS) --dim 2; 
 
 FE_LR: FE_config_LR
-		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 25) ; do \
+		$(CONDA_ACTIVATE); $(PYPATH);\
 		python experiments/run_ALR.py $(FLAGS) --dim 2; \
 		python experiments/run_LHSLR.py $(FLAGS) --dim 2; \
 		python experiments/run_posAdLR.py $(FLAGS) --dim 2; \
-		python experiments/run_randLR.py $(FLAGS) --dim 2; \
-		done
-
+		python experiments/run_randLR.py $(FLAGS) --dim 2;

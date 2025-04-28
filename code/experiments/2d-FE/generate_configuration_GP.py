@@ -41,19 +41,19 @@ gt = np.array([ [2.7e11, 0.3]])
     
 if args.eval_model:
     gt = fm.scale_parameters(gt)
-    pred = fm.predict(gt)
-    np.save(path + f"/data/d{dim}/measurements.npy", pred)
+    pred = fm.predict(gt, tols= [0])
+    np.save(path + f"/data/d{dim}/gt_measurements.npy", pred)
 else :
-    pred = np.load(path + f"/data/d{dim}/measurements.npy")
+    pred = np.load(path + f"/data/d{dim}/gt_measurements.npy")
 
 # adaptive training parameters
 sample_every = 2
 points_per_it = 1
-n_init = 5
+n_init = 3
 default_tol = 0.03
 threshold = meas_std**2 * fm.dout / 20
 conv_ratio = 1/4
-max_iter = 5
+max_iter = 6
 FE_cost = 1.5
 
 configurations = []
@@ -90,4 +90,4 @@ for i in range(n_meas):
     }
     configurations.append(config_dict)
 
-json.dump(configurations, open(path + f"/data/d{dim}/config.json", "w"), indent=4)
+json.dump(configurations, open(path + f"/data/d{dim}/GP_config.json", "w"), indent=4)

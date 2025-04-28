@@ -24,6 +24,7 @@ class Adaptive_beam :
     Python interface for the adaptive FE model of the beam.
     """
     dout = 4
+    dim = 2
 
     scale_in = def_scaling["in"]
     scale_out = def_scaling["out"]
@@ -79,10 +80,11 @@ class Adaptive_beam :
 
     def predict(self, 
                 prediction_pts : np.ndarray,
-                tolerance : np.ndarray,
+                tols : np.ndarray,
                 verbose : bool = False
                 ) -> np.ndarray :
         n_pts = len(prediction_pts)
+        tolerance = tols
 
         material_parameters = self.scale_parameters(prediction_pts, inverse = True)
 
@@ -101,7 +103,7 @@ class Adaptive_beam :
             meshfiles = []
 
             for i in range(n_pts) :
-                curr_dir = data_path + f"/par{i}"
+                curr_dir = data_path + f"/eval/par{i}"
                 if os.path.exists(curr_dir + "/mesh.vtu") :
                     # use the mesh from the previous run
                     meshfiles.append(curr_dir + "/mesh.vtu")
@@ -117,7 +119,7 @@ class Adaptive_beam :
 
             flags += f"--max_refinements 0 "
 
-            meshfiles = [ data_path + "/non_adaptive.vtu" for i in range(n_pts) ]
+            meshfiles = [ data_path + f"/non_adaptive{self.default_tol}.vtu" for i in range(n_pts) ]
 
         if not self.mesh is None :
             meshfiles = [self.mesh for i in range(n_pts)]
@@ -132,11 +134,15 @@ class Adaptive_beam :
             # set the material parameters
             runflags = flags + f" --E {E[i]} --nu {nu[i]} --tolx {tolerance[i]} "
             #data paths
-            out_path = data_path + f"/par{i}"
-            runflags += f"--datapath {out_path} --mesh {meshfiles[i]} "
+            if self.adaptive :
+                out_path = data_path + f"/eval/par{i}"
+            else :
+                out_path = data_path + "/eval"
 
             if not os.path.exists(out_path) :
                 os.makedirs(out_path)
+
+            runflags += f"--datapath {out_path} --mesh {meshfiles[i]} "
 
             responses[i], error_levels[i] = self.run(runflags, out_path, tolerance[i])
 
@@ -150,6 +156,7 @@ class Adaptive_beam :
         """
         # run the adaptive beam model
         cmd = f"{self.model_path}/adaBeam {flags}"
+        print("Running command: " + cmd)
         subprocess.run(cmd, shell=True)
 
         # read the output

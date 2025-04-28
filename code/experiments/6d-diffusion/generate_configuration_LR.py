@@ -43,13 +43,13 @@ while not np.all(np.abs(gt) <= domain_bound):
 pred = fm.predict(gt)
 
 # adaptive training parameters
-sample_every = 5
+sample_every = 6
 points_per_it = 1
-n_init = 15
+n_init = 16
 default_tol = 0.03
-threshold = meas_std * fm.dout / 10
+threshold = meas_std * fm.dout / 1.5
 conv_ratio = 1/2
-max_iter = 10
+max_iter = 9
 FE_cost = 1
 
 configurations = []

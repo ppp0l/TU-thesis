@@ -238,8 +238,8 @@ class MTModel(Surrogate):
             self.kernel=RBFKernel(
                      has_lengthscale=True,
                      ard_num_dims = dims,
-                     lengthscale_prior=GammaPrior(1, 10),
-                     lengthscale_constraint = GreaterThan(5.e-2)
+                     lengthscale_prior=GammaPrior(2, 10),
+                     lengthscale_constraint = GreaterThan(1.e-1)
                      )
                 
             
