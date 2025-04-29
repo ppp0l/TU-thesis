@@ -68,7 +68,7 @@ def corner_plot(
 
     if labels is not None:
         lines = [ mlines.Line2D([],[], color=colors[i], label=labels[i]) for i in range(len(labels)) ]
-        plt.legend(handles=lines, loc='upper right', )
+        plt.legend(handles=lines, loc = 7,bbox_to_anchor=(0., 1.9, 0.8, 1.0) )
     if title is not None:
         plt.suptitle(title)
 
