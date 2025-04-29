@@ -25,7 +25,7 @@ n_meas = 4
 fm = forward_model(dim = dim)
 
 # IP parameters
-meas_std = 0.05
+meas_std = 0.02
 
 domain_bound = 1
 
@@ -45,11 +45,11 @@ pred = fm.predict(gt)
 # adaptive training parameters
 sample_every = 6
 points_per_it = 1
-n_init = 16
+n_init = 14
 default_tol = 0.03
 threshold = meas_std * fm.dout / 1.5
-conv_ratio = 1/2
-max_iter = 9
+conv_ratio = 1/4
+max_iter = 6
 FE_cost = 1
 
 configurations = []

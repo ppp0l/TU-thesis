@@ -156,7 +156,7 @@ class Adaptive_beam :
         """
         # run the adaptive beam model
         cmd = f"{self.model_path}/adaBeam {flags}"
-        print("Running command: " + cmd)
+        
         subprocess.run(cmd, shell=True)
 
         # read the output

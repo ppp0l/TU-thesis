@@ -17,6 +17,8 @@ kaskade_path = path + f"/data/d{dim}/kaskade"
 if not os.path.exists(kaskade_path):
     os.makedirs(kaskade_path+"/")
     args.eval_model = True
+if not os.path.exists(path + f"/data/d{dim}/gt_measurements.npy"):
+    args.eval_model = True
 
 
 from models.adaBeam import Adaptive_beam 
@@ -24,7 +26,7 @@ from utils.utils import reproducibility_seed
 
 reproducibility_seed(seed=7856)
 
-fm = Adaptive_beam(path, mesh = kaskade_path + "gt_mesh.vtu", adaptive = False)
+fm = Adaptive_beam(path, mesh = kaskade_path + "/gt_mesh.vtu", adaptive = False)
 
 # IP parameters
 meas_std = 0.03
@@ -36,12 +38,12 @@ prior_mean = np.ones(dim)/2
 prior_std = 1/6
 
 n_meas = 1
-gt = np.array([ [2.7e11, 0.3]])
+gt = np.array([ [2.9e11, 0.3]])
 
     
 if args.eval_model:
     gt = fm.scale_parameters(gt)
-    pred = fm.predict(gt, tols= [0])
+    pred, _ = fm.predict(gt, tols= [0])
     np.save(path + f"/data/d{dim}/gt_measurements.npy", pred)
 else :
     pred = np.load(path + f"/data/d{dim}/gt_measurements.npy")
@@ -51,7 +53,7 @@ sample_every = 2
 points_per_it = 1
 n_init = 3
 default_tol = 0.03
-threshold = meas_std**2 * fm.dout / 20
+threshold = meas_std**2 * fm.dout / 40
 conv_ratio = 1/4
 max_iter = 6
 FE_cost = 1.5

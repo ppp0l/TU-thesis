@@ -1,8 +1,12 @@
 import numpy as np
 import emcee
+from scipy.optimize import minimize, Bounds
+
 from IP.likelihoods import base_likelihood
 from IP.priors import Prior
+
 from utils.MCMC_utils import DIMEMove, burn_in
+from utils.utils import latin_hypercube_sampling as lhs 
 
 class Posterior:
     def __init__(self, likelihood: base_likelihood, prior : Prior):
@@ -60,4 +64,38 @@ class Posterior:
         chain = self.sampler.get_chain(flat= True)
 
         return chain
+    
+    def MAP_estimate(self, starts = None):
+        mins = self.prior.dom['min']
+        maxs = self.prior.dom['max']
+
+        bounds =  Bounds(lb = mins, ub = maxs, keep_feasible = True )
+
+        if starts is None :
+            n_starts = 3 * self.likelihood.model.dim
+        
+            # evenly spread on parameter space
+            starts = lhs(mins, maxs, n_starts)
+        else :
+            n_starts = len(starts)
+            
+
+        for i in range(n_starts) :
+            res = minimize( lambda x : -self.log_prob(x), starts[i], 
+                            method='Nelder-Mead',
+                            bounds=bounds,
+                            options = { 
+                                "fatol":1e-5,
+                                "maxiter":500,
+                             }
+                            )
+            
+            if i == 0 :
+                best = res
+            else :
+                if res.fun < best.fun :
+                    best = res
+        return best.x
+
+
 

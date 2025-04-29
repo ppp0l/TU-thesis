@@ -25,7 +25,7 @@ n_meas = 4
 fm = forward_model(dim = dim)
 
 # IP parameters
-meas_std = 0.05
+meas_std = 0.02
 
 domain_bound = 1
 
@@ -47,8 +47,8 @@ sample_every = 4
 points_per_it = 1
 n_init = 13
 default_tol = 0.03
-threshold = meas_std**2 * fm.dout / 20
-conv_ratio = 1/9
+threshold = meas_std**2 * fm.dout / 40
+conv_ratio = 1/8
 max_iter = 8
 FE_cost = 1
 
