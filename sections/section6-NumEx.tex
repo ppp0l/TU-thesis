@@ -2,9 +2,10 @@
 
 In this section, we present numerical experiments to demonstrate the performance of~\ref{algo:AL} under different conditions. 
 Among the three presented experiment, the first two use an analytical solution of the underlying PDE, while the third one is based on actual FE simulations of a PDE.
-The choice of analytical forward models allows to evaluate the actual error and compare convergence rates and reduces the time required by realizations of~\ref{algo:AL}. \medskip 
+The choice of analytical forward models allows to evaluate the actual error and compare convergence rates and reduces the time required by realizations of~\ref{algo:AL}. 
+At the end of the section, we will use the setup and data from the experiments to evaluate the influence of the estimation of the discretization noise's covariance on the quality of the GPR surrogate and of the GPR-based solution of the IP.  \medskip 
 
-The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the objectives of the experiments and general setup across them; Section~\ref{sec:implementation} provides implementation details; in Section~\ref{sec:3dexp}, we present an analytical example with 3D parameter space based on the Laplace equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6D parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a FE example based on elastomechanics with 2D parameter space; finally, in Section~\ref{sec:concl}, we summarize the conclusions drawn from the experiments.
+The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the objectives of the experiments and general setup across them; Section~\ref{sec:implementation} provides implementation details; in Section~\ref{sec:3dexp}, we present an analytical example with 3D parameter space based on the Laplace equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6D parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a FE example based on elastomechanics with 2D parameter space; finally, in Section~\ref{sec:cov-est}, we elaborate data from the previous experiments to assess the impact of noise covariance estimation.
 
 \subsection{Objectives and general setup}\label{sec:setup}
 
@@ -23,7 +24,7 @@ Moreover, we also consider the fixed tolerance version of the proposed strategy,
 
 Unlike the experiments in~\cite{VillaniArconesUngerWeiser2025}, where various setups for the budget fractionating and the FE cost depending on the fraction $\frac{l}{r}$ were considered, in this work we fix them and do not investigate their effect on the performance of the algorithm.
 Previous works~\cite{SemlerWeiser2023,VillaniArconesUngerWeiser2025,VillaniUngerWeiser2024} have shown that the effect of an higher FE cost is to reduce the effectiveness of tolerance optimization, resulting in performances similar to those of a fixed tolerance strategy.
-We consider uniform budget fractionating, spending the same amount of computational resources for Problem~\eqref{prob:incremental-doe} at each iteration, and we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example. \medskip
+We consider non uniform budget fractionating, spending the an increasing amount of computational resources for Problem~\eqref{prob:incremental-doe} at each iteration, and we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example. \medskip
 
 In all experiments, the measured quantity is directly obtained from pointwise evaluations $f(\theta)$ of the equation's solution $f$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
 \[
@@ -37,7 +38,7 @@ On the downside, this requires us to simulate the discretization error; we do so
 When training GPR surrogates, we consider zero mean Gaussian noise $\nu \sim \mc N (0, \tau^2 \Sigma_T^2)$ when simulating $y_\tau(p)$, where \[
 \big(\Sigma_T\big)_{ij} = \sigma\big( \|\theta_i - \theta_j\|_{\mc Y} \big) \ \text{ for } \ \theta_i, \theta_j \in \mc S
 \]
-with $\sigma$ a decreasing function such that $\sigma(0)=1$.
+with $\sigma$ the probability density function of the centered normal distribution $\mc N(0, \frac{1}{2})$.
 Such a setup allows us to evaluate the effect of the discretization noise on the GPR surrogate model.\newline
 When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \tau]^{\text{dim} \mc Y})$ so that $I_\tau$ is an interval and the assumptions of propositions~\ref{prp:LR-PI},~\ref{prp:LR-likelihood} and~\ref{prp:EER} are met. \medskip 
 
@@ -71,8 +72,6 @@ The posterior plots are then realized using the \texttt{corner} package~\cite{co
 While the interface for the experiments is also realized in Python, the FE model is implemented in C++17 through the \texttt{Kaskade 7} Finite Element toolbox~\cite{GoetschelSchielaWeiser2021}.\medskip
 
 The rest of the implementation has been developed by the author and relies in particular on the \texttt{numpy} package~\cite{numpy}, while the \texttt{matplotlib} package~\cite{matplotlib} has been employed for the generation of plots. 
-
-
 
 \subsection{3D analytical example - Laplace equation}\label{sec:3dexp}
 
@@ -129,4 +128,7 @@ We treat $x_p, x_n$ as unknown parameters and want to identify them by measuring
 
 
 
-\subsection{Conclusions}\label{sec:concl}
+\subsection{Effects of the discretization noise covariance's estimation}\label{sec:cov-est}
+
+
+

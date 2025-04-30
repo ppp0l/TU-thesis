@@ -139,9 +139,16 @@ This, for $\|\cdot \|_\mc Y = \|\cdot \|_{\Sigma^{-2}}$ and $\|\cdot \|_\Theta =
 
 While the point estimates can be significantly cheaper to compute, they do not provide a full characterization of the uncertainty in the solution by themselves.
 To obtain a representation of the posterior distribution~\eqref{eq:Bayes} of the parameter $P$ given the observations $Y^m=y^m$, we consider Markov Chain Monte Carlo (MCMC) sampling.
-MCMC techniques usually require a greater number of evaluations of the likelihood function and consequently of the forward model, but then provide a set of correlated samples from $\pi_{P\mid Y^m = y^m}$.\newline
-The first MCMC technique to be introduced was the Metropolis-Hastings (MH) algorithm, which we will present briefly as it includes key concepts that are also present in other MCMC techniques, while being rather simple.
-\todo[inline]{add reference to MH paper}
+MCMC techniques usually require a greater number of evaluations of the likelihood function and consequently of the forward model, but then provide a set of correlated samples from $\pi_{P\mid Y^m = y^m}$. 
+Such a set of samples is particularly useful as it allows for Monte Carlo integration
+\begin{equation}\label{eq:MC-integration}
+    \bb E _{X \sim \bb P_X} [f(X)] = \int_\mc X f(x) \pi_X(x) \ dx \approx \frac{1}{N} \sum_{i=1}^{N} f(x_i).
+\end{equation}
+Under certain hypothesis on the generation of the samples $\{x_i\}_{i=1}^N$ from $\bb P_X$, a corresponding version of the Law of Large Numbers can guarantee convergence of the right-hand side to the left-hand side for $N \rightarrow \infty$ for any measurable function $f$ integrable under $\bb P_X$.
+For $X = P \mid Y^m = y^m$, Monte Carlo integration allows for the computation of several quantities of interest, such as for example the posterior mean and variance.
+
+The first MCMC technique to be introduced was the Metropolis-Hastings (MH) algorithm, first introduced by~\cite{MetropolisRosenbluthRosenbluthTellerTeller1953} and later generalized by~\cite{Hastings1970}.
+As MH includes key concepts that are also present in other MCMC techniques while being fairly simple, we will briefly introduce it here.
 MH consists of the following algorithm:
 
 \par\noindent\rule[1mm]{\textwidth}{0.4pt}
@@ -160,16 +167,66 @@ For $i =1, \dots, N$ do:
 \textbf{Return} $p_1, \dots, p_N$.
 \par\noindent\rule[3.5mm]{\textwidth}{0.4pt}
 
+We observe that, as the target distribution's density is utilized to compute the acceptance threshold $\alpha$ only through a ratio, it needs to be known up to a normalizing constant: this is crucial for the application in BIPs, where the normalizing constant is given by the marginal density $\pi_{Y^m}(y^m)$ which is usually unknown and whose estimation is usually challenging.
+This property is fortunately shared by all MCMC techniques \newline
 Similarly to Importance Sampling, MH relies on a proposal distribution $\mc K(\cdot, p)$ to generate samples; the rejection step then guarantees that the target distribution is invariant with respect to the sample chain $\{p_i\}$.
-The proposal kernel $\mc K$ is crucial both for guaranteeing the convergence of the chain to the target distribution and for the efficiency of the sampling process. \newline
-\todo[inline]{magari proprietà necessarie a convergenza e menzione a parte successiva per diagnostics/ess/gelman rubin}
-We observe that, as the target distribution's density is utilized to compute the acceptance threshold $\alpha$ only through a ratio, it needs to be known up to a normalizing constant: this is crucial for the application in BIPs, where the normalizing constant is given by the marginal density $\pi_{Y^m}(y^m)$ which is usually unknown and difficult to compute.
-This property is fortunately shared by all MCMC techniques.
+The proposal kernel $\mc K$ is crucial both for guaranteeing the convergence of the chain to the target distribution and for the efficiency of the sampling process. 
+A sufficient condition for convergence is the absolute continuity of the proposal with respect to the target, i.e. $\mc K(\cdot, p) \ll \bb P $ for every $p$; however, a proposal tailored to the target will result in a better acceptance rate for new samples and both the convergence velocity and the quality of the samples will be higher. 
 
+A number of techniques has been developed to address the issues related to the quality of the sampling process.
+First, instead of fixing the proposal distribution, one can choose a family of kernels $\mc K_\theta$ and then adjust the parameter $\theta$ during the sampling process: for random walk MH, the optimal acceptance ratio balancing the exploration of the parameter space and the acceptance of new samples is around $0.234$~\cite{GelmanGilksRoberts1997}, and the proposal distribution can be tuned to achieve this value.
+Second, a burn-in or warm-up period can be introduced in order to avoid transient behavior by allowing the chain to converge to the target distribution before starting to collect samples; this reduces the dependence of the resulting chain on the initial state and can improve the quality of the resulting chain.
+Third, convergence diagnostics can be performed to assess the state of the chain's convergence to the target distribution and the mixing of the samples.
+A commonly employed diagnostic is the Gelman-Rubin potential scale reduction $\hat R$ introduced by~\cite{GelmanRubin1992}, which utilizes multiple independent chains by computing the variance within each chain and the variance between all chains.
+Let $\{ \theta_{i,j} \}_{j=1}^{N} \subseteq \R $ be independent chains of length $N$ with $i =1, \dots, M$, and let the mean of each chain and overall mean be 
+\[
+    \bar \theta_i = \frac{1}{N} \sum_{j=1}^{N} \theta_{i,j}, \quad \text{and} \quad \bar \theta = \frac{1}{M} \sum_{i=1}^{M} \bar \theta_i.
+\]
+Then, the between chain variance is given by
+\[
+    B = \frac{N}{M-1} \sum_{i=1}^{M} (\bar \theta_i - \bar \theta)^2,
+\]
+while the within chain variance is given by
+\[
+    W = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{N-1} \sum_{j=1}^{N} (\theta_{i,j} - \bar \theta_i)^2.
+\]
+An unbiased estimator of the variance of the target distribution is then given by
+\[
+    \hat \sigma^2 = \frac{N-1}{N} W + \frac{1}{N}B,
+\]
+and the potential scale reduction is defined as 
+\[
+    \hat R = \sqrt{ \frac{\hat \sigma^2}{W} }.
+\]  
+$\hat R$ quantifies the difference in variance between the different chains and is expected to converge to $1$ from above as the chains converge to the stationary distribution. 
+Two common practices, both recommended by~\cite[Chapter 11.4]{GelmanCarlinSternDunsonVehtariRubin2013}, are to consider $\hat R < 1.1$ as a convergence criterion and to split each chain into two halves before computing the potential scale reduction in order to test for adequate mixing of each chain.
+For multivariate distributions while generalizations of the potential scale reduction $\hat R$ exist, such as the one proposed by~\cite{BrooksGelman1998}, in practice it is common to consider the potential scale reduction of each component of the parameter vector separately and then to take the maximum value of the potential scale reduction across all components.
 
- (mention effective size sampling and convergence diagnostics)\medskip
+Once convergence to the stationary distribution is achieved, the generated samples will be correlated and the effects of autocorrelation need to be taken into account when performing Monte Carlo integration; in fact, the variance of the Monte Carlo estimator~\eqref{eq:MC-integration} will be increased by the presence of autocorrelation as compared to i.i.d. data.
+For samples $\{ \theta_j\}_{j=1}^N$ from a Markov chain $X = (X_1,X_2, \dots, )$ the correlation at lag $k$ is defined as
+\[
+    \rho_k = \frac{\text{Cov}[X_1, X_{k+1}]}{\text{Var}[X_1]},
+\]
+and the chain's autocorrelation time as
+\[
+    \tau_X = 1 + 2 \sum_{k=1}^{\infty} \rho_k.
+\]
+Under the hypothesis that $X$ admits a stationary distribution $\pi$ and that the chain is initialized in the stationary state, i.e. $X_1 \sim \pi$, the finite-dimensional version of the Central Limit Theorem proved by~\cite{KipnisVaradhan1986} guarantees that 
+\[
+    \sqrt{\frac{\tau_X}{N}} \left(  \bb E_\pi [X_1] - \frac{1}{N} \sum_{j=1}^{N} X_j \right) \xrightarrow{d} \mc N(0, \text{Var}[X_1]).
+\]
+In particular this implies that the variance of the mean estimator $\frac{1}{N} \sum_{j=1}^{N} X_j$ is not given by $\frac{1}{N} \text{Var}[X_1]$ as in the i.i.d. case, but by $\frac{\tau_X}{N} \text{Var}[X_1]$.
+This motivates the introduction of the effective sample size (ESS) for the samples $\{\theta_j\}$ of the chain $X$ 
+\begin{equation}
+    \text{ESS}_{\{\theta_j\}} = \frac{N}{\tau_X} = \frac{N}{1 + 2 \sum_{k=1}^{\infty} \rho_k} \leq N
+\end{equation}
+where equality holds if and only if the samples are uncorrelated.
+The ESS can be understood as the number of independent samples that would provide the same variance as the correlated samples $\{\theta_j\}$, and can be used to assess the quality of the samples generated by the chain.
+The larger the autocorrelation time $\tau_X$ the smaller the ESS, requiring more samples achieve a desired certainty level.
+In practice, the ESS can be estimated by computing the autocorrelation of the samples $\{\theta_j\}$ and then truncating the sum at a certain lag $k$; this is often used in practice to estimate the ESS~\cite{Geyer1992}.
+If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $k$-th sample, i.e. to consider the samples $\{\theta_{k \cdot h}\}_{h=1}^{N/k}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
 
-Among other MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
+Among MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
 Ensemble Sampling is a MCMC technique introduced by~\cite{GoodmanWeare} which guarantees invariancy with respect to affine transformation of the parameter space by utilizing multiple correlated chains. 
 The effectiveness of sampling crucially depends on the proposal function, which in the case of Ensemble samplers are also known as moves.
 As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
