@@ -102,9 +102,9 @@ Iterative solution of the training problem.
 For $j =1, \dots, J$ do: 
 \begin{enumerate}
     \item \textbf{Sample the posterior.} \newline
-    Decide: $d_j$, $h_j \in \bb N$. \newline
+    Decide: $d_j$, $b_j \in \bb N$. \newline
     Sample $d_j$ points from $\pi_{P \mid D(\mc D_{j-1}), Y^m = y^m}$. \newline
-    Discard the $h_j$ oldest samples from $\mc S_{j-1}$. \newline
+    Discard the $b_j$ oldest samples from $\mc S_{j-1}$. \newline
     Concatenate the new samples to the remaining old samples to obtain $\mc S_j$.
 
     \item \textbf{Select the candidates.} \newline 

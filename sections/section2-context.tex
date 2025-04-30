@@ -250,9 +250,9 @@ The second selects a proposal for the walker $X^i$ by drawing sample from a Gaus
 where $S \subseteq \{1, \dots, M\} \setminus \{i\}$ is a subset of the walkers and \[\bar x^S(j) = \frac{1}{|S|}\sum_{k \in S} x^k(j)\] is the mean of the walkers in $S$ at step $j$.
 Moves can be combined, randomly picking one or another for each walker at each step, and can be parametrized and tuned to improve the acceptance rate of the proposals.
 
-As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble Sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
+As the posterior distribution could potentially exhibit multimodal behavior, besides the two moves above we will also adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which combines Ensemble Sampling with ideas from the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
 The DIME move divides the ensemble in two subsets of similar size and updates one using a local proposal, the Differential Evolution proposal from~\cite{TerBraak}, and the other using a global proposal with heavy tails, a parametrized multivariate t-distribution.
-Thanks to its adaptivity, the DIME move is able to explore the parameter space efficiently and to sample efficiently from multimodal distributions without sacrificing the efficiency of the sampling process on unimodal distributions.
+Thanks to its adaptivity, the DIME move is able to explore the parameter space and to sample efficiently from multimodal distributions without sacrificing the effectiveness on unimodal distributions.
 
 \subsection{Partial differential equation models} \label{sec:PDE}
 
