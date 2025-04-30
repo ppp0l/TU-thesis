@@ -144,7 +144,7 @@ Such a set of samples is particularly useful as it allows for Monte Carlo integr
 \begin{equation}\label{eq:MC-integration}
     \bb E _{X \sim \bb P_X} [f(X)] = \int_\mc X f(x) \pi_X(x) \ dx \approx \frac{1}{N} \sum_{i=1}^{N} f(x_i).
 \end{equation}
-Under certain hypothesis on the generation of the samples $\{x_i\}_{i=1}^N$ from $\bb P_X$, a corresponding version of the Law of Large Numbers can guarantee convergence of the right-hand side to the left-hand side for $N \rightarrow \infty$ for any measurable function $f$ integrable under $\bb P_X$.
+Under certain hypothesis on the generation of the samples $\{x_i\}_{i=1}^N$ from $\bb P_X$, a corresponding version of the Law of Large Numbers can guarantee convergence of the right-hand side to the left-hand side for $N \rightarrow \infty$ for any measurable function $f$ integrable with respect to $\bb P_X$.
 For $X = P \mid Y^m = y^m$, Monte Carlo integration allows for the computation of several quantities of interest, such as for example the posterior mean and variance.
 
 The first MCMC technique to be introduced was the Metropolis-Hastings (MH) algorithm, first introduced by~\cite{MetropolisRosenbluthRosenbluthTellerTeller1953} and later generalized by~\cite{Hastings1970}.
@@ -178,17 +178,17 @@ First, instead of fixing the proposal distribution, one can choose a family of k
 Second, a burn-in or warm-up period can be introduced in order to avoid transient behavior by allowing the chain to converge to the target distribution before starting to collect samples; this reduces the dependence of the resulting chain on the initial state and can improve the quality of the resulting chain.
 Third, convergence diagnostics can be performed to assess the state of the chain's convergence to the target distribution and the mixing of the samples.
 A commonly employed diagnostic is the Gelman-Rubin potential scale reduction $\hat R$ introduced by~\cite{GelmanRubin1992}, which utilizes multiple independent chains by computing the variance within each chain and the variance between all chains.
-Let $\{ \theta_{i,j} \}_{j=1}^{N} \subseteq \R $ be independent chains of length $N$ with $i =1, \dots, M$, and let the mean of each chain and overall mean be 
+For $i =1, \dots, M$, let $\{ \theta_{j}^i \}_{j=1}^{N} \subseteq \R $ be independent chains of length $N$ and let the mean of each chain and overall mean be 
 \[
-    \bar \theta_i = \frac{1}{N} \sum_{j=1}^{N} \theta_{i,j}, \quad \text{and} \quad \bar \theta = \frac{1}{M} \sum_{i=1}^{M} \bar \theta_i.
+    \bar \theta^i = \frac{1}{N} \sum_{j=1}^{N} \theta_{j}^i, \quad \text{and} \quad \bar \theta = \frac{1}{M} \sum_{i=1}^{M} \bar \theta^ii.
 \]
 Then, the between chain variance is given by
 \[
-    B = \frac{N}{M-1} \sum_{i=1}^{M} (\bar \theta_i - \bar \theta)^2,
+    B = \frac{N}{M-1} \sum_{i=1}^{M} (\bar \theta^i - \bar \theta)^2,
 \]
 while the within chain variance is given by
 \[
-    W = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{N-1} \sum_{j=1}^{N} (\theta_{i,j} - \bar \theta_i)^2.
+    W = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{N-1} \sum_{j=1}^{N} (\theta_{j}^i - \bar \theta^ii)^2.
 \]
 An unbiased estimator of the variance of the target distribution is then given by
 \[
@@ -203,33 +203,56 @@ Two common practices, both recommended by~\cite[Chapter 11.4]{GelmanCarlinSternD
 For multivariate distributions while generalizations of the potential scale reduction $\hat R$ exist, such as the one proposed by~\cite{BrooksGelman1998}, in practice it is common to consider the potential scale reduction of each component of the parameter vector separately and then to take the maximum value of the potential scale reduction across all components.
 
 Once convergence to the stationary distribution is achieved, the generated samples will be correlated and the effects of autocorrelation need to be taken into account when performing Monte Carlo integration; in fact, the variance of the Monte Carlo estimator~\eqref{eq:MC-integration} will be increased by the presence of autocorrelation as compared to i.i.d. data.
-For samples $\{ \theta_j\}_{j=1}^N$ from a Markov chain $X = (X_1,X_2, \dots, )$ the correlation at lag $k$ is defined as
+Let $X = (X(t))_{t\in \bb N}$ be a Markov chain with stationary distribution $\bb P_X$, let $f$ be square integrable with respect to $\bb P_X$ and assume that the chain is initialized in the stationary state, i.e. $X(0) \sim \bb P_X$.
+Then, the correlation at lag $k$ is defined as
 \[
-    \rho_k = \frac{\text{Cov}[X_1, X_{k+1}]}{\text{Var}[X_1]},
+    \rho_k = \frac{\text{Cov}[f(X(0)), f(X(k))]}{\text{Var}[f(X(0))]},
 \]
 and the chain's autocorrelation time as
 \[
-    \tau_X = 1 + 2 \sum_{k=1}^{\infty} \rho_k.
+    \tau_f = 1 + 2 \sum_{k=1}^{\infty} \rho_k.
 \]
-Under the hypothesis that $X$ admits a stationary distribution $\pi$ and that the chain is initialized in the stationary state, i.e. $X_1 \sim \pi$, the finite-dimensional version of the Central Limit Theorem proved by~\cite{KipnisVaradhan1986} guarantees that 
+Under the hypothesis that the finite-dimensional version of the Central Limit Theorem proved by~\cite{KipnisVaradhan1986} guarantees that 
 \[
-    \sqrt{\frac{\tau_X}{N}} \left(  \bb E_\pi [X_1] - \frac{1}{N} \sum_{j=1}^{N} X_j \right) \xrightarrow{d} \mc N(0, \text{Var}[X_1]).
+    \sqrt{\frac{\tau_f}{N}} \left(  \bb E_\pi [f(X(0))] - \frac{1}{N} \sum_{j=1}^{N} f(X(j)) \right) \xrightarrow{d} \mc N(0, \text{Var}[X(0)]).
 \]
-In particular this implies that the variance of the mean estimator $\frac{1}{N} \sum_{j=1}^{N} X_j$ is not given by $\frac{1}{N} \text{Var}[X_1]$ as in the i.i.d. case, but by $\frac{\tau_X}{N} \text{Var}[X_1]$.
-This motivates the introduction of the effective sample size (ESS) for the samples $\{\theta_j\}$ of the chain $X$ 
+In particular this implies that, for a finite realization $\{ \theta_j\}_{j=1}^N$ of the$X$, the variance of the mean estimator $\frac{1}{N} \sum_{j=1}^{N} f(\theta_j)$ is not given by $\frac{1}{N} \text{Var}[f(X_1)]$ as in the i.i.d. case, but by $\frac{\tau_f}{N} \text{Var}[f(X(0))]$.
+This motivates the introduction of the effective sample size (ESS) of the estimator of $f$ for the samples $\{\theta_j\}_{j=1}^N$ of the chain $X$
 \begin{equation}
-    \text{ESS}_{\{\theta_j\}} = \frac{N}{\tau_X} = \frac{N}{1 + 2 \sum_{k=1}^{\infty} \rho_k} \leq N
+    \text{ESS}_{\{\theta_j\}}^f = \frac{N}{\tau_X} = \frac{N}{1 + 2 \sum_{k=1}^{\infty} \rho_k} \leq N
 \end{equation}
 where equality holds if and only if the samples are uncorrelated.
-The ESS can be understood as the number of independent samples that would provide the same variance as the correlated samples $\{\theta_j\}$, and can be used to assess the quality of the samples generated by the chain.
-The larger the autocorrelation time $\tau_X$ the smaller the ESS, requiring more samples achieve a desired certainty level.
-In practice, the ESS can be estimated by computing the autocorrelation of the samples $\{\theta_j\}$ and then truncating the sum at a certain lag $k$; this is often used in practice to estimate the ESS~\cite{Geyer1992}.
-If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $k$-th sample, i.e. to consider the samples $\{\theta_{k \cdot h}\}_{h=1}^{N/k}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
+The ESS can be understood as the number of independent samples that would provide an estimator for $\bb E[f(X_1)]$ with the same variance as the correlated samples $\{\theta_j\}_{j=1}^N$, and can be used to assess the quality of the samples generated by the chain.
+The larger the autocorrelation time $\tau_f$ the smaller the ESS, requiring more samples achieve a desired certainty level.
+In practice, the ESS can be estimated via a batch estimate of the autocorrelation of the samples $\{f(\theta_j)\}_{j=1}^N$ with a truncation the sum at a certain lag $k$; this is often used in practice to estimate the ESS~\cite{Geyer1992}.
+If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $h$-th sample, i.e. to consider the samples $\{\theta_{h \cdot l}\}_{l=1}^{N/k}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
 
 Among MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
-Ensemble Sampling is a MCMC technique introduced by~\cite{GoodmanWeare} which guarantees invariancy with respect to affine transformation of the parameter space by utilizing multiple correlated chains. 
-The effectiveness of sampling crucially depends on the proposal function, which in the case of Ensemble samplers are also known as moves.
-As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
+Ensemble Sampling is introduced by~\cite{GoodmanWeare} as an MCMC technique which guarantees invariancy with respect to affine transformation of the parameter space and later generalized.
+Ensemble Sampling utilizes an ensemble 
+\[
+X =(X^1(t), \dots , X^M(t))
+\] 
+comprising of multiple correlated chains $X^i(t)$ known as walkers.
+At step $j$ the walkers are updated sequentially; each walker $X^i$ is updated by drawing a proposal $x^i_P(j+1)$ from a distribution, in this context known as move, which depends on the current state of the ensemble 
+\[
+  X^i_P(j+1) \sim \mc K\left( \cdot ; x^1(j+1), \dots, x^{i-1}(j+1), x^i(j), x^{i+1}(j), \dots, x^M(j)\right).
+\] as in MH, the proposal is then accepted or rejected according to the MH threshold $\alpha$. \newline
+The two moves proposed by~\cite{GoodmanWeare} are known as stretch move and walk move.
+The first draws a proposal for $X^i$ from the line connecting $x^i(j)$ and the current position $x^k(h_k)$ of another walker $X^k$, for $k \neq i$ randomly selected with $h_k = j$ if $k > i$ and $h_k = j+1$ if $k < i$; a univariate random variable $\Lambda$ of an assigned distribution $\bb P_\Lambda$ is used to select the distance from $x^i(j)$ to $x^k(h_k)$ resulting in the proposal
+\[
+    X^i_P(j+1) \sim x^i(j) + \Lambda \cdot (x^k(h_k) - x^i(j)).
+\]
+The second selects a proposal for the walker $X^i$ by drawing sample from a Gaussian distribution centered at $x^i(j)$ and with covariance matrix given by the empirical covariance of a subset of the rest of the walkers,
+\[
+    X^i_P(j+1) \sim \mc N\left( x^i(j), \frac{1}{|S|-1} \sum_{k \in S} (x^k(j) - \bar x^S(j))(x^k(j) - \bar x^S(j))^T \right),
+\]
+where $S \subseteq \{1, \dots, M\} \setminus \{i\}$ is a subset of the walkers and \[\bar x^S(j) = \frac{1}{|S|}\sum_{k \in S} x^k(j)\] is the mean of the walkers in $S$ at step $j$.
+Moves can be combined, randomly picking one or another for each walker at each step, and can be parametrized and tuned to improve the acceptance rate of the proposals.
+
+As the posterior distribution could potentially exhibit multimodal behavior, we adopt the Differential-Independence Mixture Ensemble (DIME) move introduced by~\cite{Boehl}, which adapts to Ensemble Sampling the Differential Evolution MCMC framework introduced by~\cite{TerBraak} and behaves efficiently on multimodal distributions. 
+The DIME move divides the ensemble in two subsets of similar size and updates one using a local proposal, the Differential Evolution proposal from~\cite{TerBraak}, and the other using a global proposal with heavy tails, a parametrized multivariate t-distribution.
+Thanks to its adaptivity, the DIME move is able to explore the parameter space efficiently and to sample efficiently from multimodal distributions without sacrificing the efficiency of the sampling process on unimodal distributions.
 
 \subsection{Partial differential equation models} \label{sec:PDE}
 
