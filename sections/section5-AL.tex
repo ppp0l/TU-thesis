@@ -95,11 +95,12 @@ The following pseudo-algorithm summarizes the adopted methodology. \medskip
 \phantomsection \makeatletter\def\@currentlabel{Algorithm 2}\makeatother\label{algo:AL}
 \large{\textbf{Algorithm 2 - Adaptive Design of Experiments.} } \normalsize
 \par\noindent\rule[2mm]{\textwidth}{0.2pt}
-\textbf{Require:} initial design $\mc D_0$, fractionating of the budget $\Delta W_1,\dots, \Delta W_J$.
+\textbf{Require:} initial design $\mc D_0$ and corresponding training set $D(\mc D_0)$, a tolerance level \texttt{tol}.
 \par\noindent\rule[2mm]{\textwidth}{0.2pt}
 Initialize sample chain $\mc S_0 = \emptyset$. \newline
-Iterative solution of the training problem.
-For $j =1, \dots, J$ do: 
+Compute initial error level $E(D(\mc D_0))$. \newline
+\textbf{Iterative solution of the training problem.}
+For $j =1, \dots, J_{\max}$ do: 
 \begin{enumerate}
     \item \textbf{Sample the posterior.} \newline
     Decide: $d_j$, $b_j \in \bb N$. \newline
@@ -116,6 +117,7 @@ For $j =1, \dots, J$ do:
     Select $s_j$  local maximizers of $\bar{\mc A}_j$.
 
     \item \textbf{Select the tolerances.} \newline
+    Decide $\Delta W_j \in \R^+$. \newline
     Solve the discretization of Problem~\ref{prob:tolerance-doe}
     \begin{equation}\label{prob:discrete-tol}       
         \min_{\mc D_{j} \in \bb D_j} \frac{1}{|\mc S_j|} \sum_{p' \in \mc S_j} e_{D(\mc D_j)}(p')  \quad \text{s.t.} 
@@ -129,12 +131,17 @@ For $j =1, \dots, J$ do:
         \item else, there exists $(p_i, \tau_i, y_i) \in D(\mc D_{j-1})$: include it in $D(\mc D_j)$.
     \end{itemize}
     Train the surrogate model on $D(\mc D_j)$, obtain $y_{D(\mc D_j)}$.
+
+    \item \textbf{Check for convergence.} \newline
+    Compute the new error level $E(D(\mc D_j))$. \newline
+    If $E(D(\mc D_j)) \leq \texttt{tol}$, set $J_{\max} = j$ and break the cycle.
 \end{enumerate}
-Decide: $d_{J+1}$, $h_{J+1} \in \bb N$. \newline
-Sample $d_{J+1}$ points from $\pi_{P \mid D(\mc D_J), Y^m = y^m}$. \newline
-Discard the $h_{J+1}$ oldest samples from $\mc S_J$. \newline
-Concatenate the new samples to the remaining old samples to obtain $\mc S_{J+1}$. \newline
-Return the resulting surrogate model $y_{D(\mc D_J)}$ and posterior samples $\mc S_{J+1}$.
+\textbf{Final  round of samples.} \newline
+Decide: $d_{J_{\max} + 1}$, $h_{J_{\max}+1} \in \bb N$. \newline
+Sample $d_{J_{\max}+1}$ points from $\pi_{P \mid D(\mc D_{J_{\max}}), Y^m = y^m}$. \newline
+Discard the $h_{J_{\max}+1}$ oldest samples from $\mc S_{J_{\max}}$. \newline
+Concatenate the new samples to the remaining old samples to obtain $\mc S_{J_{\max}+1}$. \newline
+Return the resulting surrogate model $y_{D(\mc D_J)}$ and posterior samples $\mc S_{J_{\max}+1}$.
 \par\noindent\rule[3.5mm]{\textwidth}{0.4pt}
 
 The algorithm depends on a number of parameters, namely the fractionating of the budget $\Delta W_j$, the numbers of samples to draw $d_j$ and to discard $h_j$, and the number of candidates to select $s_j$.
@@ -229,7 +236,6 @@ This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)
 which can be used when computing the predictive mean and variance of the GPR model as given by Theorem~\ref{thm:GP-posterior}.
 
 \subsection{Active learning for LR}\label{sec:LRAL}
-\pv{in this section I chose to introduce a general error indicator function for LR, and then to specialize it for the case of independent discretization noise components (similarly as done in Sections~\ref{sec:LR} and~\ref{sec:LRlike}), but the general error indicator function is not super meaningful so maybe can be omitted.}
 
 For a LR surrogate model $y_{D,\text{LR}}$, let $\Sigma^2_{y_{D,\text{LR}}}(p)$ be the covariance matrix of the distribution $y_{D,\text{LR}}(p) = \mc U (\mc PI_p)$, where we recall that $\mc PI_p$ is the predictive interval given by Equation~\eqref{eq:LR-PI-general}.\newline
 Then, the considered local error indicator function is the vector 1-norm of the square root $\Sigma_{y_{D,\text{LR}}}(p)$ of $\Sigma^2_{y_{D,\text{LR}}}(p)$,

@@ -195,9 +195,9 @@ An unbiased estimator of the variance of the target distribution is then given b
     \hat \sigma^2 = \frac{N-1}{N} W + \frac{1}{N}B,
 \]
 and the potential scale reduction is defined as 
-\[
+\begin{equation}\label{eq:hatR}
     \hat R = \sqrt{ \frac{\hat \sigma^2}{W} }.
-\]  
+\end{equation}
 $\hat R$ quantifies the difference in variance between the different chains and is expected to converge to $1$ from above as the chains converge to the stationary distribution. 
 Two common practices, both recommended by~\cite[Chapter 11.4]{GelmanCarlinSternDunsonVehtariRubin2013}, are to consider $\hat R < 1.1$ as a convergence criterion and to split each chain into two halves before computing the potential scale reduction in order to test for adequate mixing of each chain.
 For multivariate distributions while generalizations of the potential scale reduction $\hat R$ exist, such as the one proposed by~\cite{BrooksGelman1998}, in practice it is common to consider the potential scale reduction of each component of the parameter vector separately and then to take the maximum value of the potential scale reduction across all components.
@@ -240,13 +240,13 @@ At step $j$ the walkers are updated sequentially; each walker $X^i$ is updated b
 \] as in MH, the proposal is then accepted or rejected according to the MH threshold $\alpha$. \newline
 The two moves proposed by~\cite{GoodmanWeare} are known as stretch move and walk move.
 The first draws a proposal for $X^i$ from the line connecting $x^i(j)$ and the current position $x^k(h_k)$ of another walker $X^k$, for $k \neq i$ randomly selected with $h_k = j$ if $k > i$ and $h_k = j+1$ if $k < i$; a univariate random variable $\Lambda$ of an assigned distribution $\bb P_\Lambda$ is used to select the distance from $x^i(j)$ to $x^k(h_k)$ resulting in the proposal
-\[
+\begin{equation}\label{eq:stretch-move}
     X^i_P(j+1) \sim x^i(j) + \Lambda \cdot (x^k(h_k) - x^i(j)).
-\]
+\end{equation}
 The second selects a proposal for the walker $X^i$ by drawing sample from a Gaussian distribution centered at $x^i(j)$ and with covariance matrix given by the empirical covariance of a subset of the rest of the walkers,
-\[
+\begin{equation}\label{eq:walk-move}
     X^i_P(j+1) \sim \mc N\left( x^i(j), \frac{1}{|S|-1} \sum_{k \in S} (x^k(j) - \bar x^S(j))(x^k(j) - \bar x^S(j))^T \right),
-\]
+\end{equation}
 where $S \subseteq \{1, \dots, M\} \setminus \{i\}$ is a subset of the walkers and \[\bar x^S(j) = \frac{1}{|S|}\sum_{k \in S} x^k(j)\] is the mean of the walkers in $S$ at step $j$.
 Moves can be combined, randomly picking one or another for each walker at each step, and can be parametrized and tuned to improve the acceptance rate of the proposals.
 

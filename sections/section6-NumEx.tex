@@ -23,27 +23,15 @@ Unlike the experiments in~\cite{VillaniArconesUngerWeiser2025}, where various se
 Previous works~\cite{SemlerWeiser2023,VillaniArconesUngerWeiser2025,VillaniUngerWeiser2024} have shown that the effect of an higher FE cost is to reduce the effectiveness of tolerance optimization, resulting in performances similar to those of a fixed tolerance strategy.
 
 As a benchmark, we consider the non-adaptive space-filling approach given by Latin Hypercube Sampling (LHS)~\cite{McKayBeckmanConover1979}, the approach proposed in~\cite{Dinkel2024}, which also relies on interleaved sampling but selects the candidates randomly from the current posterior approximation, both using fixed tolerances.
-Moreover, we also consider the fixed tolerance version of the proposed strategy, which is given by~\ref{algo:AL} without the tolerance optimization step. \medskip
-
-In this work, we fix some parameters of~\ref{algo:AL} across different experiments, while others are set according to the specific problem.
-Regarding sampling, the number of walkers $n_w$ is selected depending on the dimensionality of the problem; the posterior is not sampled at every iteration but every $N_{\text{sample}}$ iterations: at iteration $j$, the number of samples to be drawn $d_j$ and the number of samples to be burned $b_j$ at Step 1. are given by
-\[
-d_j = b_j = \begin{cases}
-    250 \cdot n_w \cdot  & \text{ if } j \equiv 0 \mod N_{\text{sample}} \\
-    0 & \text{ otherwise}
-\end{cases}.
-\]
-By this, whenever we sample the posterior we rebuild a totally new chain $\mc S_j$. 
-Moreover, after the required accuracy level is reached, we stop the algorithm and sample the posterior with a larger number of samples $d_\text{final} = 500 \cdot n_w$, while burning the previous $b_\text{final} = 250 \cdot n_w$ samples.\newline
-We consider a single candidate point at each iteration, selecting the global maximum of the acquisition function~\eqref{eq:acq-fun-disc}, $s_j = 1$ at Step 2. of~\ref{algo:AL}; regarding the budget $\Delta W_j$ for the tolerance optimization problem at Step 3., we consider a default tolerance $\tau$ and assign the budget $\Delta W_j = \tau^{\frac{l}{r}}$ to the optimization problem, where $l$ and $r$ are the FE cost parameters.
-We consider non uniform budget fractionating, adapting the computational budget for Problem~\eqref{prob:incremental-doe} to the convergence status by halving the default tolerance if the target quantity does not reduce adequately in $N_\text{sample}$ iterations, and we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example.  \newline
-Finally, the tolerance level \texttt{tol} is selected to be a proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate.\medskip
+Moreover, we also consider the fixed tolerance version of the proposed strategy, which is given by~\ref{algo:AL} without the tolerance optimization step. 
+For the GPR surrogate, we name the strategy of~\ref{algo:AL} \texttt{AGP} for adaptive Gaussian process, the fixed tolerance version \texttt{posAdGP} for position-adaptive Gaussian process, the strategy proposed in~\cite{Dinkel2024} \texttt{randGP} and the LHS strategy \texttt{LHSGP}.
+Similarly, we will refer to the LR surrogate strategy of~\ref{algo:AL} as \texttt{ALR}, the fixed tolerance version as \texttt{posAdLR}, the LR version of the strategy proposed in~\cite{Dinkel2024} as \texttt{randLR} and the LHS version as \texttt{LHSLR}. \medskip
 
 In all experiments, the measured quantity is directly obtained from pointwise evaluations $f(\theta)$ of the equation's solution $f$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
 \[
     H(f(\cdot; p)) = \left( f(\theta_j)\right)_{j=1,\ldots, \text{dim} \mc Y} \ \text{ for some ordering } \ \theta_1, \ldots, \theta_{|\mc S|} \ \text{ of the sensors } \ \mc S.
 \]
-In the analytical examples $f(p) \in \R$, while for the FE example $f(p)\in \R^3$: in the latter case, only one component of the displacement i sassumed to be measured. \medskip
+In the analytical examples $f(p) \in \R$, while for the FE example $f(p)\in \R^3$: in the latter case, only one component of the displacement is assumed to be measured in each sensor. \medskip
 
 For the analytical examples the analytical formula of a solution is available and no discretization is necessary.
 This allows us to evaluate the forward model $y(p)$ with close to zero cost, rendering it possible to represent the ground-truth posterior and to perform repeated runs of the algorithm. 
@@ -53,26 +41,44 @@ When training GPR surrogates, we consider zero mean Gaussian noise $\nu \sim \mc
 \]
 with $\sigma$ the probability density function of the centered normal distribution $\mc N(0, \frac{1}{2})$.
 Such a setup allows us to evaluate the effect of the discretization noise on the GPR surrogate model.\newline
-When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \tau]^{\text{dim} \mc Y})$ so that $I_\tau$ is an interval and the assumptions of propositions~\ref{prp:LR-PI},~\ref{prp:LR-likelihood} and~\ref{prp:EER} are met. \medskip 
-
-For the analytical examples, we will perform and average repeated runs of the algorithm with the same budget but different random seeds, in order to compensate for the lack of discretization noise and to evaluate the sensitivity of the algorithms to randomness.
+When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \tau]^{\text{dim} \mc Y})$ so that $I_\tau$ is an interval and the assumptions of propositions~\ref{prp:LR-PI},~\ref{prp:LR-likelihood} and~\ref{prp:EER} are met. \newline
+In order to compensate for the lack of discretization noise and to evaluate the sensitivity of the algorithms to randomness, we will perform and average repeated runs of the algorithm with the same budget but different random seeds.
 Details about the number of runs will be given in the respective sections. \medskip
 
-When initializing the sampler, we randomly select a number of points on the parameter space through LHS, and then performing burn-in sampling, testing the convergence of the sampler through the Gelman-Rubin statistic introduced in section~\ref{sec:IP-sol} every 100 samples.
+For  GPR, we consider a separable RBF kernel 
+\[
+    k_{(\mathbf{L}, \lambda)}(p, p') =  \exp ( - \norm{p - p'}^2_{\mathbf{L}} ) \ K_\lambda,
+\]
+as introduced by equations~\eqref{eq:separable-kernel} and~\eqref{eq:RBF-kernel}, with diagonal $\mathbf{L} = \text{diag}(\ell_1, \dots, \ell_{\text{dim} \Theta})$, $\lambda = (\mathbf{s}, \mathbf{C}) $ and
+\[
+K_\lambda = \text{diag}(\mathbf{s}) + \mathbf{CC}^T,
+\] 
+where $\mathbf{s} \in \R^{\text{dim} \mc Y}$ is a scaling vector and $\mathbf{C} \in \R^{\text{dim} \mc Y \times 2}$ is a rank 2 matrix which models the correlation among components. 
+Moreover, to stabilize the hyperparameters we consider a Gamma prior $\mc G(2, 10)$ for the lengthscales $\ell_1, \dots, \ell_{\text{dim} \Theta}$ and impose a constraint $\ell_i > 10^{-1}$ for all $i$.
+\medskip
+
+To produce a MCMC representation of the posterior, we consider Ensemble Sampling as introduced in Section~\ref{sec:IP-sol} using at each step a move selected randomly among the stretch move~\eqref{eq:stretch-move}, the walk move~\eqref{eq:walk-move} and the DIME move from~\cite{Boehl}, with probabilities 0.25, 0.25, 0.5 respectively. 
+When initializing the sampler, we randomly select an initial state through LHS and then we perform burn-in sampling, testing the convergence of the sampler through the Gelman-Rubin statistic $\hat R$ defined in Equation~\eqref{eq:hatR} every 100 iterations.
+\medskip
+
+In this work, we fix some parameters of~\ref{algo:AL} across different experiments, while others are set according to the specific problem.
+Regarding sampling, the number $n_w$ of walkers in the ensemble is selected depending on the dimensionality of the problem; the posterior is not sampled at every iteration but every $N_{\text{sample}}$ iterations: at iteration $j$, the number of samples to be drawn $d_j$ and the number of samples to be burned $b_j$ at Step 1. are given by
+\[
+d_j = b_j = \begin{cases}
+    250 \cdot n_w \cdot  & \text{ if } j \equiv 0 \mod N_{\text{sample}} \\
+    0 & \text{ otherwise}
+\end{cases}.
+\]
+By this, whenever we sample the posterior we rebuild a totally new chain $\mc S_j$. 
+Moreover, after the required accuracy level is reached, we stop the algorithm and sample the posterior with a larger number of samples $d_{J_{\max} +1} = 500 \cdot n_w$, while burning the previous $b_{J_{\max} +1} = 250 \cdot n_w$ samples.\newline
+We consider a single candidate point at each iteration, selecting the global maximum of the acquisition function~\eqref{eq:acq-fun-disc}, $s_j = 1$ at Step 2. of~\ref{algo:AL}; regarding the budget $\Delta W_j$ for the tolerance optimization problem at Step 3., we consider a default tolerance $\tau$ and assign the budget $\Delta W_j = \tau^{-\frac{l}{r}}$ to the optimization problem, where $l$ and $r$ are the FE cost parameters.
+We consider non uniform budget fractionating, adapting the computational budget for Problem~\eqref{prob:incremental-doe} to the convergence status by halving the default tolerance if the target quantity does not reduce adequately in $N_\text{sample}$ iterations; we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example.  \newline
+Finally, the tolerance level \texttt{tol} is selected to be proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate, as the error estimates are related to the surrogate's covariance and standard deviation respectevely.\medskip
 
 \subsection{Implementation details}\label{sec:implementation}
 A Python implementation of~\ref{algo:AL}, available at (...) along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
 
 The Gaussian process surrogate model uses a GPyTorch~\cite{GPyTorchPaper} base model, set to work with double-precision floating-point numbers.
-We consider a separable RBF kernel 
-\[
-    k_{(\mathbf{L}, \lambda)}(p, p') =  \exp ( - \norm{p - p'}^2_{L} ) \ K_\lambda,
-\]
-as introduced by equations~\eqref{eq:separable-kernel} and~\eqref{eq:RBF-kernel}, with $\lambda = (\mathbf{s}, \mathbf{C}) $ and
-\[
-K_\lambda = \text{diag}(\mathbf{s}) + \mathbf{CC}^T,
-\] 
-where $\mathbf{s} \in \R^{\text{dim} \mc Y}$ is a scaling vector and $\mathbf{C} \in \R^{\text{dim} \mc Y \times 2}$ is a rank 2 matrix which models the correlation among components.
 GPyTorch's Adam is employed to optimize the hyperparameters on the marginal likelihood~\eqref{eq:marginal-likelihood}. \medskip
 
 The two optimization problems to determine new candidate points and evaluation tolerances are solved through the SciPy optimizer \texttt{scipy.optimize.minimize}. 
@@ -81,8 +87,7 @@ As derivative information is available for the LR acquisition function~\eqref{eq
 For tolerance optimization, before applying the SLSQP algorithm a coordinate transformation is applied in order to linearize the work constraint. 
 In all cases, we adopt a multi-start approach by selecting a number of initial points through a low-discrepancy sequence. \medskip
 
-To sample the posterior, we consider the \texttt{emcee}~\cite{emceePaper} implementation of Ensemble Sampling with moves selected randomly among the stretch move, the walk move and the DIME move~\cite{Boehl} as introduced in Section~\ref{sec:IP-sol}, with probabilities 0.25, 0.25, 0.5 respectively. 
-The posterior plots are then realized using the \texttt{corner} package~\cite{corner}. \medskip
+To sample the posterior, we utilize the \texttt{emcee}~\cite{emceePaper} implementation of Ensemble Sampling. The posterior plots are then realized using the \texttt{corner} package~\cite{corner}. \medskip
 
 While the interface for the experiments is also realized in Python, the FE model is implemented in C++17 through the \texttt{Kaskade 7} Finite Element toolbox~\cite{GoetschelSchielaWeiser2021}.\medskip
 
@@ -122,6 +127,32 @@ We generate measurements by adding pseudorandom noise $N \sim \mc N (0, \sigma^2
 We consider 5 different measurements corresponding to 5 different $p$ randomly extracted from the prior distribution and, as the discretization error is simulated, we perform 5 runs of each training strategy with different random seeds for each measurement.
 \medskip
 
+For the GPR surrogate, we consider an halting threshold $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} \mc Y }{20} = 7\cdot 10^{-5}$, where the factor $\frac{\text{dim} \mc Y}{20}$ is chosen to be proportional to the number of output components of the surrogate model, as the error model sums the predictive variance over the output components, and divided by a factor 20 to impose that the surrogate model's variance is smaller than the measurement's variance.
+For all configurations, we sample every $N_{\text{sample}} = 3$ iterations and we set the number of walkers to $n_w = 32$.
+We begin with an initial design of $5$ points selected through LHS and with default tolerance $\tau_d = 3 \cdot 10^{-2}$, and we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}}$ iterations; when assigning the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ to the optimization problem, we use the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then every $N_{\text{sample}}$ iterations we halve it if the expected error reduction does not reduce by a factor 4 every $N_{\text{sample}}$ iterations, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} < \frac{1}{4}$.
+
+This setup results in the expected error per spent budget curves represented by Picture~\todo{add plot} for the different training strategies.
+We see that, while \texttt{LHSGP} struggles to reduce the expected error and has a slower convergence rate, the fixed-tolerance strategies \texttt{posAdGP} and \texttt{randGP} are able to perform on par with \texttt{AGP} until they hit a plateau around an error level of $3\cdot 10^{-4}$, while \texttt{AGP} is able to reach the threshold $\texttt{tol}$ before the maximum number of iterations.
+Moreover we observe that in this case random selection of the candidates in \texttt{randGP} is as effective as the position-adaptive strategy \texttt{posAdGP}, resulting in a similar convergence velocity.
+As shown in Table \todo{add table}, while before the plateau \texttt{AGP} and the position-adaptive strategies achieve a similar performance in terms of expected error per budget, \texttt{AGP} uses a smaller number of iterations and training points as it adaptively reduces the default tolerance $\tau_d$ and optimizes work distribution.
+The plateau phase motivates us to test the behavior of the fixed-tolerance strategies with a lower tolerance $\tau_d = 10^{-3}$: in this case \texttt{posAdGP} and \texttt{randGP} are able to reach the target threshold $\texttt{tol}$ as shown in Picture \todo{add plot}, but they require a larger computational budget and a similar number of iterations as \texttt{AGP} with the lower default tolerance $\tau_d =  3\cdot 10^{-2}$ \todo{add table}.
+Finally, we observe that on average a run \texttt{AGP} does not include the selected candidate in \todo{number} iterations, resulting in an average number of points in the design.\medskip
+
+For the LR surrogate, we consider a halting threshold $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 0.09\bar 3$, proportional to the measurement's standard deviation as the error model is based on the standard deviation of the LR surrogate.
+For LR, we sample every $N_{\text{sample}} = 4$ iterations and we set the number of walkers to $n_w = 32$.
+The initial design consists of 5 points selected through LHS and with default tolerance $\tau_d = 0.03$, and we perform a maximum of $J_{\max} = 8 \cdot N_{\text{samples}}$ iterations; when assigning the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ to the optimization problem, we use the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then every $N_{\text{sample}}$ iterations we halve it if the expected error reduction does not reduce by a factor 2 every $N_{\text{sample}}$ iterations, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} < \frac{1}{2}$.
+The different choices regarding configuration parameters as compared to GPR are due to the higher prediction variance and lower sensitivity of the LR surrogate model to computational work. 
+Picture \todo{add plot} shows the expected error per budget curves for the different training strategies. 
+We observe that, as opposed to the GPR surrogate, the fixed-tolerance strategies \texttt{posAdLR} and \texttt{randLR} perform on par with \texttt{ALR} until they meet the maximum number of iterations, while \texttt{ALR} is able to reach the target threshold $\texttt{tol}$ before the maximum number of iterations thanks to the adaptive budget allocation.
+It is worth noting that \texttt{LHSLR} performs significantly worse than the other strategies, barely reducing the expected error at all, while \texttt{posAdLR} performs slightly better than \texttt{randLR}. 
+In this case, the adaptive strategy \texttt{ALR} almost always includes the new candidate in the design, resulting in an average number of training points of \todo{number} over the 25 runs of the algorithm.
+This fact, as well as the effectiveness of fixed-tolerance strategies, suggests that for LR the number of points is a more relevant factor than in GPR. \medskip
+
+We compare the performance of the GPR and LR surrogates utilizing the available ground truth.
+Table \todo{add table} shows the average error on the MAP estimate, posterior mean and posterior variance of the different strategies and different surrogates.
+\todo[inline]{add comment on other strategies}
+We can notice that the LHS-based strategies \texttt{LHSGP} and \texttt{LHSLR} are the ones showing the most performance difference between the two surrogate kinds in both relative and absolute value. 
+Picture \todo{add plot} shows the samples gathered from the two posteriors as well as the ground truth for one of the runs.
 
 \subsection{6D analytical example - Diffusion equation}\label{sec:6dexp}
 
