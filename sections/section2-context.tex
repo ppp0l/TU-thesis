@@ -256,4 +256,75 @@ Thanks to its adaptivity, the DIME move is able to explore the parameter space a
 
 \subsection{Partial differential equation models} \label{sec:PDE}
 
+For this section and the following, we will use Peter Deuflhard and Martin Weiser's Adaptive Numerical Solution of PDEs~\cite{DeuflhardWeiser2012} as a reference; other sources will be quoted when utilized.
+
+Partial differential equations (PDEs) are a class of equations that relate a function of several variables to its partial derivatives.
+For a sufficiently smooth function $u : D \rightarrow \R^o$ defined on an open domain $D \subseteq \R^l$, a differential equation of degree $k$ can be first represented as an equation of the form
+\[
+    F\big(,u(x), \nabla u(x), \nabla^2 u(x), \dots, \nabla^k u(x)\big) = 0,
+\]
+for a function $F: D \times \R^o \times \R^{o \times l} \times \dots \times \R^{o \times l^k} \rightarrow \R^e$.
+If $l =1$, then all the derivatives are univariate and the equation is ordinary differential equation (ODE), while if $l > 1$ the equation is a proper PDE.
+
+A first distinction that can be introduced is that between time-dependent and non time-dependent PDEs.
+In fact, despite the fact that the definition of a PDE does not make a distinction between time and space variables, it is often useful for use cases to distinguish between the two.
+For the rest of this chapter and the following, $D$ will indicate a generic domain, $\mc X$ will indicate the space-domain of dimension $l$, while $\mc T$ will indicate the time-domain and $t$ will denote a time variable; for time-dependent PDEs the domain will thus be $\mc T \times \mc X$ and the functions $u(t,x)$, while for non time-dependent PDEs the domain will be $\mc X$ and the functions $u(x)$.
+A second distinction is that between linear and non-linear PDEs: a PDE is linear if the function $F$ is affine with respect to the unknown function $u$ and its derivatives.
+We will only deal with linear PDEs: non linear PDEs are usually more difficult to treat  than linear PDEs, and in many cases they can be approximated by linear PDEs.
+
+Like in ODEs, the solution of a PDE is in usually non unique unless additional information is provided; this information is usually provided in the form of boundary conditions on $\mc X$, which lead to a boundary value problem (BVP), in the form of initial conditions on $\mc T$, which lead to an initial value problem (IVP), or combining the two.
+Unlike ODEs, where the existence and uniqueness of the solution depends on the regularity of the function $f$ around the initial condition, in PDEs the existence of a solution can be more complicated and issues of compatibility between the boundary conditions and the equation can arise.
+Moreover, for a PDE different kinds of boundary conditions can be imposed, and we consider three main types of boundary conditions: Dirichlet, Neumann and Robin boundary conditions.
+For a subset $B \subseteq \bar D$ of the domain, Dirichlet boundary conditions impose the value of the solution on $B$, i.e.
+\[
+    u(x) = g(x), \quad \forall x \in B,
+\]
+for some function $g: B \rightarrow \R^o$;
+Neumann boundary conditions impose the value of the normal derivative of the solution on $B$, i.e.
+\[
+    \frac{\partial u}{\partial \hat n}(x)= \hat n \nabla u(x) = g(x), \quad \forall x \in B,
+\]
+where $\hat n$ is the unit normal vector on the boundary $B$; 
+finally, Robin boundary conditions impose a linear combination of the value of the solution and its normal derivative on $B$, i.e.
+\[
+    \frac{\partial u}{\partial \hat n}(x) + \alpha(x) u(x) = g(x), \quad \forall x \in B.
+\]
+
+We will now introduce some exemplary linear PDEs, which will then be used in the numerical experiments of Section~\ref{sec:exp}.
+
+The first one is the Poisson equation, given by 
+\begin{equation}\label{eq:Poisson}
+    -\Delta u(x) = f(x), 
+\end{equation}
+over a domain $\mc X \subseteq \R^l$, where $\Delta$ is the Laplace operator, defined as the divergence of the gradient of $u$, 
+\[
+    \Delta u(x) = \nabla \cdot \nabla u(x) = \sum_{i=1}^{l} \frac{\partial^2 u}{\partial x_i^2}(x), 
+\] and $f$ is a given scalar function on $\mc X$.
+The Poisson equation is a second-order linear PDE and is the simplest representative of elliptic PDEs and is used to model a variety of phenomena, such as heat conduction, electrostatics and fluid flow; its homogeneous version, i.e. with $f=0$, is known as Laplace equation.
+
+A general solution for the Poisson equation can be derived by the method of Green's functions, which consists in representing the solution as the sum of the convolution of the right-hand side $f$ with a Green's function $G(x,y)$ plus a boundary term.
+Obtaining the Green's function is usually a non-trivial task, as it depends on the domain $\mc X$ and the boundary conditions imposed on it.
+A crucial element to obtain the Green's function is the fundamental solution of the Laplace operator, which for the 3-dimensional case $l=3$ is given by
+\begin{equation}\label{eq:Poisson-fundamental-solution}
+    \begin{gathered}
+        \Phi : \R^3 \setminus \{0\} \rightarrow \R, \\
+        \Phi(x) =  -\frac{1}{4\pi \|x \|_2}.
+    \end{gathered}
+\end{equation}
+The fundamental solution $\Phi$ solves the equation on $\R^3\setminus \{0\}$ and can be derived as the unique up to a multiplicative constant rotationally invariant solution of the Laplace equation which decays at infinity\todo{add citation, evans}.
+The key property of the fundamental solution is that the equation 
+\[ 
+    \Delta \int_{\R^3} \Phi(x-y) f(y) \ dy = f(x) 
+\]
+holds for every $x \in \R^3$ and $f \in \mc C^2_c{\R^2}$\todo{citation}.
+This justifies writing \[
+    \Delta \Phi(x) = \delta(x),
+\]
+i.e. the Laplace operator of the fundamental solution is equal to Dirac's delta distribution $\delta$.
+Moreover, gives a solution 
+
+plus a corrector term $h(x)$ which solves the homogeneous equation and guarantees the satisfaction of the boundary conditions.
+
+
+
 \subsection{Adaptive Finite Element method} \label{sec:AdaFE}

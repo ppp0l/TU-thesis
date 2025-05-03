@@ -205,7 +205,7 @@ This setup resulted in a poor performance for all strategies, as shown in Pictur
 To try to improve the performance, on one side we raised the ratio threshold for the adaptive default tolerance reduction for \texttt{ALR} to $2/3$ in order to avoid unnecessary spending; on the other, we tried to lower the default tolerance $\tau_d$ to $10^{-2}$ and to $10^{-3}$ and consider more iterations in order to improve the results of all strategies.
 While raising the threshold for \texttt{ALR} managed to curb the spending, the second measure did not significantly improve the overall performance of the considered strategies, as shown in Pictures \todo{add plot}.
 
-The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the considered solution~\eqref{eq:diffusion-solution}, the steepness of every component varies greatly over the parameter space, the flatter and steeper regions are distinct for each component.
+The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the solution~\eqref{eq:diffusion-solution}, the steepness of every component varies greatly over the parameter space, and moreover the flatter and steeper regions are distinct for each component.
 For a component $j$ of $y$, let $(t,x)$ being the corresponding time and sensor postion.
 Then, the Lipschitz constant for $y^{(j)}(x_p,x_n) = f(t,x;x_p,x_n)$ is given by 
 \begin{align*}
@@ -214,8 +214,8 @@ Then, the Lipschitz constant for $y^{(j)}(x_p,x_n) = f(t,x;x_p,x_n)$ is given by
     &\qquad \qquad= \max_{x_p\in [-1,1]^3} \left| \frac{50}{(4 \pi t)^{\frac{3}{2}}}\exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right) \frac{x^{(1)}-x_p^{(1)}}{4t} \right| 
     = \frac{100}{(8\pi)^{\frac{3}{2}}} e^{-\frac{1}{2}} t^{-2},
 \end{align*}
-where for simmetry reasons we can consider the derivative with respect to the first component of $x_p$ only, as the maximum is the same for all components of $\partial_{x_p, x_n} f(t,x;x_p,x_n)$, being obtained for component $h$ of $\partial_{x_p} f(t,x;x_p,x_n)$ in $x_p = x \pm \sqrt{2t} \cdot e_h$ and similarly for $x_n$.
-Note that for any $(t,x) \in \mc S$ and $h \in \{1,2,3\}$, one of $(x \pm \sqrt{2t} e_h, \tilde x)$ is inside $\Theta$ for any $\tilde x \in [-1,1]^3$.
+where for simmetry reasons we can consider the derivative with respect to the first component of $x_p$ only, as the maximum is the same for all components of $\partial_{x_p, x_n} f(t,x;x_p,x_n)$, being obtained for component $h$ of $\partial_{x_p} f(t,x;x_p,x_n)$ in $x_p = x \pm \sqrt{2t} \cdot e_h$, with $e_h$ being the $h-$th vector of the canonical base of $\R^3$, and similarly for $x_n$.
+Note that for any $(t,x) \in \mc S$ and $h \in \{1,2,3\}$, one between $(x + \sqrt{2t} e_h, \tilde x)$ and $(x - \sqrt{2t} e_h, \tilde x)$ is inside $\Theta$ for any $\tilde x \in [-1,1]^3$.
 
 For $t=0.3$ and $t=0.5$ this results in a ground-truth global Lipschitz constant of approximately $ 5.3$ and $1.9$ for the respective components of the surrogate model.
 However, in all components the minimum value of the local Lipschitz constant can go well below 0.1, and large portions of the parameter space can be covered with a significantly smaller Lipschitz constant.
