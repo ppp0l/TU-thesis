@@ -45,7 +45,7 @@ When training LR surrogates, we consider uniform noise $\nu \sim \mc U([-\tau, \
 In order to compensate for the lack of discretization noise and to evaluate the sensitivity of the algorithms to randomness, we will perform and average repeated runs of the algorithm with the same budget but different random seeds.
 Details about the number of runs will be given in the respective sections. \medskip
 
-For  GPR, we consider a separable RBF kernel 
+For GPR, we consider a separable RBF kernel 
 \[
     k_{(\mathbf{L}, \lambda)}(p, p') =  \exp ( - \norm{p - p'}^2_{\mathbf{L}} ) \ K_\lambda,
 \]
@@ -55,6 +55,9 @@ K_\lambda = \text{diag}(\mathbf{s}) + \mathbf{CC}^T,
 \] 
 where $\mathbf{s} \in \R^{\text{dim} \mc Y}$ is a scaling vector and $\mathbf{C} \in \R^{\text{dim} \mc Y \times 2}$ is a rank 2 matrix which models the correlation among components. 
 Moreover, to stabilize the hyperparameters we consider a Gamma prior $\mc G(2, 10)$ for the lengthscales $\ell_1, \dots, \ell_{\text{dim} \Theta}$ and impose a constraint $\ell_i > 10^{-1}$ for all $i$.
+
+For LR, we consider the euclidean norm $\norm{\cdot}_2$ on the parameter space $\Theta$ and set the Lipschitz constant estimation hyperparameter $\lambda$ in Equation~\eqref{eq:lips-const} to 
+\[ \lambda = 1.1 + \exp{\left(-\frac{n_\text{train}}{\text{dim} \Theta^2}\right)},\] where $n_\text{train}$ is the number of training points.
 \medskip
 
 To produce a MCMC representation of the posterior, we consider Ensemble Sampling as introduced in Section~\ref{sec:IP-sol} using at each step a move selected randomly among the stretch move~\eqref{eq:stretch-move}, the walk move~\eqref{eq:walk-move} and the DIME move from~\cite{Boehl}, with probabilities 0.25, 0.25, 0.5 respectively. 
@@ -167,9 +170,9 @@ with initial conditions given by two Dirac's delta of opposite sign centered in 
 \[
 f (0,x; x_p, x_n) = \delta_{x_p}(x) - \delta_{x_n}(x).
 \]
-We consider the difference of fundamental solutions of the diffusion equation centered in $x_p$ and $x_n$ as a solution of the above problem
+We consider the difference of fundamental solutions of the diffusion equation centered in $x_p$ and $x_n$, scaled for numerical stability of the surrogates, as a solution of the above problem
 \begin{equation}\label{eq:diffusion-solution}
-f(t,x; x_p, x_n) = (4 \pi t)^{-\frac{3}{2}} \left( \exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right)- \exp \left( - \frac{\norm{x-x_n}_2^2}{4t}\right) \right).
+f(t,x; x_p, x_n) = \frac{50}{(4 \pi t)^{\frac{3}{2}}} \left( \exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right)- \exp \left( - \frac{\norm{x-x_n}_2^2}{4t}\right) \right).
 \end{equation}
 We treat $x_p, x_n$ as unknown parameters and want to identify them by measuring $u(t,x;x_p, x_n)$ for $t,x \in \mc S$, where $\mc S$ is a set of times in $\R^+$ coupled with sensors in $\R^3$ given by
 \[
@@ -202,9 +205,21 @@ This setup resulted in a poor performance for all strategies, as shown in Pictur
 To try to improve the performance, on one side we raised the ratio threshold for the adaptive default tolerance reduction for \texttt{ALR} to $2/3$ in order to avoid unnecessary spending; on the other, we tried to lower the default tolerance $\tau_d$ to $10^{-2}$ and to $10^{-3}$ and consider more iterations in order to improve the results of all strategies.
 While raising the threshold for \texttt{ALR} managed to curb the spending, the second measure did not significantly improve the overall performance of the considered strategies, as shown in Pictures \todo{add plot}.
 
-The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the considered solution~\eqref{eq:diffusion-solution}, every component is flat on most of the parameter space besides a small region where $y$ is rather steep.
-This kind of behavior is extremely difficult to capture with a LR surrogate, which considers a global Lipschitz constant for the forward model: for every sensor, the Lipschitz constant at fixed time is given by \todo{numbers, compute} for $t=0.3$ and by \todo{number} $t=0.5$, but for $x_p$ and $x_n$ outside of the ball \todo{compute ball}, then the Lipschitz constant goes down to \todo{number} for $t=0.3$ and \todo{number} for $t=0.5$.
-Due to this behavior, the LR surrogate requires a great number of points in order to be able to reduce the uncertainty of its prediction in the flat region.
+The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the considered solution~\eqref{eq:diffusion-solution}, the steepness of every component varies greatly over the parameter space, the flatter and steeper regions are distinct for each component.
+For a component $j$ of $y$, let $(t,x)$ being the corresponding time and sensor postion.
+Then, the Lipschitz constant for $y^{(j)}(x_p,x_n) = f(t,x;x_p,x_n)$ is given by 
+\begin{align*}
+    L^{(j)} = \max_{(x_p,x_n)\in\Theta}& \left\| \partial_{x_p,  x_n} y^{(j)}(x_p,x_n) \right\|_\infty  =
+    \max_{x_p\in[-1,1]^3} \left\| \partial_{x_p} f(t,x;x_p,0) \right\|_\infty  =\\
+    &\qquad \qquad= \max_{x_p\in [-1,1]^3} \left| \frac{50}{(4 \pi t)^{\frac{3}{2}}}\exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right) \frac{x^{(1)}-x_p^{(1)}}{4t} \right| 
+    = \frac{100}{(8\pi)^{\frac{3}{2}}} e^{-\frac{1}{2}} t^{-2},
+\end{align*}
+where for simmetry reasons we can consider the derivative with respect to the first component of $x_p$ only, as the maximum is the same for all components of $\partial_{x_p, x_n} f(t,x;x_p,x_n)$, being obtained for component $h$ of $\partial_{x_p} f(t,x;x_p,x_n)$ in $x_p = x \pm \sqrt{2t} \cdot e_h$ and similarly for $x_n$.
+Note that for any $(t,x) \in \mc S$ and $h \in \{1,2,3\}$, one of $(x \pm \sqrt{2t} e_h, \tilde x)$ is inside $\Theta$ for any $\tilde x \in [-1,1]^3$.
+
+For $t=0.3$ and $t=0.5$ this results in a ground-truth global Lipschitz constant of approximately $ 5.3$ and $1.9$ for the respective components of the surrogate model.
+However, in all components the minimum value of the local Lipschitz constant can go well below 0.1, and large portions of the parameter space can be covered with a significantly smaller Lipschitz constant.
+This kind of behavior is extremely difficult to capture with a LR surrogate, which considers a global Lipschitz constant for every component of the forward model, as the surrogate requires a great number of points in order to be able to reduce the uncertainty of its prediction in the flatter region of each component.
 
 The comparison of the performance of the GPR and LR surrogates is shown in Table \todo{add table}, where we can see that the performance of GPR is considerably better than that of LR as also depicted in Picture \todo{add plot}, where we show the samples gathered from the posteriors from \texttt{AGP} and \texttt{ALR} as well as the ground truth for one of the runs.
 
