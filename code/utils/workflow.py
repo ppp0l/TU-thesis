@@ -32,13 +32,20 @@ def process_configuration(configuration):
     configuration["sampling_config"]["n_burn"] = int(configuration["sampling_config"]["n_burn"])
 
 class Manager() :
-    def __init__(self, path : str, dimension : int, try_per_param : int = 5):
+    def __init__(self, path : str, dimension : int):
         
         self.path = path
-        
-        self.try_per_param = try_per_param
 
         self.dimension = dimension
+
+        match dimension :
+            case 2:
+                self.try_per_param = 1
+            case 3:
+                self.try_per_param = 5
+            case 6:
+                self.try_per_param = 3
+
         
     def read_configuration(self, type_res = "AGP"):
         

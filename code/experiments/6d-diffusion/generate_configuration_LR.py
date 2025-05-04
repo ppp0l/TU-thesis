@@ -8,6 +8,8 @@ dim = 6
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--tol", type=float, default=0.03, help="Default evaluation tolerance")
+parser.add_argument("--conv_ratio", type=float, default=1/2, help="Desired convergence ratio")
 args = parser.parse_args()
 path = args.path
 
@@ -43,12 +45,12 @@ while not np.all(np.abs(gt) <= domain_bound):
 pred = fm.predict(gt)
 
 # adaptive training parameters
-sample_every = 6
+sample_every = 5
 points_per_it = 1
 n_init = 14
-default_tol = 0.03
-threshold = meas_std * fm.dout / 1.5
-conv_ratio = 1/4
+default_tol = args.tol
+threshold = meas_std * fm.dout /1.5
+conv_ratio = args.conv_ratio
 max_iter = 6
 FE_cost = 1
 

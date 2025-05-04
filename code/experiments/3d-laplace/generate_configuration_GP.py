@@ -8,6 +8,7 @@ dim = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", type=str, help="Path for data")
+parser.add_argument("--tol", type=float, default=0.03, help="Default evaluation tolerance")
 args = parser.parse_args()
 path = args.path
 
@@ -46,7 +47,7 @@ pred = fm.predict(gt)
 sample_every = 3
 points_per_it = 1
 n_init = 5
-default_tol = 0.03
+default_tol = args.tol
 threshold = meas_std**2 * fm.dout / 20
 conv_ratio = 1/4
 max_iter = 10

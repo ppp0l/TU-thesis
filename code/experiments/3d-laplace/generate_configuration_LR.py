@@ -49,7 +49,7 @@ n_init = 5
 default_tol = 0.03
 threshold = meas_std * fm.dout / 1.5
 conv_ratio = 1/2
-max_iter = 7
+max_iter = 8
 FE_cost = 1
 
 configurations = []
