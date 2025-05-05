@@ -6,7 +6,7 @@ OUTPATH = /data/numerik/people/pvillani/thesis/prova1
 
 FLAGS = --path $(OUTPATH)
 
-FLAGSALT = --path $(OUTPATH)/other_configurations
+FLAGSALT = --path $(OUTPATH)/config_dtol0.001
 
 CONDA_ACTIVATE = source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(env)
 PYPATH = export PYTHONPATH=$(CURDIR)

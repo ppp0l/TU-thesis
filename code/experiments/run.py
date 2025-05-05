@@ -246,6 +246,9 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
+    training_set["train_p"] = train_p
+    training_set["train_y"] = train_y
+    training_set["errors"] = errors
     workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
 
 def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str , target):
@@ -371,6 +374,9 @@ def run_fixed_tolerance(training_set : dict, surrogate : Surrogate, fm : forward
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
+    training_set["train_p"] = train_p
+    training_set["train_y"] = train_y
+    training_set["errors"] = errors
     workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
 
 def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, posterior : Posterior, workflow_manager: Manager, run_type : str, target):
@@ -498,6 +504,9 @@ def run_random(training_set : dict, surrogate : Surrogate, fm : forward_model, p
 
     # save results
     workflow_manager.save_results({"W": [W], "target": [curr_target]}, run_type)
+    training_set["train_p"] = train_p
+    training_set["train_y"] = train_y
+    training_set["errors"] = errors
     workflow_manager.state_saver(run_type, i+1, W, training_set, surrogate, samples)
     
 

@@ -213,4 +213,7 @@ curr_L2 = L2_approx(std**2).mean()
 
 # save results
 workflow_manager.save_results({"W": [W], "target": [curr_L2]}, run_type)
+training_set["train_p"] = train_p
+training_set["train_y"] = train_y
+training_set["errors"] = errors
 workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)

@@ -20,7 +20,7 @@ parser.add_argument("--type_surr", type=str, default="GP", help="Type of surroga
 parser.add_argument("--include_gt", type=bool, default=False, help="Include ground truth for comparison")
 parser.add_argument("--proc_samples", type=bool, default=False, help="Process samples")
 parser.add_argument("--proc_MAP", type=bool, default=False, help="Process MAP")
-parser.add_argument("--proc_n_pts", type=bool, default=False, help="Process number of training points")
+parser.add_argument("--proc_train", type=bool, default=False, help="Process statistics aboout the training set")
 args = parser.parse_args()
 path = args.path
 dim = args.dim
@@ -52,8 +52,11 @@ for i, config in enumerate(configs):
     stds = {}
     MAPs = {}
     n_train_pts= {}
+    n_its = {}
+    final_work = {}
     samples_dict = {}
-
+    cleaned_true = []
+    
     if args.include_gt :
         if args.proc_samples :
             try :
@@ -73,6 +76,7 @@ for i, config in enumerate(configs):
             samples_dict["Ground truth"] = cleaned_true
         else :
             starts = lhs(domain["min"], domain["max"], 3*dim)
+            
         
         if args.proc_MAP :
             try :
@@ -98,6 +102,7 @@ for i, config in enumerate(configs):
                 for row in reader :
                     pars = row
                 nit = int(pars[0])
+                W = int(pars[1])
             
             if args.proc_samples :
                 with open(curr_path + f'/it{nit}_samples.npy', 'rb') as file:
@@ -139,12 +144,26 @@ for i, config in enumerate(configs):
                 except :
                     MAPs[type_run+type_surr] = [MAP]
 
-            if args.proc_n_pts :
+            if args.proc_train :
+
+                tr_file = curr_path + f'/it{nit}_training_set.pth'
+                tr_set = torch.load(tr_file)
+
                 n_train = len(tr_set['train_p'])
                 try :
                     n_train_pts[type_run+type_surr].append(n_train)
                 except :
                     n_train_pts[type_run+type_surr] = [n_train]
+
+                try :
+                    n_its[type_run+type_surr].append(nit)
+                except :
+                    n_its[type_run+type_surr] = [nit]
+                
+                try :
+                    final_work[type_run+type_surr].append(W)
+                except :
+                    final_work[type_run+type_surr] = [W]
                     
             
             
@@ -152,23 +171,27 @@ for i, config in enumerate(configs):
             for key in samples.keys() :
                 samples[key] = samples[key][:min_len]
 
-            
-            corner_plot( list(samples.values()), 
-                        labels = list(samples.keys()), 
-                        colors = ["blue", "orange", "green", "red", "purple"],
-                        savepath = pic_path + f"/corner_plots/{type_surr}/run{i}_{seed}.png",
-                        saveformat = "png",
-                        title = f"Corner plot for {type_surr} surrogate, measurement {i} and seed {seed}",
-                        domain = domain,
-                        dim = dim,
-                        )
+            try :
+                corner_plot( list(samples.values()), 
+                            labels = list(samples.keys()), 
+                            colors = ["blue", "orange", "green", "red", "purple"],
+                            savepath = pic_path + f"/corner_plots/{type_surr}/run{i}_{seed}.png",
+                            saveformat = "png",
+                            title = f"Corner plot for {type_surr} surrogate, measurement {i} and seed {seed}",
+                            domain = domain,
+                            dim = dim,
+                            )
+            except :
+                pass
     if args.proc_samples :
         torch.save(means, data_path +f"/postprocessing/meas{i}_{type_surr}_means.pth")
         torch.save(stds, data_path +f"/postprocessing/meas{i}_{type_surr}_stds.pth")
     if args.proc_MAP :
         torch.save(MAPs, data_path +f"/postprocessing/meas{i}_{type_surr}_MAPs.pth")
-    if args.proc_n_pts :
+    if args.proc_train :
         torch.save(n_train_pts, data_path +f"/postprocessing/meas{i}_{type_surr}_n_train.pth")
+        torch.save(n_its, data_path +f"/postprocessing/meas{i}_{type_surr}_n_its.pth")
+        torch.save(final_work, data_path +f"/postprocessing/meas{i}_{type_surr}_Ws.pth")
 
         
 

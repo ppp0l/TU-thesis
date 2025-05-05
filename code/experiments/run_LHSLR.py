@@ -208,4 +208,7 @@ curr_L1 = L1_err(LB, UB).mean()
 
 # save results
 workflow_manager.save_results({"W": [W], "target": [curr_L1]}, run_type)
+training_set["train_p"] = train_p
+training_set["train_y"] = train_y
+training_set["errors"] = errors
 workflow_manager.state_saver(run_type, n_it, W, training_set, surrogate, samples)
