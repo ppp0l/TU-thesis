@@ -65,16 +65,16 @@ When initializing the sampler, we randomly select an initial state through LHS a
 \medskip
 
 In this work, we fix some parameters of~\ref{algo:AL} across different experiments, while others are set according to the specific problem.
-Regarding sampling, the number $n_w$ of walkers in the ensemble is selected depending on the dimensionality of the problem; the posterior is not sampled at every iteration but every $N_{\text{sample}}$ iterations: at iteration $j$, the number of samples to be drawn $d_j$ and the number of samples to be burned $b_j$ at Step 1. are given by
+Regarding sampling, the number $n_w$ of walkers in the ensemble is selected depending on the dimensionality of the problem; the posterior is not sampled at every iteration but every $N_{\text{sample}}$ iterations: at iteration $j$, the number of samples to be drawn $d_j$ and the number of samples to be burned $b_j$ at Step 1 are given by
 \[
 d_j = b_j = \begin{cases}
-    250 \cdot n_w \cdot  & \text{ if } j \equiv 0 \mod N_{\text{sample}} \\
+    250 \cdot n_w \cdot  & \text{ if } j \equiv 1 \mod N_{\text{sample}} \\
     0 & \text{ otherwise}
 \end{cases}.
 \]
 By this, whenever we sample the posterior we rebuild a totally new chain $\mc S_j$. 
 Moreover, after the required accuracy level is reached, we stop the algorithm and sample the posterior with a larger number of samples $d_{J_{\max} +1} = 500 \cdot n_w$, while burning the previous $b_{J_{\max} +1} = 250 \cdot n_w$ samples.\newline
-We consider a single candidate point at each iteration, selecting the global maximum of the acquisition function~\eqref{eq:acq-fun-disc}, $s_j = 1$ at Step 2. of~\ref{algo:AL}; regarding the budget $\Delta W_j$ for the tolerance optimization problem at Step 3., we consider a default tolerance $\tau$ and assign the budget $\Delta W_j = \tau^{-\frac{l}{r}}$ to the optimization problem, where $l$ and $r$ are the FE cost parameters.
+We consider a single candidate point at each iteration, selecting the global maximum of the acquisition function~\eqref{eq:acq-fun-disc}, $s_j = 1$ at Step 2 of~\ref{algo:AL}; regarding the budget $\Delta W_j$ for the tolerance optimization problem at Step 3, we consider a default tolerance $\tau$ and assign the budget $\Delta W_j = \tau^{-\frac{l}{r}}$ to the optimization problem, where $l$ and $r$ are the FE cost parameters.
 We consider non uniform budget fractionating, adapting the computational budget for Problem~\eqref{prob:incremental-doe} to the convergence status by halving the default tolerance if the target quantity does not reduce adequately in $N_\text{sample}$ iterations; we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example.  \newline
 Finally, the tolerance level \texttt{tol} is selected to be proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate, as the error estimates are related to the surrogate's covariance and standard deviation respectevely.\medskip
 
@@ -124,41 +124,164 @@ To formulate an IP, $x_0$ is assumed to be an unknown parameter and we aim at id
      \right\},
 \]
 resulting in 14 sensors on the unit sphere and consequently a 14-dimensional measurement space $\mc Y = \R^{14}$. \newline
-The parameter space is assumed to be $\Omega = \left[-\frac{1}{2}, \frac{1}{2}\right]^3$ and a Normal prior $\mc N (0, \frac{1}{6}I_3)$ is considered.
+The parameter space is assumed to be $\Omega = \left[-\frac{1}{2}, \frac{1}{2}\right]^3$ and a Normal prior $\mc N (0, \frac{1}{4}I_3)$ is considered.
 
 We generate measurements by adding pseudorandom noise $N \sim \mc N (0, \sigma^2 I_{14})$, with $\sigma = 10^{-2}$ to the exact forward model evaluations $y(p)$ for some $p$. 
 We consider 5 different measurements corresponding to 5 different $p$ randomly extracted from the prior distribution and, as the discretization error is simulated, we perform 5 runs of each training strategy with different random seeds for each measurement.
 \medskip
 
-For the GPR surrogate, we consider an halting threshold $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} \mc Y }{20} = 7\cdot 10^{-5}$, where the factor $\frac{\text{dim} \mc Y}{20}$ is chosen to be proportional to the number of output components of the surrogate model, as the error model sums the predictive variance over the output components, and divided by a factor 20 to impose the surrogate model's variance to be smaller than the measurement's variance.
-For all configurations, we sample every $N_{\text{sample}} = 3$ iterations and we set the number of walkers to $n_w = 32$.
+For the GPR surrogate, we consider a default configuration with a halting threshold $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} \mc Y }{20} = 7\cdot 10^{-5}$, where the factor $\frac{\text{dim} \mc Y}{20}$ is chosen to be proportional to the number of output components of the surrogate model, as the error model sums the predictive variance over the output components, and divided by a factor 20 to impose the surrogate model's variance to be smaller than the measurement's variance.
+For all measurements and seeds, we sample every $N_{\text{sample}} = 3$ iterations and we set the number of walkers to $n_w = 32$.
 We begin with an initial design of $5$ points selected through LHS and with default tolerance $\tau_d = 3 \cdot 10^{-2}$, and we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}}$ iterations; when assigning the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ to the optimization problem, we use the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then every $N_{\text{sample}}$ iterations we halve it if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.
 
-This setup results in the expected error per spent budget curves represented by Picture~\todo{add plot} for the different training strategies.
-We see that, while \texttt{LHSGP} struggles to reduce the expected error and has a slower convergence rate, the fixed-tolerance strategies \texttt{posAdGP} and \texttt{randGP} are able to perform on par with \texttt{AGP} until they hit a plateau around an error level of $3\cdot 10^{-4}$, while \texttt{AGP} is able to reach the threshold $\texttt{tol}$ before the maximum number of iterations.
-Moreover we observe that in this case random selection of the candidates in \texttt{randGP} is as effective as the position-adaptive strategy \texttt{posAdGP}, resulting in a similar convergence velocity.
-As shown in Table \todo{add table}, while before the plateau \texttt{AGP} and the position-adaptive strategies achieve a similar performance in terms of expected error per budget, \texttt{AGP} uses a smaller number of iterations and training points as it adaptively reduces the default tolerance $\tau_d$ and optimizes work distribution.
-The plateau phase motivates us to test the behavior of the fixed-tolerance strategies with a lower tolerance $\tau_d = 10^{-3}$: in this case \texttt{posAdGP} and \texttt{randGP} are able to reach the target threshold $\texttt{tol}$ as shown in Picture \todo{add plot}, but they require a larger computational budget and a similar number of iterations as \texttt{AGP} with the lower default tolerance $\tau_d =  3\cdot 10^{-2}$ \todo{add table}.
-Finally, we observe that on average a run \texttt{AGP} does not include the selected candidate in \todo{number} iterations, resulting in an average number of points in the design.\medskip
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{results/pictures/d3/GP_res.png}
+\end{center}
+\caption{Convergence rates for the GPR expected error over computational budget for the four considered strategies on the 3d example and default configuration.}
+\label{fig:3dGPconv}
+\end{figure}
 
-For the LR surrogate, we consider a halting threshold $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 0.09\bar 3$, proportional to the measurement's standard deviation as the error model is based on the standard deviation of the LR surrogate.
+This setup results in the expected error per spent budget curves represented by Picture~\ref{fig:3dGPconv} for the different training strategies.
+We see that, while \texttt{LHSGP} struggles to reduce the expected error and has a slower convergence rate, the fixed-tolerance strategies \texttt{posAdGP} and \texttt{randGP} are able to perform on par with \texttt{AGP} until they hit a plateau around an error level of $10^{-3}$, while \texttt{AGP} is able to reach the threshold $\texttt{tol}$ before the maximum number of iterations.
+Moreover we observe that in this case random selection of the candidates in \texttt{randGP} is as effective as the position-adaptive strategy \texttt{posAdGP}, resulting in a similar convergence velocity.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{cccc}
+    \toprule
+         & Iterations & Training points & Computational work \\
+         \midrule
+         \texttt{AGP} 
+         & 15.1 & 14.4 & 830 \\
+         \texttt{posAdGP} 
+         & 19.2 & 24.2 & 806 \\
+         \texttt{randGP} 
+         & 18.8 & 23.8 & 794  \\
+         \bottomrule
+    \end{tabular}
+    \caption{Average over the 25 runs of number of iterations, points in the training set and computational work required to reduce the expected error below $2 \cdot 10^{-3}$ for the GPR-based adaptive strategies.}
+    \label{tab:3dGP-plateau}
+\end{table}
+
+As shown in Table~\ref{tab:3dGP-plateau}, while before the plateau \texttt{AGP} and the position-adaptive strategies achieve a similar performance in terms of expected error per budget, \texttt{AGP} uses a smaller number of iterations and training points as it adaptively reduces the default tolerance $\tau_d$ and optimizes work distribution.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccccccccccc}
+    \toprule
+        & Converged & $W$  & \multicolumn{4}{c}{Training points} & \multicolumn{4}{c}{Iterations} \\ 
+        &   &  avg  & avg   & med   & min   & max   & avg   & med   & min   & max \\
+        \midrule
+        \texttt{AGP}, $\tau_d = 3 \cdot 10 ^{-2}$    
+        &always & 1830 & 15.3  &  15   &  12   &  20   &  20.6 &  21   &   16  & 23   \\
+        Others, $\tau_d = 3 \cdot 10 ^{-2}$    
+        & never & 1167 &  35   &  35   &  35   &   35  &   30  &  30   &   30  & 30   \\
+        \texttt{posAdGP}, $\tau_d = 10 ^{-3}$ 
+        & always&14320 & 14.3  &  15   &  12   &   18  &  9.3  &  10   &   7   & 13   \\
+        \texttt{randGP}, $\tau_d = 10 ^{-3}$ 
+        & always&15080 & 15.1  &  14   &  14   &   17  &  8.1  &  9    &   9   & 12 \\
+        \texttt{LHSGP}, $\tau_d = 10 ^{-3}$ 
+        & never &35000 &  35   &  35   &  35   &   35  &   30  &   30  &   30  & 30   \\
+    \bottomrule
+    \end{tabular}
+    \caption{Status of the training after the final iteration of different strategies and configurations for the GPR surrogate. For the total computational work $W$ the average over the 25 runs is provided, while for the final number of points in the training set and the number of iterations necessary to terminate the training the average, the median, the minimum and the maximum are provided.
+    }
+    \label{tab:3dGP-recap}
+\end{table}
+
+The plateau phase motivates us to test the behavior of the fixed-tolerance strategies with a lower tolerance $\tau_d = 10^{-3}$: in this case \texttt{posAdGP} and \texttt{randGP} are able to reach the target threshold $\texttt{tol}$ as shown in Picture~\ref{fig:3dGP-other}, but they require a larger computational budget and a similar number of training points as \texttt{AGP} with the lower default tolerance $\tau_d =  3\cdot 10^{-2}$, see Table~\ref{tab:3dGP-recap}.
+We observe that even in this higher-accuracy case, \texttt{LHSGP} is unable to reach the convergence threshold \texttt{tol}.
+Finally, on Table~\ref{tab:3dGP-recap} we can notice that on average a run \texttt{AGP} does not include the selected candidate in 10 iterations, resulting in an average number of 15.3 points in the design, of which 5 are the initial ones, over 20.6 average iterations.
+As the computational costs of GPR scale with the number of training points, a reduced number of training points renders the evaluation of the surrogate more efficient.
+
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{results/pictures/d3/config_dtol0.001/GP_res.png}
+\end{center}
+\caption{Convergence rates for the GP expected error over computational budget for the fixed-tolerance strategies, default tolerance $\tau_d = 10^{-3}$.}
+\label{fig:3dGP-other}
+\end{figure}
+
+For the LR surrogate, we consider a halting threshold $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 9.\bar 3 \cdot 10^{-2}$, proportional to the measurement's standard deviation as the error model is based on the standard deviation of the LR surrogate.
 For LR, we sample every $N_{\text{sample}} = 4$ iterations and we set the number of walkers to $n_w = 32$.
-The initial design consists of 5 points selected through LHS and with default tolerance $\tau_d = 0.03$, and we perform a maximum of $J_{\max} = 8 \cdot N_{\text{samples}}$ iterations; when assigning the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ to the tolerance optimization problem at Step 3,, we use the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then every $N_{\text{sample}}$ iterations we halve it if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.
+The initial design consists of 5 points selected through LHS and with default tolerance $\tau_d = 3 \cdot 10^{-2}$, and we perform a maximum of $J_{\max} = 8 \cdot N_{\text{samples}}$ iterations; when assigning the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ to the tolerance optimization problem at Step 3, we use the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then every $N_{\text{sample}}$ iterations we halve it if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.
 The different choices regarding configuration parameters as compared to GPR are due to the higher prediction variance and lower sensitivity of the LR surrogate model to computational work. 
 
-Picture \todo{add plot} shows the expected error per budget curves for the different training strategies. 
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{results/pictures/d3/LR_res.png}
+\end{center}
+\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies.}
+\label{fig:3dLRconv}
+\end{figure}
+
+Picture~\ref{fig:3dLRconv} depicts the expected error per budget curves for the different training strategies. 
 We observe that, as opposed to the GPR surrogate, the fixed-tolerance strategies \texttt{posAdLR} and \texttt{randLR} perform on par with \texttt{ALR} until they meet the maximum number of iterations, while \texttt{ALR} is able to reach the target threshold $\texttt{tol}$ before the maximum number of iterations thanks to the adaptive budget allocation.
 It is worth noting that \texttt{LHSLR} performs significantly worse than the other strategies, barely reducing the expected error at all, while \texttt{posAdLR} performs slightly better than \texttt{randLR}. 
-In this case, the fully adaptive strategy \texttt{ALR} almost always includes the new candidate in the design, resulting in an average number of training points of \todo{number} over the 25 runs of the algorithm.
-This fact, as well as the effectiveness of fixed-tolerance strategies, suggests that for LR the number of points is a more relevant factor than in GPR. \medskip
+In this case, the fully adaptive strategy \texttt{ALR} includes the new candidate in the design more frequently than \texttt{AGP}, resulting on average for the 25 runs of 27.1 training points over 26.4 iterations, with on average 4 iterations without the inclusion of the candidate.
+This fact, as well as the effectiveness of fixed-tolerance strategies, suggests that for LR the inclusion of high-accuracy points is a less relevant factor than in GPR on this example. \medskip
+
+\begin{table}[H]
+
+    \centering
+    \hspace*{-1.5cm}
+    \begin{tabular}{ccccccccccccc}
+    \toprule
+        & \multicolumn{4}{c}{MAP error}  & \multicolumn{4}{c}{Posterior mean error} & \multicolumn{4}{c}{Posterior st. dev. error} \\ 
+        & \multicolumn{4}{c}{$ \|p_\text{MAP} - \hat p _\text{MAP}\|_2 $}  & \multicolumn{4}{c}{$ \|p_\text{mean} - \hat p _\text{mean}\|_2 $} & \multicolumn{4}{c}{$\| \text{diag}(\Sigma_P) - \text{diag}( \hat \Sigma _P) \|_2$} \\ 
+        & avg   & med   & min   & max   & avg   & med   & min   & max   & avg   & med   & min   & max \\
+        \midrule
+        \texttt{AGP}
+        & 0.0046 & 0.0039 & 0.0011 & 0.0086
+        & 0.0037 & 0.0036 & 0.0011 & 0.0084
+        & 0.0038 & 0.0015 & 0.0001 & 0.0131 \\
+        \texttt{posAdGP}
+        & 0.0145 & 0.0152 & 0.0048 & 0.0214 
+        & 0.0136 & 0.0141 & 0.0049 & 0.0217
+        & 0.0071 & 0.0067 & 0.0034 & 0.0110 \\
+        \texttt{randGP}
+        & 0.0103 & 0.0097 & 0.0048 & 0.0192 
+        & 0.0107 & 0.0106 & 0.0041 & 0.0201
+        & 0.0064 & 0.0058 & 0.0011 & 0.0136 \\
+        \texttt{LHSGP}
+        & 0.0332 & 0.0325 & 0.0124 & 0.0753 
+        & 0.0312 & 0.0278 & 0.0119 & 0.0658
+        & 0.1486 & 0.0131 & 0.0088 & 0.0331 \\
+        \texttt{ALR}
+        & 0.0186 & 0.0180 & 0.0041 & 0.0446
+        & 0.0113 & 0.0010 & 0.0043 & 0.0272
+        & 0.0094 & 0.0087 & 0.0024 & 0.0196 \\
+        \texttt{posAdLR}
+        & 0.0199 & 0.0178 & 0.0041 & 0.0524
+        & 0.0139 & 0.0115 & 0.0037 & 0.0369
+        & 0.0103 & 0.0095 & 0.0049 & 0.0208 \\
+        \texttt{randLR}
+        & 0.0225 & 0.0211 & 0.0077 & 0.0507
+        & 0.0156 & 0.0141 & 0.0053 & 0.0283
+        & 0.0117 & 0.0113 & 0.0052 & 0.0232 \\
+        \texttt{LHSLR}
+        & 0.1315 & 0.1134 & 0.0536 & 0.2801 
+        & 0.1053 & 0.0992 & 0.0319 & 0.1988
+        & 0.0717 & 0.0707 & 0.0251 & 0.1378 \\
+        
+    \bottomrule
+    \end{tabular}
+    \caption{Average, median, minimum and maximum of the absolute error on the MAP estimate, posterior mean and posterior standard deviation on each component over the 25 runs with default configuration.
+    The analytical ground truth posterior and corresponding samples are utilized to compute the true MAP $p_\text{MAP}$, mean $p_\text{mean}$ and component-wise standard deviation $\text{diag}(\Sigma_P)$, while for each strategy the surrogate-based posteriors and samples are used to compute $\hat p_\text{MAP}$, $\hat p_\text{mean}$ and $\text{diag}(\hat \Sigma_P)$.
+    }
+    \label{tab:3d-comparison}
+    
+    
+\end{table}
 
 We compare the performance of the GPR and LR surrogates utilizing the available ground truth.
-Table \todo{add table} shows the average error on the MAP estimate, posterior mean and posterior variance of the different strategies and different surrogates.
+Table~\ref{tab:3d-comparison} shows the average error on the MAP estimate, posterior mean and posterior standard deviation of the different strategies and different surrogates.
 \todo[inline]{add comment on other strategies}
-We can notice that the LHS-based strategies \texttt{LHSGP} and \texttt{LHSLR} are the ones showing the most performance difference between the two surrogate kinds in both relative and absolute value. 
+We can notice that the LHS-based strategies \texttt{LHSGP} and \texttt{LHSLR} are the ones obtaining the most performance difference between the two surrogate kinds. 
 In this example, LR is unable to obtain a good approximation of the posterior through a globally-accurate surrogate, while GPR is able to reach a good approximation of the posterior even with a non-adaptive globally-accurate surrogate.
 For the adaptive strategies instead, LR is able to reach a similar performance as GPR by having a locally-accurate representation of the forward model, despite a slightly higher computational cost.
-Picture \todo{add plot} shows the samples gathered from the posteriors from \texttt{LHSGP} and \texttt{LHSLR} as well as the ground truth for one of the runs.
+Picture \todo{add plot} plots the samples gathered from the posteriors from \texttt{LHSGP} and \texttt{LHSLR} as well as the ground truth for one of the runs.
 
 \subsection{6D analytical example - Diffusion equation}\label{sec:6dexp}
 
@@ -190,19 +313,28 @@ Measurements are generated by exact forward model evaluations $y(p)$ for 4 diffe
 For each of the 4 measurements, we perform 3 runs of each training strategy with different random seeds. \medskip
 
 The configuration parameters for the GPR surrogate are similar to those of the previous example: we choose an halting threshold of $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} \mc Y }{20} = 6\cdot 10^{-4}$; sampling is performed every $N_{\text{sample}} = 4$ iterations, with an ensemble comprising of $n_w = 64$ walkers.
-The initial design consists of 13 points selected through LHS with default tolerance $\tau_d = 3 \cdot 10^{-2}$; we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}}$ iterations and at Step 3. of the algorithm we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ computational budget, using the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then again halving it every $N_{\text{sample}}$ iterations if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.
+The initial design consists of 13 points selected through LHS with default tolerance $\tau_d = 3 \cdot 10^{-2}$; we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}}$ iterations and at Step 3 of the algorithm we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ computational budget, using the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then again halving it every $N_{\text{sample}}$ iterations if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.
 
-The convergence curves resulting from the different training strategies with the above configuration are shown in Picture \todo{add plot}.
-In this example, we observe that, despite an overall higher error level, the relative performance of the different strategies is similar to the previous experiment; the position-adaptive strategies \texttt{posAdGP} and \texttt{randGP} stall at an error level of $5\cdot 10^{-3}$, while \texttt{AGP} is able to reach the target threshold $\texttt{tol}$ before the maximum number of iterations and \texttt{LHSGP} is unable to reduce the expected error significantly.
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{results/pictures/d6/GP_res.png}
+\end{center}
+\caption{Convergence rates for the GP expected error over computational budget for the four considered strategies on the 6d example.}
+    \label{fig:6dGPconv}
+\end{figure}
+
+The convergence curves resulting from the different training strategies with the above configuration are shown in Picture~\ref{fig:6dGPconv}.
+In this example, we observe that, despite an overall higher error level, the relative performance of the different strategies is similar to the previous experiment; the position-adaptive strategies \texttt{posAdGP} and \texttt{randGP} stall at an error level of $10^{-3}$, while \texttt{AGP} is able to reach the target threshold $\texttt{tol}$ before the maximum number of iterations and \texttt{LHSGP} is unable to reduce the expected error significantly.
 In contrast to the previous example, \texttt{AGP} is closer to the fixed-tolerance strategies \texttt{posAdGP} and \texttt{randGP} in terms of expected error per budget, but also spends considerably less budget than the previous experiment: both of these effects can be due to the higher likelihood standard deviation $\sigma$, here set to $2\cdot 10^{-2}$ in contrast to $10^{-2}$ in the previous example, which makes the need for higher-accuracy evaluations less pressing.
 This can also be seen in the lower number of iterations where no new candidate is selected, as shown in Table \todo{add table}.
 Another considerable difference is that \texttt{LHSGP} performs significantly worse than the other strategies, likely due to the higher dimensionality of the parameter space which makes evenly spaced sampling less effective.
 
-For the LR we tried configuration parameters similar to the previous one: after setting the halting threshold to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 0.6$, we sampled every $N_{\text{sample}} = 5 $ iterations and set the number of walkers to $n_w = 64$.
-The initial design consists of 13 points selected through LHS with default tolerance $\tau_d = 0.03$; we perform a maximum of $J_{\max} = 8 \cdot N_{\text{samples}}$ iterations and at Step 3. of the algorithm we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ computational budget, using the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then again halving it every $N_{\text{sample}}$ iterations if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.
+For the LR we tried default configuration parameters similar to the previous one: after setting the halting threshold to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 0.6$, we sampled every $N_{\text{sample}} = 5 $ iterations and set the number of walkers to $n_w = 64$.
+The initial design consists of 13 points selected through LHS with default tolerance $\tau_d = 3 \cdot 10^{-2}$; we perform a maximum of $J_{\max} = 8 \cdot N_{\text{samples}}$ iterations and at Step 3 of the algorithm we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ computational budget, using the default value $\tau= \tau_d$ for the first $2\cdot N_{\text{samples}}$ iterations and then again halving it every $N_{\text{sample}}$ iterations if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.
+
 This setup resulted in a poor performance for all strategies, as shown in Picture \todo{add plot}, with \texttt{LHSLR} performing the worst but also the adaptive strategies \texttt{ALR}, \texttt{posAdLR} and \texttt{randLR} being unable to reduce the expected error significantly; in particular, \texttt{ALR} spends considerably more budget than the fixed-tolerance strategies, as it tries to adaptively reduce the default tolerance $\tau_d$ but the expected error does not reduce correspondingly.
 
-To try to improve the performance, on one side we raised the ratio threshold for the adaptive default tolerance reduction for \texttt{ALR} to $2/3$ in order to avoid unnecessary spending; on the other, we tried to lower the default tolerance $\tau_d$ to $10^{-2}$ and to $10^{-3}$ and consider more iterations in order to improve the results of all strategies.
+To try to improve the performance, on one side we raised the ratio threshold for the adaptive default tolerance reduction for \texttt{ALR} to $2/3$ in order to avoid unnecessary spending; on the other, we tried to lower the default tolerance $\tau_d$ to $10^{-3}$ and consider more iterations in order to improve the results of all strategies.
 While raising the threshold for \texttt{ALR} managed to curb the spending, the second measure did not significantly improve the overall performance of the considered strategies, as shown in Pictures \todo{add plot}.
 
 The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the solution~\eqref{eq:diffusion-solution}, the steepness of every component varies greatly over the parameter space, and moreover the flatter and steeper regions are distinct for each component.
@@ -221,7 +353,7 @@ For $t=0.3$ and $t=0.5$ this results in a ground-truth global Lipschitz constant
 However, in all components the minimum value of the local Lipschitz constant can go well below 0.1, and large portions of the parameter space can be covered with a significantly smaller Lipschitz constant.
 This kind of behavior is extremely difficult to capture with a LR surrogate, which considers a global Lipschitz constant for every component of the forward model, as the surrogate requires a great number of points in order to be able to reduce the uncertainty of its prediction in the flatter region of each component.
 
-The comparison of the performance of the GPR and LR surrogates is shown in Table \todo{add table}, where we can see that the performance of GPR is considerably better than that of LR as also depicted in Picture \todo{add plot}, where we show the samples gathered from the posteriors from \texttt{AGP} and \texttt{ALR} as well as the ground truth for one of the runs.
+The comparison of the performance of the GPR and LR surrogates is shown in Table \todo{add table}, where we can see that the performance of GPR is considerably better than that of LR as also depicted in Picture \todo{add plot}, where we plot the samples gathered from the posteriors from \texttt{AGP} and \texttt{ALR} as well as the ground truth for one of the runs.
 
 \subsection{2D Finite Element example - Elastomechanics}\label{sec:FEexp}
 
