@@ -10,7 +10,7 @@ When a point estimate of the parameter is a sufficient solution for the IP, adop
 Instead, when aiming for a posterior representation through sampling, approaches such as Delayed Acceptance MCMC \cite{ChristenFox2005} are indifferent to the choice.
 For the approach presented in this work, a forward model representation will be obtained, as we will exploit the error estimators for FE models in the surrogate's training. \medbreak
 
-We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical forward model,\[ y_i = H(f_{\tau_i}(\cdot; p_i)). \]
+We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical forward model,\[ y_i = H(u_{\tau_i}(\cdot; p_i)). \]
 
 There exist different classes of surrogate models: an useful distinction is the one between deterministic and stochastic surrogate models.
 Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
@@ -54,7 +54,7 @@ The choice of a kernel is crucial for the effectiveness of GPR: in order to allo
 
 The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and in our context entails that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. 
 \[
-    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc N(0, \Sigma_D(\tau)^2);
+    H(u_{\tau}(\cdot; p)) - H(u(\cdot; p)) \sim \mc N(0, \Sigma_D(\tau)^2);
 \] for a general GPR task, it is common to assume 
 \begin{equation}\label{eq:iid-GPR-noise}
     \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
@@ -64,15 +64,17 @@ In the context we are working in, Equation~\eqref{eq:iid-GPR-noise} implies i.i.
 
 Given a prior GP $Y \sim GP(m, k)$ and the training data $D$, the posterior GP $Y \mid D$ is obtained by conditioning the prior on the observations. 
 The analytical expression for the posterior GP is given by the following theorem.
-Although this result is foundational for GPR, its complete proof is rarely explicitly stated.~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which we will present explicitly in Appendix~\ref{app:GPR}.
+Although this result is foundational for GPR, its complete proof is rarely explicitly stated:~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which relies on some technical linear algebra lemmas.
 
 \begin{restatable}[GP posterior]{theorem}{GPpost} \label{thm:GP-posterior}
     Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $\nu_{D,1},\dots,\nu_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
     Then the posterior GP $Y \mid D$ is a GP over $\mc Y$ with mean function $m_D$ and kernel $k_D$, where
-    \begin{gather}
-        m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P)) \label{eq:predictive-mean} \\
-        k_D(p, p') = k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T \label{eq:predictive-var}
-    \end{gather}
+    \begin{equation} \label{eq:GP-predictive}
+        \begin{gathered}
+            m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P))  \\
+            k_D(p, p') = k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T            
+        \end{gathered}
+    \end{equation}
     for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$, and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
 \end{restatable}
 
@@ -83,7 +85,7 @@ As we are not interested in the full GP posterior but only in the point-wise pre
         y_{D, \text{GP}} : \Theta \rightarrow \mc P( \mc Y) \\
         p \mapsto \mc N( m_D(p), k_D(p,p) ),
     \end{gather*}
-    with $m_D$ and $k_D$ are given by Equations~\eqref{eq:predictive-mean} and~\eqref{eq:predictive-var} respectively.
+    with $m_D$ and $k_D$ are given by Equations~\eqref{eq:GP-predictive}.
 \end{cor}
 
 The core of GPR is now outlined, but for practical use a few more remarks are necessary. \newline
@@ -169,7 +171,7 @@ Moreover when the Lipschitz constants are unknown, their estimation is sensitive
 The second assumption does not allow for correlated noise terms $\nu_{D,i}$, $\nu_{D,k}$ as in \textit{(GPR-data)}, but in practice GPR usually also assumes their independence, as in Equation~\ref{eq:GPR-noise-corr}. 
 In the context of this work, \textit{(LR-data)} entails that the discretization error is uniformly distributed in a region $I_\tau$, i.e. 
 \[
-    H(f_{\tau}(\cdot; p)) - H(f(\cdot; p)) \sim \mc U(I_\tau),
+    H(u_{\tau}(\cdot; p)) - H(u(\cdot; p)) \sim \mc U(I_\tau),
 \] 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
 Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \medbreak

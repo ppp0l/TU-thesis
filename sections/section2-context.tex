@@ -282,15 +282,14 @@ For a subset $B \subseteq \bar D$ of the domain, Dirichlet boundary conditions i
 for some function $g: B \rightarrow \R^o$;
 Neumann boundary conditions impose the value of the normal derivative of the solution on $B$, i.e.
 \[
-    \frac{\partial u}{\partial \hat n}(x)= \hat n \nabla u(x) = g(x), \quad \forall x \in B,
+    \partial_{\hat{n}} u(x)= \hat n \nabla u(x) = g(x), \quad \forall x \in B,
 \]
 where $\hat n$ is the unit normal vector on the boundary $B$; 
 finally, Robin boundary conditions impose a linear combination of the value of the solution and its normal derivative on $B$, i.e.
 \[
-    \frac{\partial u}{\partial \hat n}(x) + \alpha(x) u(x) = g(x), \quad \forall x \in B.
+    \partial_{\hat{n}} u(x) + \alpha(x) u(x) = g(x), \quad \forall x \in B.
 \]
-
-We will now introduce some exemplary linear PDEs, which will then be used in the numerical experiments of Section~\ref{sec:exp}.
+We will now proceed to introduce some exemplary linear PDEs, which will then be used in the numerical experiments of Section~\ref{sec:exp}.\medskip
 
 The first one is the Poisson equation, given by 
 \begin{equation}\label{eq:Poisson}
@@ -298,33 +297,62 @@ The first one is the Poisson equation, given by
 \end{equation}
 over a domain $\mc X \subseteq \R^l$, where $\Delta$ is the Laplace operator, defined as the divergence of the gradient of $u$, 
 \[
-    \Delta u(x) = \nabla \cdot \nabla u(x) = \sum_{i=1}^{l} \frac{\partial^2 u}{\partial x_i^2}(x), 
+    \Delta u(x) = \nabla \cdot \nabla u(x) = \sum_{i=1}^{l} \partial^2_{x_i} u(x), 
 \] and $f$ is a given scalar function on $\mc X$.
-The Poisson equation is a second-order linear PDE and is the simplest representative of elliptic PDEs and is used to model a variety of phenomena, such as heat conduction, electrostatics and fluid flow; its homogeneous version, i.e. with $f=0$, is known as Laplace equation.
+The Poisson equation is a second-order linear PDE and is the simplest representative of elliptic PDEs and is used to model a variety of phenomena, such as heat conduction, electrostatics and fluid flow; its homogeneous version, i.e. with $f=0$, is known as Laplace equation and the solutions of the Laplace equation are known as harmonic functions.
 
-A general solution for the Poisson equation can be derived by the method of Green's functions, which consists in representing the solution as the sum of the convolution of the right-hand side $f$ with a Green's function $G(x,y)$ plus a boundary term.
-Obtaining the Green's function is usually a non-trivial task, as it depends on the domain $\mc X$ and the boundary conditions imposed on it.
-A crucial element to obtain the Green's function is the fundamental solution of the Laplace operator, which for the 3-dimensional case $l=3$ is given by
+A general solution for the Poisson equation can be derived by the method of Green's functions, which consists in representing the solution as the sum of the convolution of the right-hand side $f$ with a Green's function $G(x,y)$ plus a boundary term~\cite[Chapter 2.2, Theorem 12]{Evans2010}.
+Obtaining Green's function is usually a non-trivial task, as it depends on the domain $\mc X$ and the boundary conditions imposed on it.
+A crucial element to obtain the Green's function is the fundamental solution of the Laplace equation, which for the 3-dimensional case $l=3$ is given by
 \begin{equation}\label{eq:Poisson-fundamental-solution}
     \begin{gathered}
         \Phi : \R^3 \setminus \{0\} \rightarrow \R, \\
         \Phi(x) =  -\frac{1}{4\pi \|x \|_2}.
     \end{gathered}
 \end{equation}
-The fundamental solution $\Phi$ solves the equation on $\R^3\setminus \{0\}$ and can be derived as the unique up to a multiplicative constant rotationally invariant solution of the Laplace equation which decays at infinity\todo{add citation, evans}.
+The fundamental solution $\Phi$ is harmonic on $\R^l\setminus \{0\}$ and can be derived as a rotationally invariant solution of the Laplace equation.
 The key property of the fundamental solution is that the equation 
 \[ 
-    \Delta \int_{\R^3} \Phi(x-y) f(y) \ dy = f(x) 
+    \Delta \int_{\R^l} \Phi(x-y) f(y) \ dy = f(x) 
 \]
-holds for every $x \in \R^3$ and $f \in \mc C^2_c{\R^2}$\todo{citation}.
+holds for every $x \in \R^l$ and $f \in \mc C^2_c(\R^l)$ twice continuously differentiable with compact support~\cite[Theorem 1]{Evans2010}.
 This justifies writing \[
     \Delta \Phi(x) = \delta(x),
 \]
 i.e. the Laplace operator of the fundamental solution is equal to Dirac's delta distribution $\delta$.
-Moreover, gives a solution 
+Green's function is then defined by 
+\[
+    G(x,y) = \Phi(y-x) + h_x(y),
+\]
+where $h_x(y)$ is an harmonic corrector term which guarantees the satisfaction of the boundary conditions imposed on the domain $\mc X$. \medskip
 
-plus a corrector term $h(x)$ which solves the homogeneous equation and guarantees the satisfaction of the boundary conditions.
+The second type of PDE we will consider is the diffusion or heat equation, given by
+\begin{equation}\label{eq:diffusion}
+    \partial_t u - k \Delta u = f,
+\end{equation}
+on some domain $\mc T \times \mc X$, with $k\in \R^+$ a positive constant and $f$ a given function on $\mc T \times \mc X$ and the Laplacian $\Delta$ acting on the spatial variable $x$.
+The diffusion equation is a time-dependent second-order linear PDE and is used to model the diffusion of a quantity $u$ in time and space, such as heat or the concentration of a substance.
+$f$ is known as the source term and can be used to model the presence of a source or sink of the diffusing quantity $u$, while $k$ is known as the diffusion coefficient and describes the rate at which the quantity diffuses in space; it is usually assumed to be positive as negative values can be understood as an inversion of the time direction.
 
+Similarly to the Poisson equation, the diffusion equation admits a fundamental solution given by
+\[
+    \begin{gathered}
+        \Phi : \R^l \times \R \rightarrow \R, \\
+        \Phi(x,t) = 
+        \begin{cases}
+            \frac{1}{(4\pi k t)^{l/2}} e^{-\frac{\|x\|_2^2}{4kt}} & \text{for } t > 0 \\
+            0 & \text{for } t \leq 0.
+        \end{cases}
+    \end{gathered}
+\]
+The fundamental solution of the heat equation can be considered the solution of the initial value problem 
+\[
+    \begin{cases}
+        \partial_t u - k \Delta u = 0 & \\
+        u(0,x) = \delta(x). &
+    \end{cases}
+\]
+over $\R^+ \times \R^l$ and has the property that solutions of various problems on the heat equation can be solved by convolution of a term with the fundamental solution~\cite[Chapter 2.3, Theorem 1-2]{Evans2010}.
 
 
 \subsection{Adaptive Finite Element method} \label{sec:AdaFE}
