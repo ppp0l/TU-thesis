@@ -12,16 +12,11 @@ def solve_pos_prob(n_pts, dom, default_tol, lips, samples) :
     dim = len(maxs)
     
     # number of starts for multistarts
-    n_starts = 3 * dim
-    
-    # evenly spread on parameter space
-    starts = lhs(mins, maxs, n_starts)
-    # starts from postrior
-    indices = np.random.randint(0, len(samples), size = 2 * dim)
-    other_starts = samples[indices] 
+    n_starts = 4 * dim
+    # starts from random points on posterior
+    indices = np.random.randint(0, len(samples)-1, size = n_starts )
 
-    starts = np.concatenate((starts, other_starts), axis = 0)
-
+    starts = samples[indices] 
 
     _, LB_samples, UB_samples = lips.predict(samples, return_bds=True)
 

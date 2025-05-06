@@ -46,11 +46,11 @@ pred = fm.predict(gt)
 # adaptive training parameters
 sample_every = 5
 points_per_it = 1
-n_init = 14
+n_init = 13
 default_tol = args.tol
 threshold = meas_std * fm.dout /1.5
 conv_ratio = 1/2
-max_iter = 6
+max_iter = 8
 FE_cost = 1
 
 configurations = []
@@ -78,8 +78,8 @@ for i in range(n_meas):
         "sampling_config": {
             "n_walkers": 64,
             "sample_every": sample_every,
-            "n_sample": 250,
-            "n_burn": 250,
+            "n_sample": 150,
+            "n_burn": 150,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,

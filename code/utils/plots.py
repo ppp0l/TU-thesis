@@ -174,6 +174,8 @@ def plot_metric(path : str, type_surr : str) :
 
         for run in type_runs :
             plt.semilogy(whole_data[run].mean(axis = 1), colors[run], lw = 3, label = run)
+
+        plt.xlim(300, 3500)
         
         # print()
         # print( dim, fname)

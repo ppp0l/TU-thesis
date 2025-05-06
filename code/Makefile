@@ -74,7 +74,6 @@ diffusion_ALR: diffusion_LR_config
 
 diffusion_LR : diffusion_LR_config
 		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 12) ; do \
-		python experiments/run_ALR.py $(FLAGS) --dim 6; \
 		python experiments/run_LHSLR.py $(FLAGS) --dim 6; \
 		python experiments/run_posAdLR.py $(FLAGS) --dim 6; \
 		python experiments/run_randLR.py $(FLAGS) --dim 6; \
