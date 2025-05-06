@@ -17,7 +17,7 @@ The scope of these examples can be articulated in three senses:
     \item comparing the effect on GPR of discretization noise estimation as given by Equation~\eqref{eq:shrinkage-estimator} in Section~\ref{sec:GPAL}.
 \end{enumerate}
 While the first and the last points can be evaluated more easily, the second point is more difficult to evaluate as it requires a fair comparison between the two kinds of surrogate models.
-Consequentely for point 2, we will exploit the available ground-truth in the analytical examples, while for the FE example we will resort to a qualitative comparison.
+Consequently for point 2, we will exploit the available ground-truth in the analytical examples, while for the FE example we will resort to a qualitative comparison.
 
 Unlike the experiments in~\cite{VillaniArconesUngerWeiser2025}, where various setups for the budget fractionating and the FE cost depending on the fraction $\frac{l}{r}$ were considered, in this work we fix them and do not investigate their effect on the performance of the algorithm.
 Previous works~\cite{SemlerWeiser2023,VillaniArconesUngerWeiser2025,VillaniUngerWeiser2024} have shown that the effect of an higher FE cost is to reduce the effectiveness of tolerance optimization, resulting in performances similar to those of a fixed tolerance strategy.
@@ -27,7 +27,7 @@ Moreover, we also consider the fixed tolerance version of the proposed strategy,
 For the GPR surrogate, we name the strategy of~\ref{algo:AL} \texttt{AGP} for adaptive Gaussian process, the fixed tolerance version \texttt{posAdGP} for position-adaptive Gaussian process, the strategy proposed in~\cite{Dinkel2024} \texttt{randGP} and the LHS strategy \texttt{LHSGP}.
 Similarly, we will refer to the LR surrogate strategy of~\ref{algo:AL} as \texttt{ALR}, the fixed tolerance version as \texttt{posAdLR}, the LR version of the strategy proposed in~\cite{Dinkel2024} as \texttt{randLR} and the LHS version as \texttt{LHSLR}. \medskip
 
-In all experiments, the measured quantity is directly obtained from pointwise evaluations $u(\theta;p)$ of the equation's solution $u$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
+In all experiments, the measured quantity is directly obtained from point-wise evaluations $u(\theta;p)$ of the equation's solution $u$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
 \[
     H(u(\cdot; p)) = \left( u(\theta_j;p)\right)_{j=1,\ldots, \text{dim} \mc Y} \ \text{ for some ordering } \ \theta_1, \ldots, \theta_{|\mc S|} \ \text{ of the sensors } \ \mc S.
 \]
@@ -76,7 +76,7 @@ By this, whenever we sample the posterior we rebuild a totally new chain $\mc S_
 Moreover, after the required accuracy level is reached, we stop the algorithm and sample the posterior with a larger number of samples $d_{J_{\max} +1} = 500 \cdot n_w$, while burning the previous $b_{J_{\max} +1} = 250 \cdot n_w$ samples.\newline
 We consider a single candidate point at each iteration, selecting the global maximum of the acquisition function~\eqref{eq:acq-fun-disc}, $s_j = 1$ at Step 2 of~\ref{algo:AL}; regarding the budget $\Delta W_j$ for the tolerance optimization problem at Step 3, we consider a default tolerance $\tau$ and assign the budget $\Delta W_j = \tau^{-\frac{l}{r}}$ to the optimization problem, where $l$ and $r$ are the FE cost parameters.
 We consider non uniform budget fractionating, adapting the computational budget for Problem~\eqref{prob:incremental-doe} to the convergence status by halving the default tolerance if the target quantity does not reduce adequately in $N_\text{sample}$ iterations; we set the fraction $\frac{l}{r}$ to $1$ for the analytical examples and to $1.5$, corresponding to quadratic FE $r=2$ on a 3D mesh $l=3$, for the elastomechanics example.  \newline
-Finally, the tolerance level \texttt{tol} is selected to be proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate, as the error estimates are related to the surrogate's covariance and standard deviation respectevely.\medskip
+Finally, the tolerance level \texttt{tol} is selected to be proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate, as the error estimates are related to the surrogate's covariance and standard deviation respectively.\medskip
 
 \subsection{Implementation details}\label{sec:implementation}
 A Python implementation of~\ref{algo:AL}, available at (...) along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
@@ -276,11 +276,21 @@ We compare the performance of the GPR and LR surrogates utilizing the available 
 Table~\ref{tab:3d-comparison} shows the average error on the MAP estimate, posterior mean and posterior standard deviation of the different strategies and different surrogates.
 First, we observe that the GPR-based strategies perform significantly better than the LR-based ones, with \texttt{AGP} being the best performing strategy across all metrics with a precision of one order of magnitude better than others on the MAP and mean errors. 
 The tolerance-adaptive strategy \texttt{ALR} performs at a level similar to that of \texttt{posAdGP} and \texttt{randGP}, but with a higher computational cost.
-As already noticed with the expected error per budget curves, the difference among \texttt{ALR} and the fixed-tolerance strategies is less pronounced than for GPR.
+As already noticed with the expected error per budget curves, the difference among \texttt{ALR} and the LR-based fixed-tolerance strategies is less pronounced than for GPR.
 In fact, in the fixed-tolerance strategies LR is able to reach a performance at the same order of magnitude as GPR by having a locally-accurate representation of the forward model with a similar computational cost.
 We can notice that the LHS-based strategies \texttt{LHSGP} and \texttt{LHSLR} are worst performing ones and display a remarkable performance difference between the two surrogate kinds. 
 In this example, LR is unable to obtain a good approximation of the posterior through a globally-accurate surrogate, while GPR is able to reach a good approximation of the posterior even with a non-adaptive globally-accurate surrogate.
-Picture \todo{add plot} plots the samples gathered from the posteriors from \texttt{LHSGP} and \texttt{LHSLR} as well as the ground truth for one of the runs.
+\begin{figure}[t]
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{results/pictures/d3/LHS_samples4_0.png}
+\end{center}
+\caption{Final sample chains from \texttt{LHSGP} and \texttt{LHSLR}, default tol $\tau_d = 3\cdot 10^{-2}$, compared with the ground truth for the run with the 5-th measurement set and pseudorandom seed 0.}
+    \label{fig:3d-LHS}
+\end{figure}
+Picture~\ref{fig:3d-LHS} plots the samples gathered from the posteriors from \texttt{LHSGP} and \texttt{LHSLR} as well as the ground truth for one of the runs.
+
+
+
 
 \subsection{6D analytical example - Diffusion equation}\label{sec:6dexp}
 
@@ -337,7 +347,7 @@ To try to improve the performance, on one side we raised the ratio threshold for
 While raising the threshold for \texttt{ALR} managed to curb the spending, the second measure did not significantly improve the overall performance of the considered strategies, as shown in Pictures \todo{add plot}.
 
 The failure of LR on this problem can be attributed to the nature of the forward model; in fact, due to the rapid decay of the solution~\eqref{eq:diffusion-solution}, the steepness of every component varies greatly over the parameter space, and moreover the flatter and steeper regions are distinct for each component.
-For a component $j$ of $y$, let $(t,x)$ being the corresponding time and sensor postion.
+For a component $j$ of $y$, let $(t,x)$ being the corresponding time and sensor position.
 Then, the Lipschitz constant for $y^{(j)}(x_p,x_n) = f(t,x;x_p,x_n)$ is given by 
 \begin{align*}
     L^{(j)} = \max_{(x_p,x_n)\in\Theta}& \left\| \partial_{x_p,  x_n} y^{(j)}(x_p,x_n) \right\|_\infty  =
@@ -345,7 +355,7 @@ Then, the Lipschitz constant for $y^{(j)}(x_p,x_n) = f(t,x;x_p,x_n)$ is given by
     &\qquad \qquad= \max_{x_p\in [-1,1]^3} \left| \frac{50}{(4 \pi t)^{\frac{3}{2}}}\exp \left( - \frac{\norm{x-x_p}_2^2}{4t}\right) \frac{x^{(1)}-x_p^{(1)}}{4t} \right| 
     = \frac{100}{(8\pi)^{\frac{3}{2}}} e^{-\frac{1}{2}} t^{-2},
 \end{align*}
-where for simmetry reasons we can consider the derivative with respect to the first component of $x_p$ only, as the maximum is the same for all components of $\partial_{x_p, x_n} f(t,x;x_p,x_n)$, being obtained for component $h$ of $\partial_{x_p} f(t,x;x_p,x_n)$ in $x_p = x \pm \sqrt{2t} \cdot e_h$, with $e_h$ being the $h-$th vector of the canonical base of $\R^3$, and similarly for $x_n$.
+where for symmetry reasons we can consider the derivative with respect to the first component of $x_p$ only, as the maximum is the same for all components of $\partial_{x_p, x_n} f(t,x;x_p,x_n)$, being obtained for component $h$ of $\partial_{x_p} f(t,x;x_p,x_n)$ in $x_p = x \pm \sqrt{2t} \cdot e_h$, with $e_h$ being the $h-$th vector of the canonical base of $\R^3$, and similarly for $x_n$.
 Note that for any $(t,x) \in \mc S$ and $h \in \{1,2,3\}$, one between $(x + \sqrt{2t} e_h, \tilde x)$ and $(x - \sqrt{2t} e_h, \tilde x)$ is inside $\Theta$ for any $\tilde x \in [-1,1]^3$.
 
 For $t=0.3$ and $t=0.5$ this results in a ground-truth global Lipschitz constant of approximately $ 5.3$ and $1.9$ for the respective components of the surrogate model.
@@ -361,7 +371,7 @@ The comparison of the performance of the GPR and LR surrogates is shown in Table
 \subsection{Effects of the discretization noise covariance's estimation}\label{sec:cov-est}
 
 To test the impact of the estimation of the discretization noise covariance $\Sigma_D^2$ on the performance of the surrogate, we utilize the data from the 3-d and 6-d analytical examples, where the discretization noise covariance is known.
-First we test the absolute error on the matrix 2-norm of the shrinkage covariance estimare $\hat \Sigma_D^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_D^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with the two covariances and then comparing the predictive variance of the surrogates over the parameter space and he resulting MAP and mean estimates as well as the corresponding posteriors standard deviation.
+First we test the absolute error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_D^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_D^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with the two covariances and then comparing the predictive variance of the surrogates over the parameter space and he resulting MAP and mean estimates as well as the corresponding posteriors standard deviation.
 
 
 

@@ -157,7 +157,7 @@ which can be interpreted as the expected value over the GP predictive posterior 
 \[
     \text{Trace} (k_D(p,p)) = \bb E_{y(p) \sim \mc N (m_D, k_D(p,p)) } \big[ \| m_{D}(p) - y(p)\|_2^2 \big].
 \]
-Note that, as the predictive covariance $k_D(p,p)$~\eqref{eq:predictive-var} does not depend on the model evaluations $y_i$, $e_{D, \text{GPR}}(p)$ can be computed when the design $\mc D$ is known, but the corresponding training set $D(\mc D)$ is not. 
+Note that, as the predictive covariance $k_D(p,p)$~\eqref{eq:GP-predictive} does not depend on the model evaluations $y_i$, $e_{D, \text{GPR}}(p)$ can be computed when the design $\mc D$ is known, but the corresponding training set $D(\mc D)$ is not. 
 This renders it possible to solve the tolerance problem~\eqref{prob:tolerance-doe} without any other approximation than the discretization of the integral as given in Equation~\eqref{prob:discrete-tol}.  \medbreak
 
 As an acquisition function for new candidates we consider the sensitivity of the error indicator with respect to computational work spent in the point, following~\cite{SemlerWeiser2024,VillaniUngerWeiser2024}.\newline

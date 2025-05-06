@@ -109,7 +109,7 @@ This allows for a more intuitive and direct formulation of the Bayesian posterio
 What it means to solve an IP depends on its formulation and on the objectives that the solution serves.   
 The least-squares formulation~\eqref{eq:IP1}, the regularization approach~\eqref{eq:Tycho} and non-Bayesian statistical IPs usually rely on point estimates; the Bayesian formulation instead can also provide a posterior distribution of the unknown given the observations. \medskip
 
-In a statistical framework, the likelihood~\eqref{eq:likelihood} can be utilized to obtain a point estimate of the unknown $p*$ by Maximum Likeihood (ML) estimation
+In a statistical framework, the likelihood~\eqref{eq:likelihood} can be utilized to obtain a point estimate of the unknown $p*$ by Maximum Likelihood (ML) estimation
 \begin{equation}\label{eq:ML}
     p^* = \arg \max_{p \in \Theta} L(p),
 \end{equation}
@@ -228,7 +228,7 @@ In practice, the ESS can be estimated via a batch estimate of the autocorrelatio
 If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $h$-th sample, i.e. to consider the samples $\{\theta_{h \cdot l}\}_{l=1}^{N/k}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
 
 Among MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
-Ensemble Sampling is introduced by~\cite{GoodmanWeare} as an MCMC technique which guarantees invariancy with respect to affine transformation of the parameter space and later generalized.
+Ensemble Sampling is introduced by~\cite{GoodmanWeare} as an MCMC technique which guarantees invariance with respect to affine transformation of the parameter space and later generalized.
 Ensemble Sampling utilizes an ensemble 
 \[
 X =(X^1(t), \dots , X^M(t))
@@ -272,7 +272,7 @@ For the rest of this chapter and the following, $D$ will indicate a generic doma
 A second distinction is that between linear and non-linear PDEs: a PDE is linear if the function $F$ is affine with respect to the unknown function $u$ and its derivatives.
 We will only deal with linear PDEs: non linear PDEs are usually more difficult to treat  than linear PDEs, and in many cases they can be approximated by linear PDEs.
 
-Like in ODEs, the solution of a PDE is in usually non unique unless additional information is provided; this information is usually provided in the form of boundary conditions on $\mc X$, which lead to a boundary value problem (BVP), in the form of initial conditions on $\mc T$, which lead to an initial value problem (IVP), or combining the two.
+Like in ODEs, the solution of a PDE is in usually non unique unless additional information is provided; this information is usually provided in the form of boundary conditions on $\mc X$, which lead to a boundary value problem, in the form of initial conditions on $\mc T$, which lead to an initial value problem, or combining the two.
 Unlike ODEs, where the existence and uniqueness of the solution depends on the regularity of the function $f$ around the initial condition, in PDEs the existence of a solution can be more complicated and issues of compatibility between the boundary conditions and the equation can arise.
 Moreover, for a PDE different kinds of boundary conditions can be imposed, and we consider three main types of boundary conditions: Dirichlet, Neumann and Robin boundary conditions.
 For a subset $B \subseteq \bar D$ of the domain, Dirichlet boundary conditions impose the value of the solution on $B$, i.e.
