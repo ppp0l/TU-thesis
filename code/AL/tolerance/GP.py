@@ -96,7 +96,7 @@ def solve_acc_prob(candidates, W, GP, samples, std_samples, cost, talk = False) 
     # print(f'Best work distribution: {best_res}')
 
     # updated points, with threshold
-    updated = (best_precs - old_precs) > 0.02*W
+    updated = (best_precs - old_precs) > 0.1*W
     n_tr_pts = len(training_p)
     print(f'Number of updated points: {np.sum(updated[:n_tr_pts])}' )
     print(f'Number of included candidates: {np.sum(updated[n_tr_pts:])}' )

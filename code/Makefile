@@ -81,8 +81,7 @@ diffusion_LR : diffusion_LR_config
 		done
 
 diffusion_LR_alt_config: experiments/6d-diffusion/generate_configuration_LR.py
-		$(CONDA_PY_SET) python experiments/6d-diffusion/generate_configuration_LR.py $(FLAGSALT) --tol 0.001 --conv_ratio 2/3
-
+		$(CONDA_PY_SET) python experiments/6d-diffusion/generate_configuration_LR.py $(FLAGSALT) --tol 0.001
 diffusion_LR_alt : diffusion_LR_alt_config
 		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 12) ; do \
 		python experiments/run_ALR.py $(FLAGSALT) --dim 6; \

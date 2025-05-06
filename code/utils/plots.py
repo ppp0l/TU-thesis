@@ -17,6 +17,8 @@ def_colors = [
     "darkviolet",
     "blue",
     "darkorange",
+    "mediumseagreen",
+    "darkred",
 ]
 alt_colors = [
     "black",
