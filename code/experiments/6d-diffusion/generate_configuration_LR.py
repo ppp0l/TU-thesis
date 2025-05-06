@@ -78,8 +78,8 @@ for i in range(n_meas):
         "sampling_config": {
             "n_walkers": 64,
             "sample_every": sample_every,
-            "n_sample": 150,
-            "n_burn": 150,
+            "n_sample": 250,
+            "n_burn": 250,
         },
         "forward_model_config": {
             "FE_cost": FE_cost,
