@@ -40,7 +40,7 @@ class Manager() :
 
         match dimension :
             case 2:
-                self.try_per_param = 1
+                self.try_per_param = 10
             case 3:
                 self.try_per_param = 5
             case 6:

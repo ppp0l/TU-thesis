@@ -73,7 +73,7 @@ def corner_plot(
         plt.suptitle(title)
 
     if savepath is not None:
-        plt.savefig(savepath, format=saveformat)
+        plt.savefig(savepath, format=saveformat, bbox_inches='tight')
     
     plt.close()
 

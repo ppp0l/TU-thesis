@@ -47,6 +47,11 @@ class Adaptive_beam :
             self.default_tol = default_tol
 
         self.data_path = data_path
+
+        if os.path.exists(data_path + "/eval") :
+            # remove the directory
+            subprocess.run(f"rm -rf {data_path}/eval", shell=True)
+            
         self.model_path = model_path
 
         self.mesh = mesh
