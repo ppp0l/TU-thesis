@@ -390,10 +390,10 @@ For $t=0.3$ and $t=0.5$ this results in a ground-truth global Lipschitz constant
 However, in all components the minimum value of the local Lipschitz constant can go well below 0.1, and large portions of the parameter space can be covered with a significantly smaller Lipschitz constant.
 This kind of behavior is extremely difficult to capture with a LR surrogate, which considers a global Lipschitz constant for every component of the forward model, as the surrogate requires a great number of points in order to be able to reduce the uncertainty of its prediction in the flatter region of each component.\medskip
 
-The comparison of the performance of the GPR and LR surrogates is shown in Table~\ref{tab:6d-comparison}, where we can see that the performance of GPR is considerably better than that of LR; the best performance from an LR-based strategy is the one from \texttt{ALR}: but even for the fully-adaptive strategy strategy the corresponding estimates are unreliable and substantially wrong, and result being less accurate than \texttt{LHSGP}.
+The comparison of the performance of the GPR and LR surrogates is shown in Table~\ref{tab:6d-comparison}, where we can see that the performance of GPR is considerably better than that of LR; the best performance from an LR-based strategy is the one from \texttt{ALR}: but even for the fully-adaptive strategy strategy the corresponding estimates are unreliable and substantially wrong, and result being around as accurate as the ones provided by \texttt{LHSGP} for a smaller computational cost.
 Regarding GPR-based strategies, two observations can be made.
 First, the actual error values confirm the behavior suggested by the expected error curves, with the gap between \texttt{AGP} and the fixed-tolerance strategies being smaller, and the performance of \texttt{LHSGP} being far worse than in the 3d case.
-Second, we can notice that while the mean and median values achieved by \texttt{randGP} are on par with the other adaptive strategies, there is a considerably high maximum value for the error on the MAP and mean estimates.
+Second, we can notice that while the median values achieved by \texttt{randGP} are on par with the other adaptive strategies, there is a considerably high maximum value for the error on the MAP and mean estimates.
 As the standard deviation error does not display such phenomenon, this indicates that in some run \texttt{randGP} was misled and converged to the wrong posterior.
 
 \begin{table}
@@ -407,33 +407,33 @@ As the standard deviation error does not display such phenomenon, this indicates
         & avg   & med   & min   & max   & avg   & med   & min   & max   & avg   & med   & min   & max \\
         \midrule
         \texttt{AGP}
-        & 0.0137 & 0.0067 & 0.0029 & 0.0843
-        & 0.0192 & 0.0036 & 0.0016 & 0.2334
-        & 0.0914 & 0.0795 & 0.0349 & 0.1400 \\
+        & 0.0086 & 0.0075 & 0.0029 & 0.0219
+        & 0.0046 & 0.0036 & 0.0016 & 0.0105
+        & 0.0935 & 0.0812 & 0.0657 & 0.1400 \\
         \texttt{posAdGP}
-        & 0.0258 & 0.0156 & 0.0027 & 0.1117
-        & 0.0256 & 0.0114 & 0.0013 & 0.1783
-        & 0.0868 & 0.0791 & 0.0566 & 0.1383 \\
+        & 0.0211 & 0.0164 & 0.0027 & 0.0637
+        & 0.0270 & 0.0138 & 0.0013 & 0.1783
+        & 0.0860 & 0.0845 & 0.0336 & 0.1383 \\
         \texttt{randGP}
-        & 0.0451 & 0.0113 & 0.0030 &  0.314
-        & 0.0341 & 0.0062 & 0.0031 & 0.3378
-        & 0.0982 & 0.0789 & 0.0336 & 0.1860 \\
+        & 0.0511 & 0.0117 & 0.0051 & 0.3140
+        & 0.0392 & 0.0062 & 0.0034 & 0.3378
+        & 0.0998 & 0.0845 & 0.0336 & 0.1860 \\
         \texttt{LHSGP}
-        & 0.3347 & 0.3019 & 0.1498 & 0.8805 
-        & 0.2594 & 0.2439 & 0.0854 & 0.4684
-        & 0.1300 & 0.1248 & 0.0226 & 0.3528 \\
+        & 0.2960 & 0.3019 & 0.1498 & 0.4543 
+        & 0.2535 & 0.2439 & 0.0854 & 0.4684
+        & 0.1229 & 0.1248 & 0.0226 & 0.2303 \\
         \texttt{ALR}
-        & 0.0186 & 0.0180 & 0.0041 & 0.0446
-        & 0.0113 & 0.0102 & 0.0043 & 0.0272
-        & 0.0094 & 0.0087 & 0.0024 & 0.0196 \\
+        & 0.3017 & 0.3139 & 0.1830 & 0.4252
+        & 0.3021 & 0.3030 & 0.1383 & 0.4348
+        & 0.0653 & 0.0657 & 0.0259 & 0.1099 \\
         \texttt{posAdLR}
-        & 0.0199 & 0.0178 & 0.0041 & 0.0524
-        & 0.0139 & 0.0115 & 0.0037 & 0.0369
-        & 0.0103 & 0.0095 & 0.0049 & 0.0208 \\
+        & 0.4045 & 0.3933 & 0.1955 & 0.6292
+        & 0.3902 & 0.3541 & 0.1867 & 0.5732
+        & 0.0655 & 0.0496 & 0.0191 & 0.1144 \\
         \texttt{randLR}
-        & 0.5498 & 0.5437 & 0.3975 & 0.7604
-        & 0.5501 & 0.5328 & 0.3867 & 0.7746
-        & 0.0452 & 0.0371 & 0.0167 & 0.1089\\
+        & 0.5490 & 0.5420 & 0.3975 & 0.7604
+        & 0.5563 & 0.5361 & 0.3867 & 0.7746
+        & 0.0492 & 0.0423 & 0.0167 & 0.1089\\
         \texttt{LHSLR}
         & 0.6616 & 0.6180 & 0.3113 & 1.0597
         & 0.6257 & 0.6539 & 0.3246 & 0.9277
