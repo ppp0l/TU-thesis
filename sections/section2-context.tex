@@ -291,7 +291,7 @@ finally, Robin boundary conditions impose a linear combination of the value of t
 \]
 We will now proceed to introduce some exemplary linear PDEs, which will then be used in the numerical experiments of Section~\ref{sec:exp}.\medskip
 
-The first one is the Poisson equation, given by 
+The first one is the Poisson equation, given for a scalar function $u$ by 
 \begin{equation}\label{eq:Poisson}
     -\Delta u(x) = f(x), 
 \end{equation}
@@ -326,7 +326,7 @@ Green's function is then defined by
 \]
 where $h_x(y)$ is an harmonic corrector term which guarantees the satisfaction of the boundary conditions imposed on the domain $\mc X$. \medskip
 
-The second type of PDE we will consider is the diffusion or heat equation, given by
+The second type of PDE we will consider is the diffusion or heat equation, given for a scalar function $u$ by
 \begin{equation}\label{eq:diffusion}
     \partial_t u - k \Delta u = f,
 \end{equation}
@@ -352,7 +352,41 @@ The fundamental solution of the heat equation can be considered the solution of 
         u(0,x) = \delta(x). &
     \end{cases}
 \]
-over $\R^+ \times \R^l$ and has the property that solutions of various problems on the heat equation can be solved by convolution of a term with the fundamental solution~\cite[Chapter 2.3, Theorem 1-2]{Evans2010}.
+over $\R^+ \times \R^l$ and has the property that solutions of various problems involving the heat equation can be solved by convolution of a term with the fundamental solution~\cite[Chapter 2.3, Theorem 1-2]{Evans2010}.\medskip
+
+Finally, the third equations we will consider are the Lamè-Navier or stationary Navier-Cauchy equations, which describe the deformation of an elastic body under the action of external forces at the equilibrium.
+These equations are a system of second-order linear elliptic PDEs and involve the displacement field $u: \mc X \rightarrow \R^o$, with tipically $o=2$ or $o=3$; they are given by 
+\begin{equation}\label{eq:Navier-Lame}
+    -2\mu \Delta u - \lambda \nabla (\nabla \cdot u) = f,
+\end{equation}
+where the Laplacian $\Delta$ acts componentwise on the vector $u$ and $\lambda, \mu$ are the Lamè parameters, which are related to the material properties of the body.
+$f$ is a given vector function on $\mc X$ and represents the external forces acting on the body.
+To derive the equations, we consider the following set of equations on $\mc X$:
+\begin{numcases}{}
+        - \nabla \cdot T = f, \label{eq:continuity} \\
+        \epsilon = \frac{1}{2} \left( \nabla u + (\nabla u)^T \right), \label{eq:linearized-strain} \\
+        T = \lambda \text{Trace}(\epsilon) I_o + 2\mu \epsilon \label{eq:constitutive-law}
+\end{numcases}
+where $T$ is the stress tensor, $I_o$ is the identity tensor and $\epsilon$ is the strain tensor; for simplicity we identified 2-tensors on $\R^o$ with matrices in $R^{o\times o}$. \newline
+The first equation~\eqref{eq:continuity} is the continuity equation, relating the divergence of the stress tensor $T$ to the external forces $f$ acting on the body; the stress tensor can be understood as expressing at an infinitesimal level the internal forces of the body, so the first equation imposes an equilibrium between forces.
+The second equation~\eqref{eq:linearized-strain} relates the displacement field $u$ to the strain tensor $\epsilon$, which represents the infinitesimal deformation of the body in a point.
+The strain tensor $\epsilon$ defined by~\eqref{eq:linearized-strain} is known as the linearized strain tensor, as it can be derived as the linearization in $\nabla u$ of a general and non-linear strain tensor, known as the Green-Lagrange strain tensor~\cite[Section 2.3]{DeuflhardWeiser2012}; this linearization is a reasonable assumption for small deformations and allows us to obtain a linear PDE. 
+Finally, the third equation~\eqref{eq:constitutive-law} is known as the material's constituitive equation and relates the stress tensor $T$ to the strain tensor $\epsilon$ through the Lamè parameters $\lambda$ and $\mu$; this relation corresponds to isotropic linear elastic behavior from the body, which is a reasonable assumption for small strains and allows to derive Hooke's Law. \newline
+The parameters $\lambda$ and $\mu$ in the constituitive equation are particularly interesting as they depend on the specific material of the body and in real-world cases often need to be identified: Experiment~\ref{sec:FEexp} will deal with such problem.
+As common in practice instead of the Lamè parameters we will identify two equivalent parameters, the Young's modulus $E$ and the Poisson's ratio $\nu$, which are related to the Lamè parameters by the relations
+\begin{equation}\label{eq:material-parameters}
+    \begin{gathered}
+        E = \frac{\mu(3\lambda + 2\mu)}{\lambda + \mu}, \\
+        \nu = \frac{\lambda}{2(\lambda + \mu)}.
+    \end{gathered}
+\end{equation}
+$E$ and $\nu$ are the most commonly employed parameters due to their physical interpretation: in fact, let us consider the 3-dimensional $o=3$ case and let $e_1,e_2,e_3$ be the canonical basis of $\R^3$.
+For an axial stress $T = \sigma e_1 \otimes e_1$, by inverting the constituitive equation~\eqref{eq:constitutive-law} and inserting equations~\eqref{eq:material-parameters} one finds 
+\[
+    \epsilon = \frac{1}{E} \sigma e_1 \otimes e_1 + \frac{\nu}{E} \sigma ( e_2 \otimes e_2 + e_3 \otimes e_3).
+\]  
+Consequently, Young's modulus $E$ can be interpreted as the ratio between the stress and the strain in the direction of the stress, while Poisson's ratio $\nu$ can be interpreted as the ratio between the strain in the direction of the stress and the strain in the orthogonal directions.
+
 
 
 \subsection{Adaptive Finite Element method} \label{sec:AdaFE}
