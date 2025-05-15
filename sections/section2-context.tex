@@ -383,10 +383,94 @@ As common in practice instead of the Lamè parameters we will identify two equiv
 $E$ and $\nu$ are the most commonly employed parameters due to their physical interpretation: in fact, let us consider the 3-dimensional $o=3$ case and let $e_1,e_2,e_3$ be the canonical basis of $\R^3$.
 For an axial stress $T = \sigma e_1 \otimes e_1$, by inverting the constituitive equation~\eqref{eq:constitutive-law} and inserting equations~\eqref{eq:material-parameters} one finds 
 \[
-    \epsilon = \frac{1}{E} \sigma e_1 \otimes e_1 + \frac{\nu}{E} \sigma ( e_2 \otimes e_2 + e_3 \otimes e_3).
+    \epsilon = \frac{1}{E} \sigma e_1 \otimes e_1 - \frac{\nu}{E} \sigma ( e_2 \otimes e_2 + e_3 \otimes e_3).
 \]  
-Consequently, Young's modulus $E$ can be interpreted as the ratio between the stress and the strain in the direction of the stress, while Poisson's ratio $\nu$ can be interpreted as the ratio between the strain in the direction of the stress and the strain in the orthogonal directions.
+Consequently, Young's modulus $E$ can be interpreted as the ratio between the stress and the strain in the direction of the stress, while Poisson's ratio $\nu$ can be interpreted as the ratio between the strain in the direction of the stress and the strain in the orthogonal directions with switched sign.
 
+\subsection{The Finite Element method} \label{sec:AdaFE}
 
+The Finite Element(FE) method is a numerical technique for solving PDEs which is based on the discretization of the domain $\mc X$ into a finite number of elements, which are usually polytopes such as triangles or tetrahedra.
+Its foundations lie in the weak formulation of PDEs and it belongs to the family of Galerkin methods, which approximate the infinite dimensional problem by a finite-dimensional one.
+For a time-independent linear PDE, one can derive its weak formulation by multiplying the PDE by a test function $v$ and then some integration steps: the weak solution $u$ of the PDE solves the weak problem 
+\begin{equation}\label{eq:weak-formulation}
+    a(u,v) = f(v), \quad \forall v \in V,
+\end{equation}
+for a bilinear form $a: V \times V \rightarrow \R$ and a linear functional $f: V \rightarrow \R$, where $V$ is a suitable function space.
+The weak formulation is weaker than the original PDE as all solutions of the PDE are also weak solutions, but the weak formulation usually allows for less regular solutions.
+Under certain conditions on $a$, the Theorem of Lax-Milgram~\cite{LaxMilgram1955} guarantees the existance of the solution and its satisfaction of some optimality conditions; the satisfaction of the hypothesis of such Theorem depends on the nature of the original equational and of the considered boundary conditions. \newline
+Galerkin methods construct a finite-dimensional approximation of the solution of Problem~\eqref{eq:weak-formulation} by restricting the space $V$ to a finite-dimensional subspace $V_h \subseteq V$ and then solving the problem
+\begin{equation*}
+    a(u_h,v_h) = f(v_h), \quad \forall v_h \in V_h
+\end{equation*} 
+for $u_h \in V_h$.
+As $V_h$ is finite-dimensional, one can fix a basis $\{ b_i\}_{i=1}^N$ of $V_h$ and write the solution as a linear combination of the basis functions
+\[
+    u_h = \sum_{i=1}^N x_i b_i
+\]
+for $x_i \in \R$.
+Writing 
+\begin{equation*}
+    A = (a(b_i,b_j))_{i,j=1}^N \in \R^{N \times N}, \quad b = (f(b_i))_{i=1}^N \in \R^N, \quad x = (x_i)_{i=1}^N \in \R^N,
+\end{equation*} 
+one finds that
+\begin{equation}\label{eq:Galerkin-formulation}
+    Ax = b
+\end{equation}
+must hold; by this, the infinite-dimensional problem has been reduced to a matrix equation and the approximate solution $u_h$ minimizes in $V_h$ the error in the energy norm induced by the bilinear form $a$ as shown for example in~\cite[Theorem 4.3]{DeuflhardWeiser2012}.\newline
+The FE method is distinct from other Galerkin methods as it uses piecewise polynomial functions when choosing the subspace $V_h$ and considers a local basis of the space.
+The domain $\mc X$ is partitioned into a mesh $M$ composed of subdomains $\mc E$ covering $\mc X$, i.e.
+\[
+    \bar{\mc X} = \bigcup_{\mc E \in M} \mc E,
+\]
+with the requirement that the intersection of two subdomains has zero measure, i.e. 
+\[
+    m_{\mc X}\left(\mc E \cap \mc E'\right) = 0, \quad \forall \mc E, \mc E' \in M, \mc E \neq \mc E.
+\]
+As a precise description of a general mesh would be out of the scope of this work, for simplicity we restrict ourselves to the 3-dimensional case $l=3$ and consider a restricted family of meshes only.
+As a reference,~\cite[Chapter 4.3]{DeuflhardWeiser2012} introduces a general definition of mesh, but the class of meshes hereby considered is sufficient to introduce the concepts required for the rest this work.
+We will assume the subdomains $\mc E \in M$ to be closed and non-degenerate tetrahedra; moreover, we require the mesh $M$ to be conformal, i.e. 
+\[
+ \text{for } v \in \mc E \ \text{ vertex of } \mc E, \text{ for every } \mc E' \in M \text{ either } v \notin \mc E' \text{ or } v \text{ is a vertex of } \mc E';
+\]
+this requirement signifies that no vertex of a tetrahedron falls in the interior of a face or edge of another tetrahedron, and we assume it as non-conformal meshes can be significantly more difficult to treat. \newline
+Given a mesh $M$, the corresponding finite dimensional space of FE functions of degree $r$ is given by 
+\[
+    V_M = \{ f\in \mc C(\mc X) \mid f_{\mid \mc E} \text{ is a polynomial of degree } r \text{ for every } \mc E \in M \}
+\]  
+for an equation involving scalar functions $o=1$; for vector functions $o>1$ the space is given by the direct sum of $o$ copies of $V_M$, i.e. $V_M^o = V_M \oplus \dots \oplus V_M$, thus we restrict ourselves to the scalar case $o=1$ for simplicity. \newline
+In the FE method, the basis functions of $V_M$ are chosen to be local, i.e. they are non-zero only on a few subdomains of the mesh.
+In the simplest case $r=1$, they are continuous piecewise linear functions defined to be equal to $1$ in a single vertex of the mesh and to $0$ in the other vertices of the tetrahedron. 
+By this each basis function is zero in all subdomains but the ones surrounding one vertex, and on each subdomain there are only $4$ non-zero basis functions, one for each vertex of the tetrahedron.
+This results in a number $N$ of degrees of freedom which is equal to the number of vertices of the mesh, unless some degrees of freedom are fixed by boundary conditions.
+For higher order FE, there are more non-zero basis functions on each subdomain and they need to be fixed by assigning the values of the basis function in other points of the subdomain; by this, the number of degrees of freedom will be higher than in the linear case, with the advantage of a higher accuracy of the approximation. \medskip
 
-\subsection{Adaptive Finite Element method} \label{sec:AdaFE}
+A crucial extension of the FE method is the Adaptive Finite Element method, which introduces adaptive refinement steps of the mesh in order to improve the solution quality.
+The idea behind the adaptive refinement is to refine the mesh in regions where the solution is expected to be more complex, while leaving coarser meshes in regions where the solution is expected to be smoother.
+In order to do so, we need to introduce a refinement criterion, which is a measure of the quality of the approximation of the solution in a given subdomain $\mc E$ of the mesh.
+This is done by a posteriori error estimates, which indicate regions of the mesh where the approximation error between the exact solution and the approximate solution is expected to be significant.
+Having retrieved a local error estimate for the approximation, the subdomains with error level exceeding a certain threshold are marked for refinement.
+The mesh is then refined starting from the marked subdomains; the refinement of a mesh is a non trivial task as it needs to guarantee the conformality of the new mesh and not to result in a mesh having tetrahedra with too great internal angles, as this can lead to numerical instability as discussed in~\cite[Section 4.4.3]{DeuflhardWeiser2012} and first proved by~\cite{SyngeRheinboldt1957}.
+This refinement process is repeated until a stopping criterion is satisfied, which is usually related to the size of the error estimate or on a maximum number of iterations.\newline
+As discussed in~\cite[Chapter 6.3]{DeuflhardWeiser2012}, the adaptive FE method can converge to the exact solution of the PDE in an optimal way, asyntotically reducing the computational effort required to obtain an approximated solution of a certain accuracy to the minimum. 
+For a problem as in~\eqref{eq:weak-formulation}, we consider a sequence of meshes $(M_h)_h$ with $h= \frac{1}{n}$ for $n\in \bb N$ and the corresponding sequences of approximate solutions $(u_h)_h$ and degrees of freedom $(N_h)_h$; under certain hypothesis on the refinement criterion one can show that 
+\begin{equation}\label{eq:asyntotical-AFEM}
+    \| u - u_h \|_a \leq C \cdot N_h^{-\frac{r}{l}} \|f\|_{L^2(\mc X)} 
+\end{equation}
+holds for a constant $C$ independent of $h$ and $N_h$, where $\| \cdot \|_a$ is the energy norm induced by the bilinear form $a$, $l$ is the dimensionality of the domain and $r$ is the order of the considered finite elements. \newline
+As in the adaptive training strategy presented in Section~\ref{sec:AL} the computational cost of the FE evaluations at a given accuracy is of interest, we elaborate on Equation~\eqref{eq:asyntotical-AFEM} to derive an a priori estimate of the FE computational costs as done in~\cite{SemlerWeiser2023}.
+In the worst case, the order of convergence of the error is not better than the one given by~\eqref{eq:asyntotical-AFEM}; neglecting the constant factors, we can at worst expect for $h$ small enough that
+\[
+    \| u - u_h \|_a \propto N_h^{-\frac{r}{l}}
+\]
+holds.
+Such a pessimistic estimates allows us to relate the error level to the number of degrees of freedom $N_h$ and consequently to the required computational effort.
+Assuming a linear solver with optimal complexity such as nested multigrid, the computational cost W of the FE evaluation is proportional to the number of degrees of freedom, i.e. 
+\[
+    W \propto N_h.
+\]
+By inserting this relation in the preceding one and inverting, we find the asymptotical estimate of the computational cost as a function of the error level
+\begin{equation}\label{eq:FE-cost}
+    W \propto \| u - u_h \|_a^{-\frac{l}{r}}
+\end{equation}
+which we will adopt in Section~\ref{sec:AL}.
+Despite the estimate not being realistic for large error levels, it is a good approximation for those evaluations where an high accuracy is required, which are the ones where a great computational effort is required.

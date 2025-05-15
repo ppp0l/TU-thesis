@@ -1,4 +1,4 @@
-\section{Active learning}\label{sec:AL}
+\section{Adaptive Design of Experiments}\label{sec:AL}
 The last section established the surrogate-based likelihoods $L_{D, \text{GPR}}$ and $L_{D, \text{LR}}$, given by Equation \eqref{eq:GPR-likelihood} and Equation~\eqref{eq:LR-likelihood}, respectively.
 These two likelihoods are then used to compute the surrogate-informed posteriors $\pi_{P\mid D, Y^m = y^m} $ given by Equation~\eqref{eq:surr-posterior}.
 
@@ -6,11 +6,11 @@ From a practical perspective, this is the only accessible posterior: it is conse
 The quality of the approximation of the posterior is directly related to the quality of the surrogate model, which in turn depends on the training data $D$.
 Consequently, we now turn our attention to the problem of selecting the training data in an optimal way, in order to maximize the quality of the posterior approximation under computational budget constraints.
 
-We adopt an Active Learning (AL) framework, aiming to select the most informative points to evaluate the forward model $y$; the forward model evaluations are inexact but thanks to the FE adaptivity the tolerance on the discretization error can be controlled, so we also aim at selecting the optimal tolerance level for each evaluation.
+We adopt an Design of Experiments (DoE) framework, aiming to select the most informative points to evaluate the forward model $y$; the forward model evaluations are inexact but thanks to the FE adaptivity the tolerance on the discretization error can be controlled, so we also aim at selecting the optimal tolerance level for each evaluation.
 The adaptive selection of the tolerance level has been shown to be particularly effective in reducing the computational costs for GPR in an IP setting, both for MAP estimates~\cite{SemlerWeiser2023,SemlerWeiser2024} and for posterior sampling~\cite{VillaniUngerWeiser2024}.
 The methodology of the latter works is expanded and adapted to the present setting, considering the LR surrogate model and different target functions, and incorporating a discretization error covariance estimate for GPR. \medbreak
 
-The remainder of this section is organized as follows: Section~\ref{sec:AL-method} introduces the notation and the general methodology for the AL framework, presenting the challenges of the adopted approach and the general structure of the algorithm; Section~\ref{sec:GPAL} describes the specific implementation of the AL framework for GPR, introducing the GPR-specific error indicator function and acquisition function, and developing a strategy to estimate the noise covariance from the forward model evaluations; finally, Section~\ref{sec:LRAL} presents the implementation of the AL framework for LR, introducing the LR-specific error indicator function, the acquisition function, and the necessary adjustments for the tolerance optimization problem for the LR surrogate model.
+The remainder of this section is organized as follows: Section~\ref{sec:AL-method} introduces the notation and the general methodology for the adaptive DoE framework we describe, presenting the challenges of the adopted approach and the general structure of the algorithm; Section~\ref{sec:GPAL} describes the specific implementation of the DoE framework for GPR, introducing the GPR-specific error indicator function and acquisition function, and developing a strategy to estimate the noise covariance from the forward model evaluations; finally, Section~\ref{sec:LRAL} presents the implementation of the DoE framework for LR, introducing the LR-specific error indicator function, the acquisition function, and the necessary adjustments for the tolerance optimization problem for the LR surrogate model.
 
 \subsection{General methodology}\label{sec:AL-method}
 
@@ -28,7 +28,7 @@ The expected error estimate for data $D$ is then given by
 
 Moreover, we consider to have a certain computational budget $W$ to spend on the evaluations of the forward model $y$ necessary to generate the training data $D$. \medbreak 
 
-In a design of experiments (DoE) setting, the problem of selecting training data $D$ can be formulated to selecting a design $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ of evaluation points and tolerances, whose evaluation through the numerical forward model then provides the training data $D(\mc D) = \{ (p_i, \tau_i, H(f_{\tau_i}(\cdot, p_i)) \}_{i=1}^n$. \newline
+In a DoE setting, the problem of selecting training data $D$ can be formulated to selecting a design $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ of evaluation points and tolerances, whose evaluation through the numerical forward model then provides the training data $D(\mc D) = \{ (p_i, \tau_i, H(f_{\tau_i}(\cdot, p_i)) \}_{i=1}^n$. \newline
 As the computational costs of the forward model evaluations depend on the tolerance level and not on the resulting value, we write $W(\mc D)$ for the computational cost for the creation of $D(\mc D)$. \newline
 Finally, it useful to talk about refinements of a design: for two designs $\mc D$ and $\mc D'$, we say that $\mc D'$ refines $\mc D$, denoted by $\mc D' \leq \mc D$, if for every $(p, \tau) \in \mc D$ there exists $(p, \tau') \in \mc D'$ such that $\tau' \leq \tau$, i.e.  $\mc D'$ contains all the evaluation points of $\mc D$ with a smaller or equal tolerance.
 For $\mc D' \leq \mc D$, we write 
@@ -61,9 +61,9 @@ These issue are overcome separately in the following ways:
 \begin{enumerate}[label=\textbf{\arabic*}]
     \item interleave sampling steps and training steps: sample from the approximated posterior $\pi_{D_{j-1}, Y^m = y^m}$ before step $j$, concatenating the new samples to the chain $\mc S_{j-1}$ and discarding old samples to obtain the current posterior representation $\mc S_j$;
     \item the choice of new evaluation points is separated from the optimization of evaluation accuracies, splitting the problem into two simpler subproblems;
-    \item the asymptotical estimates described in Section~\ref{sec:AdaFE} are adopted to estimate the computational cost of a design, leading for $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ to the estimate
+    \item the asymptotical computational effort estimates given by Equation~\eqref{eq:FE-cost} in Section~\ref{sec:AdaFE} are adopted to estimate the computational cost of a design, leading for $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ to the estimate
     \begin{equation} \label{eq:comp-cost}
-        W(\mc D) = \sum_{i=1}^n W_{\tau_i} = \sum_{i=1}^n \tau_i^{- \frac{l \cdot  s}{r}}.
+        W(\mc D) = \sum_{i=1}^n W_{\tau_i} = \sum_{i=1}^n \tau_i^{- \frac{l}{r}}.
     \end{equation}
 \end{enumerate}
 
@@ -147,7 +147,7 @@ Return the resulting surrogate model $y_{D(\mc D_J)}$ and posterior samples $\mc
 The algorithm depends on a number of parameters, namely the fractionating of the budget $\Delta W_j$, the numbers of samples to draw $d_j$ and to discard $h_j$, and the number of candidates to select $s_j$.
 These parameter have to be decided by the user, and Section~\ref{sec:setup} will describe the choices made in this work as well as give general guidelines for the selection of these parameters. 
 
-\subsection{Active learning for GPR}\label{sec:GPAL}
+\subsection{Design of Experiments for GPR}\label{sec:GPAL}
 
 For GPR surrogate models, we consider the local error indicator function 
 \begin{equation} \label{eq:loc-err-GP}
@@ -173,7 +173,7 @@ Then, the sensitivity of the error indicator at $p'$ with respect to the computa
 \begin{equation} \label{eq:alpha-GP}
     \alpha_{\mc D_{j-1}, \text{GP}}(p, p') = \frac{\partial \Gamma_{\mc D_{j-1}}}{\partial \tau} \bigg |_{(p',p,\tau_p)} \frac{\partial \tau}{\partial W}\bigg |_{W(\tau_p)},
 \end{equation}
-where $W(\tau)$ is the estimate given by (!!) for the computational work needed to evaluate the forward model with tolerance $\tau$ and $\tau(W)$ is the inverse of such relation. \newline
+where $W(\tau)$ is the estimate given by Equation~\eqref{eq:FE-cost} for the computational work needed to evaluate the forward model with tolerance $\tau$ and $\tau(W)$ is the inverse of such relation. \newline
 Note that the derivatives are well defined for every $\tau >0$ as long as the discretization noise covariance $\Sigma_D(\tau)$ is differentiable with respect to $\tau$, as in the case given by Equation~\eqref{eq:iid-GPR-noise}. 
 For the explicit expressions of the derivatives with the current notation, we refer to the Appendix~\ref{app:derivatives}.
 
@@ -235,7 +235,7 @@ This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)
 \end{equation}
 which can be used when computing the predictive mean and variance of the GPR model as given by Theorem~\ref{thm:GP-posterior}.
 
-\subsection{Active learning for LR}\label{sec:LRAL}
+\subsection{Design of Experiments for LR}\label{sec:LRAL}
 
 For a LR surrogate model $y_{D,\text{LR}}$, let $\Sigma^2_{y_{D,\text{LR}}}(p)$ be the covariance matrix of the distribution $y_{D,\text{LR}}(p) = \mc U (\mc PI_p)$, where we recall that $\mc PI_p$ is the predictive interval given by Equation~\eqref{eq:LR-PI-general}.\newline
 Then, the considered local error indicator function is the vector 1-norm of the square root $\Sigma_{y_{D,\text{LR}}}(p)$ of $\Sigma^2_{y_{D,\text{LR}}}(p)$,
