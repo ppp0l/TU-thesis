@@ -77,7 +77,7 @@ def corner_plot(
     if savepath is not None:
         plt.savefig(savepath, format=saveformat, bbox_inches='tight')
     
-    plt.close()
+    #plt.close()
 
 
 def plot_metric(path : str, type_surr : str) :

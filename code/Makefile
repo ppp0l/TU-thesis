@@ -13,6 +13,9 @@ PYPATH = export PYTHONPATH=$(CURDIR)
 
 CONDA_PY_SET = $(CONDA_ACTIVATE); $(PYPATH);
 
+likelihood_comparison : experiments/1d-GP_LR_demonstrator.py
+		$(CONDA_ACTIVATE); $(PYPATH); python experiments/1d-GP_LR_demonstrator.py $(FLAGS)
+
 
 laplace_GP_config: experiments/3d-laplace/generate_configuration_GP.py
 		$(CONDA_PY_SET) python experiments/3d-laplace/generate_configuration_GP.py $(FLAGS)
@@ -82,6 +85,7 @@ diffusion_LR : diffusion_LR_config
 
 diffusion_LR_alt_config: experiments/6d-diffusion/generate_configuration_LR.py
 		$(CONDA_PY_SET) python experiments/6d-diffusion/generate_configuration_LR.py $(FLAGSALT) --tol 0.001
+		
 diffusion_LR_alt : diffusion_LR_alt_config
 		$(CONDA_ACTIVATE); $(PYPATH); for i in $$(seq 1 12) ; do \
 		python experiments/run_ALR.py $(FLAGSALT) --dim 6; \
@@ -102,11 +106,13 @@ FE_GP: FE_config_GP
 		python experiments/run_AGP.py $(FLAGS) --dim 2; \
 		python experiments/run_LHSGP.py $(FLAGS) --dim 2; \
 		python experiments/run_posAdGP.py $(FLAGS) --dim 2; \
-		python experiments/run_randGP.py $(FLAGS) --dim 2; 
+		python experiments/run_randGP.py $(FLAGS) --dim 2;
 
 FE_LR: FE_config_LR
-		$(CONDA_ACTIVATE); $(PYPATH);\
+		$(CONDA_ACTIVATE); $(PYPATH); \
 		python experiments/run_ALR.py $(FLAGS) --dim 2; \
 		python experiments/run_LHSLR.py $(FLAGS) --dim 2; \
 		python experiments/run_posAdLR.py $(FLAGS) --dim 2; \
 		python experiments/run_randLR.py $(FLAGS) --dim 2;
+		 
+

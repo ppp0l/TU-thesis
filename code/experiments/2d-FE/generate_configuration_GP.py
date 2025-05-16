@@ -29,7 +29,7 @@ reproducibility_seed(seed=7856)
 fm = Adaptive_beam(path, mesh = kaskade_path + "/gt_mesh.vtu", adaptive = False)
 
 # IP parameters
-meas_std = 0.03
+meas_std = 0.01
 
 domain_upper_bound = np.ones(dim)
 domain_lower_bound = np.zeros(dim)
@@ -52,7 +52,7 @@ else :
 sample_every = 2
 points_per_it = 1
 n_init = 3
-default_tol = 0.03
+default_tol = 0.001
 threshold = meas_std**2 * fm.dout / 40
 conv_ratio = 1/4
 max_iter = 6

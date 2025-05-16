@@ -8,11 +8,16 @@ Created on Tue Dec  3 12:13:57 2024
 import gpytorch
 import torch
 
-class ExactGPModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood):
-        super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
+class SimpleGPModel(gpytorch.models.ExactGP):
+    dim = 1
+    dout = 1
+    
+    def __init__(self, train_x, train_y, noise):
+        likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(noise = noise**2)
+        super(SimpleGPModel, self).__init__(train_x, train_y, likelihood)
         self.train_x = train_x
         self.train_y = train_y
+        self.noise = noise**2
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         
@@ -41,10 +46,9 @@ class ExactGPModel(gpytorch.models.ExactGP):
             # Calc loss and backprop gradients
             loss = -mll(output, self.train_y)
             loss.backward()
-            print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
+            print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f ' % (
                 i + 1, 200, loss.item(),
                 self.covar_module.base_kernel.lengthscale.item(),
-                self.likelihood.noise.item()
             ), 
                   end="\r",
                   flush = True)
@@ -52,6 +56,8 @@ class ExactGPModel(gpytorch.models.ExactGP):
             optimizer.step()
 
     def predict(self, theta, return_std = False):
+        if not isinstance(theta, torch.Tensor):
+            theta = torch.tensor(theta, dtype=torch.float32)
         self.eval()
         self.likelihood.eval()
         # Make prediction

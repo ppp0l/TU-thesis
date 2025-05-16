@@ -58,10 +58,14 @@ class base_likelihood() :
     
 class lipschitz_likelihood(base_likelihood) :
 
-    def prob(self, p) :
+    def prob(self, p, plug_in = False) :
+        if plug_in :
+            return self.plugin(p)
         return self.marginal(p)
     
-    def log_prob(self, p) :
+    def log_prob(self, p, plug_in = False) :
+        if plug_in :
+            return self.log_plugin(p)
         return self.log_marginal(p)
 
         
@@ -92,10 +96,14 @@ class lipschitz_likelihood(base_likelihood) :
     
 class GP_likelihood(base_likelihood) :
 
-    def prob(self, p) :
+    def prob(self, p, plug_in = False) :
+        if plug_in :
+            return self.plugin(p)
         return self.marginal(p)
     
-    def log_prob(self, p) :
+    def log_prob(self, p, plug_in = False) :
+        if plug_in :
+            return self.log_plugin(p)
         return self.log_marginal(p)
     
     def marginal(self, p) :

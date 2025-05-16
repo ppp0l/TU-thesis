@@ -15,16 +15,16 @@ class Posterior:
         self.sampler = None
         self.sampler_start = None
 
-    def prob(self, p) :
+    def prob(self, p, **kwargs): 
         if hasattr(self, "ndim") :
             dim = self.ndim
         else :
             dim = self.likelihood.model.dim
         p = p.reshape((-1, dim))
             
-        return self.prior.prob(p) * self.likelihood.prob(p)
+        return self.prior.prob(p) * self.likelihood.prob(p, **kwargs)
 
-    def log_prob(self, p):
+    def log_prob(self, p, **kwargs):
         if hasattr(self, "ndim") :
             dim = self.ndim
         else :
@@ -32,7 +32,7 @@ class Posterior:
         p = p.reshape((-1, dim))
         
         log_prior = self.prior.log_prob(p)
-        log_likelihood = self.likelihood.log_prob(p)
+        log_likelihood = self.likelihood.log_prob(p, **kwargs)
         return log_prior + log_likelihood
 
     def initialize_sampler(self, n_walkers, initial_pos):
