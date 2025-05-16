@@ -28,7 +28,7 @@ The expected error estimate for data $D$ is then given by
 
 Moreover, we consider to have a certain computational budget $W$ to spend on the evaluations of the forward model $y$ necessary to generate the training data $D$. \medbreak 
 
-In a DoE setting, the problem of selecting training data $D$ can be formulated to selecting a design $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ of evaluation points and tolerances, whose evaluation through the numerical forward model then provides the training data $D(\mc D) = \{ (p_i, \tau_i, H(f_{\tau_i}(\cdot, p_i)) \}_{i=1}^n$. \newline
+In a DoE setting, the problem of selecting training data $D$ can be formulated to selecting a design $\mc D = \{ (p_i, \tau_i) \}_{i=1}^n$ of evaluation points and tolerances, whose evaluation through the numerical forward model then provides the training data $D(\mc D) = \{ (p_i, \tau_i, H(f_{\tau_i}(\cdot, p_i))) \}_{i=1}^n$. \newline
 As the computational costs of the forward model evaluations depend on the tolerance level and not on the resulting value, we write $W(\mc D)$ for the computational cost for the creation of $D(\mc D)$. \newline
 Finally, it useful to talk about refinements of a design: for two designs $\mc D$ and $\mc D'$, we say that $\mc D'$ refines $\mc D$, denoted by $\mc D' \leq \mc D$, if for every $(p, \tau) \in \mc D$ there exists $(p, \tau') \in \mc D'$ such that $\tau' \leq \tau$, i.e.  $\mc D'$ contains all the evaluation points of $\mc D$ with a smaller or equal tolerance.
 For $\mc D' \leq \mc D$, we write 
@@ -151,7 +151,7 @@ These parameter have to be decided by the user, and Section~\ref{sec:setup} will
 
 For GPR surrogate models, we consider the local error indicator function 
 \begin{equation} \label{eq:loc-err-GP}
-    e_{D, \text{GP}}(p) = \text{Trace} (k_D(p,p)),
+    e_{D, \text{GPR}}(p) = \text{Trace} (k_D(p,p)),
 \end{equation}
 which can be interpreted as the expected value over the GP predictive posterior of the squared error of the surrogate model mean at $p$, as
 \[
@@ -165,23 +165,23 @@ Assume to be at step $j$ of the algorithm, with a design $\mc D_{j-1} = \{ (p_i,
 We define the map 
 \begin{gather*}
     \Gamma_{\mc D_{j-1}} : \Omega \times \Omega \times \R^+ \to SPSD_{\text{dim}\mc Y}(\R) \\
-    (p', p, \tau) \mapsto k_{D(\mc D_{j-1} \cup \{(p, \tau)\}) }(p',p')
+    (p', p, \tau) \mapsto \text{Trace} \left( k_{D(\mc D_{j-1} \cup \{(p, \tau)\}) }(p',p') \right) 
 \end{gather*}
 which maps a parameter point $p'$, a candidate point $p$ and a tolerance level $\tau$ to the predictive covariance of the surrogate model $y_{D(\mc D_{j-1} \cup \{(p, \tau)\}) }$ trained on any training data $D(\mc D_{j-1} \cup \{(p, \tau)\})$  resulting from the design $\mc D_{j-1}$ with the addition of the new point $(p, \tau)$.
-Note that this map is well-defined as, for any design $\mc D$ and corresponding training data $D(\mc D)$, the predictive covariance $k_{D(\mc D)}$ is actually a function of $\mc D$ only and not of model evaluations, as noted above.\newline
+Note that this map is well-defined as, for any design $\mc D$ and corresponding training data $D(\mc D)$, the predictive covariance $k_{D(\mc D)}$ is actually a function of $\mc D$ only and does not depend on the model evaluations, as noted above.\newline
 Then, the sensitivity of the error indicator at $p'$ with respect to the computational work spent in $p$ for an evaluation at a given default tolerance $\tau_p$ is defined by
 \begin{equation} \label{eq:alpha-GP}
-    \alpha_{\mc D_{j-1}, \text{GP}}(p, p') = \frac{\partial \Gamma_{\mc D_{j-1}}}{\partial \tau} \bigg |_{(p',p,\tau_p)} \frac{\partial \tau}{\partial W}\bigg |_{W(\tau_p)},
+    \alpha_{\mc D_{j-1}, \text{GPR}}(p, p') = \frac{\partial \Gamma_{\mc D_{j-1}}}{\partial \tau} \bigg |_{(p',p,\tau_p)} \frac{\partial \tau}{\partial W}\bigg |_{W(\tau_p)},
 \end{equation}
 where $W(\tau)$ is the estimate given by Equation~\eqref{eq:FE-cost} for the computational work needed to evaluate the forward model with tolerance $\tau$ and $\tau(W)$ is the inverse of such relation. \newline
-Note that the derivatives are well defined for every $\tau >0$ as long as the discretization noise covariance $\Sigma_D(\tau)$ is differentiable with respect to $\tau$, as in the case given by Equation~\eqref{eq:iid-GPR-noise}. 
+Note that the derivatives are well defined for every $\tau >0$ as long as the discretization noise covariance $\Sigma_d(\tau)$ is differentiable with respect to $\tau$, as in the case given by Equation~\eqref{eq:iid-GPR-noise}. 
 For the explicit expressions of the derivatives with the current notation, we refer to the Appendix~\ref{app:derivatives}.
 
-The acquisition function is then given by~\eqref{eq:acq-fun-gen} with $\alpha_{\mc D_{j-1},\text{GP}}$ as in~\eqref{eq:alpha-GP}. 
+The acquisition function is then given by~\eqref{eq:acq-fun-gen} with $\alpha_{\mc D_{j-1},\text{GPR}}$ as in~\eqref{eq:alpha-GP}. 
 It depends on the default tolerance parameter $\tau_p$, which can be either a fixed value or a function of the point $p$; in~\cite{VillaniUngerWeiser2024} it is set to the average over the components of the predictive standard deviation, i.e.
 \[ \tau_p = \frac{1}{\text{dim}\mc Y} \sum_{i=1}^{\text{dim}\mc Y} \sqrt{ \big (k_{D(\mc D_{j-1})}(p,p) \big )_{i,i}}. \]  \medbreak
 
-In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma^2_D(\tau)$ from the evaluations of the forward model.\newline
+In this work, we further attempt to improve the efficiency of GPR by inferring the noise covariance $\Sigma^2_d(\tau)$ from the evaluations of the forward model.\newline
 As the model evaluations are performed through Adaptive FE, for each data point $(p_i, \tau_i, y_i) \in D$ we will have a sequence of estimated residuals 
 \begin{equation}\label{eq:eval-seq}
      n_{i,1}, \dots, n_{i,r_i}
@@ -191,7 +191,7 @@ As the model evaluations are performed through Adaptive FE, for each data point 
         \tau_{i,1} > \dots > \tau_{i,r_i} = \tau_i
 \end{equation}
 given by the sequence of FE refinements necessary to obtain $y_i$.
-We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_D(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2004b}. 
+We aim at exploiting this evaluations to estimate the noise covariance $\Sigma^2_d(\tau)$ for the GPR model under certain assumptions by adopting a linear shrinkage estimator~\cite{LedoitWolf2004b}. 
 Such an estimator is adopted do to its efficiency in contexts where the amount of data and the dimensionality of the covariance matrix are of comparable sizes. \newline
 Given some centered i.i.d. data $x_1,\dots, x_s$ in $\R^d$, a linear shrinkage estimator for the covariance matrix $\Sigma^2 \in \R^{d\times d}$ of the generating distribution is given by the convex combination of the empirical covariance matrix 
 \begin{equation}\label{eq:empirical-cov}
@@ -206,32 +206,32 @@ where the parameter $\delta$ is an estimate of the value which minimizes the mea
     \delta = \frac{1}{\big \|S - \Sigma^2_0 \big \|_F^2} \min \left( \frac{1}{s^2} \sum_{i=1}^{s} \big \|S - x_i \cdot x_i^T\big \|_F^2, \big \|S - \Sigma^2_0 \big\|_F^2 \right).
 \end{equation}\medbreak
 
-In the present setting, we aim at estimating the noise covariance $\Sigma^2_D(\tau)$ of the discretization noise affecting the forward model evaluations at a given tolerance level $\tau$.
-We first assume that $\Sigma^2_D(\tau)$ scales quadratically with the tolerance level, i.e. 
+In the present setting, we aim at estimating the noise covariance $\Sigma^2_d(\tau)$ of the discretization noise affecting the forward model evaluations at a given tolerance level $\tau$.
+We first assume that $\Sigma^2_d(\tau)$ scales quadratically with the tolerance level, i.e. 
 \[
-\Sigma^2_D(\tau) = \tau^2 \Sigma^2_D(1),
+\Sigma^2_d(\tau) = \tau^2 \Sigma^2_d(1),
 \]
 and second we assume that the residual estimates $n_{i,j}$ are faithful realizations of the discretization noise $\nu_D$.
 Under these assumptions it holds that 
 \[
-\tilde n_{i,j} \coloneq \frac{1}{\tau_{i,j}} n_{i,j} \text{ is a realization of } \eta_{i,j} \sim \mc N (0, \Sigma^2_D(1))
+\tilde n_{i,j} \coloneq \frac{1}{\tau_{i,j}} n_{i,j} \text{ is a realization of } \eta_{i,j} \sim \mc N (0, \Sigma^2_d(1))
 \]
 for every $ i=1,\dots,n $ and $ j=1,\dots,r_i$. \newline
 While assuming $\eta_{i,j}$ to be independent from $\eta_{h,k}$ for $i\neq h$ can be a reasonable approximation, the residuals in a same evaluation sequence will most likely be correlated.
-However as we are assuming the data to be centered, the empirical covariance $S$ defined by Equation~\eqref{eq:empirical-cov} will still be an unbiased estimator of the covariance matrix $\Sigma^2_D(1)$ even if less efficient.
+However as we are assuming the data to be centered, the empirical covariance $S$ defined by Equation~\eqref{eq:empirical-cov} will still be an unbiased estimator of the covariance matrix $\Sigma^2_d(1)$ even if less efficient.
 Thus, we can use the residuals $\tilde n_{i,j}$ to compute the empirical covariance matrix $S$ of the data $\{\tilde n_{i,j}\}_{i,j}$, which is given by  
 \begin{equation}
     \hat S = \frac{1}{n_{\text{tot}}} \sum_{i=1}^n\sum_{j=1}^{r_i} \tilde n_{i,j} \cdot \tilde n_{i,j}^T,
 \end{equation} 
 where $n_{\text{tot}} = \sum_{i=1}^n r_j $ is the sample size of $\{\tilde  n_{i,j}\}_{i,j}$. \newline
-Then, the linear shrinkage estimator for the noise covariance $\Sigma^2_D(1)$ is given by
+Then, the linear shrinkage estimator for the noise covariance $\Sigma^2_d(1)$ is given by
 \[
-    \hat \Sigma_D^2 = \delta   I_{\text{dim}\mc Y} + (1-\delta) \hat S,
+    \hat \Sigma_d^2 = \delta   I_{\text{dim}\mc Y} + (1-\delta) \hat S,
 \]
 where we adopted the identity matrix $I_{\text{dim}\mc Y}$ as the fixed matrix $\Sigma_0$ of Equation~\eqref{eq:shrinkage-estimator-gen} and the parameter $\delta$ is given by the formula~\eqref{eq:shrinkage-delta} with the substitution of $\{x_i\}$ by $\{\tilde n_{i,j}\}$, of $S$ by $\hat S$ and of $s$ by $n_{\text{tot}}$.\newline
-This leads to the following estimator for the noise covariance $\Sigma^2_D(\tau)$
+This leads to the following estimator for the noise covariance $\Sigma^2_d(\tau)$
 \begin{equation}\label{eq:shrinkage-estimator}
-    \hat{\Sigma}_D^2(\tau) = \tau^2 \hat \Sigma_D^2,
+    \hat{\Sigma}_d^2(\tau) = \tau^2 \hat \Sigma_d^2,
 \end{equation}
 which can be used when computing the predictive mean and variance of the GPR model as given by Theorem~\ref{thm:GP-posterior}.
 
@@ -244,7 +244,7 @@ Then, the considered local error indicator function is the vector 1-norm of the 
 \end{equation}
 In the case of independent discretization noise components described by Proposition~\ref{cor:LR-const}, as the predictive interval given by Equation~\eqref{eq:LR-PI} is
 \begin{equation*}
-    \mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right],
+    \mc PI_p = \bigoplus_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right],
 \end{equation*}
 we have that
 \[
@@ -381,7 +381,7 @@ Such assignment makes the constants independent from the tolerance levels $\tau_
 The derivation of a computable tolerance problem for LR follows a similar idea as done for the acquisition function~\eqref{eq:alpha-LR-general}.
 For a fixed set of evaluation points $p_1, \dots, p_n$ with predictive intervals $\mc PI_{p_1}, \dots, \mc PI_{p_n}$ we consider the expected value of the error indicator function over the model response and the discretization noise
 \begin{equation} \label{eq:tol-exp-err}
-    E(p, \tau_1, \dots, \tau_n)\coloneq \bb E _{ (Y_{p_1}, \dots Y_{p_n}, \nu_1, \dots, \nu_n) \sim  \mc U\left( \bigotimes_{i=1}^n \mc PI_{p_i} \times \bigotimes_{i=1}^n  [-\tau_i, \tau_i] ^{ \text{dim} \mc Y } \right)} 
+    E(p, \tau_1, \dots, \tau_n)\coloneq \bb E _{ (Y_{p_1}, \dots Y_{p_n}, \nu_1, \dots, \nu_n) \sim  \mc U\left( \bigoplus_{i=1}^n \mc PI_{p_i} \times \bigoplus_{i=1}^n  [-\tau_i, \tau_i] ^{ \text{dim} \mc Y } \right)} 
     \left[ 
          e_{\{(p_i,\tau_i, Y_{p_i} + \nu_i )\}_{i=1}^n, \text{LR}}(p)
     \right]

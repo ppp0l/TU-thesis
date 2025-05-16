@@ -45,19 +45,19 @@ Gaussian process regression relies on two assumptions:
     \item[(GPR-model)] the forward model $y$ is a realization of a GP $Y \sim GP(m, k)$;
     \item[(GPR-data)] the observations are contaminated by Gaussian noise independent from $Y$, i.e. 
     \[ 
-        y_i = y(p_i) + \nu_{D,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
+        y_i = y(p_i) + \nu_{d,i} \ \text{ for every } \ (p_i,\tau_i,y_i) \ \text{ in } \ D 
     \] 
-    holds, where $\nu_{D,i} \sim \mc N(0, \Sigma_D(\tau_i)^2)$ for some $\Sigma_D(\tau)$, and $\nu_{D,i}$ is independent from $Y$.
+    holds, where $\nu_{d,i} \sim \mc N(0, \Sigma^2_d(\tau_i))$ for some $\Sigma_d(\tau)$, and $\nu_{d,i}$ is independent from $Y$.
 \end{itemize}  
 The first assumption implicitly prescribes a certain regularity of the forward model depending on the choice of the kernel $k$, but does not impose any parametric form on the model itself. 
 The choice of a kernel is crucial for the effectiveness of GPR: in order to allow for flexibility, in practice a parametric family of kernels $\{ k_\lambda\}$ is chosen to model the covariance, with $\lambda$ known as the kernel's hyperparameters. More remarks about kernel structure and hyperparameters will be made at the end of this section.
 
 The second assumption allows to derive a closed-form expression for the predictive distribution of the GP, and in our context entails that the discretization error on numerical evaluations of the forward model is Gaussian, i.e. 
 \[
-    H(u_{\tau}(\cdot; p)) - H(u(\cdot; p)) \sim \mc N(0, \Sigma_D(\tau)^2);
+    H(u_{\tau}(\cdot; p)) - H(u(\cdot; p)) \sim \mc N(0, \Sigma^2_d(\tau));
 \] for a general GPR task, it is common to assume 
 \begin{equation}\label{eq:iid-GPR-noise}
-    \Sigma_D(\tau) = \tau I_{\text{dim} \mc Y}
+    \Sigma_d(\tau) = \tau I_{\text{dim} \mc Y}
 \end{equation} 
 and often $\tau$ is unknown and fitted together with the kernel's hyperparameters. \newline
 In the context we are working in, Equation~\eqref{eq:iid-GPR-noise} implies i.i.d. components of the FE discretization error, which is not realistic: Section~\ref{sec:GPAL} presents an approach to model the discretization error covariance by exploiting an adaptive FE scheme. \medbreak
@@ -67,12 +67,12 @@ The analytical expression for the posterior GP is given by the following theorem
 Although this result is foundational for GPR, its complete proof is rarely explicitly stated:~\cite[Appendix A]{RasmussenWilliams2006} provides the necessary results for the full proof, which relies on some technical linear algebra lemmas.
 
 \begin{restatable}[GP posterior]{theorem}{GPpost} \label{thm:GP-posterior}
-    Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $\nu_{D,1},\dots,\nu_{D,n}$ is given by some positive definite $\Sigma_D(\mc T)^2$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
+    Under assumptions \textit{(GPR-model)} and \textit{(GPR-data)}, assume that the covariance between the noise terms $\nu_{D,1},\dots,\nu_{D,n}$ is given by some positive definite $\Sigma^2_d(\mc T)$ for $\mc T = (\tau_1, \ldots, \tau_n)$. \newline
     Then the posterior GP $Y \mid D$ is a GP over $\mc Y$ with mean function $m_D$ and kernel $k_D$, where
     \begin{equation} \label{eq:GP-predictive}
         \begin{gathered}
-            m_D(p) = m(p) + k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} (y - m(P))  \\
-            k_D(p, p') = k(p, p') - k(p, P) (k(P,P) + \Sigma_D(\mc T)^2 )^{-1} k(P, p')^T            
+            m_D(p) = m(p) + k(p, P) \left(k(P,P) + \Sigma^2_d(\mc T) \right)^{-1} (y - m(P))  \\
+            k_D(p, p') = k(p, p') - k(p, P) \left(k(P,P) + \Sigma^2_d(\mc T) \right)^{-1} k(P, p')^T            
         \end{gathered}
     \end{equation}
     for $P = (p_1, \ldots, p_n)$ and block matrices $K(P,P)_{i,j} = k(p_i, p_j)$, and $k(p, P) = (k(p, p_1), \ldots, k(p, p_n))$.
@@ -91,7 +91,7 @@ As we are not interested in the full GP posterior but only in the point-wise pre
 The core of GPR is now outlined, but for practical use a few more remarks are necessary. \newline
 First, note that the covariance between the noise terms $\nu_{D,i}, \ \nu_{D,k}$ is assumed to be known in Theorem~\ref{thm:GP-posterior}, but in practice information about correlations is scarce or absent. Thus, usually a block diagonal structure is assumed 
 \begin{equation} \label{eq:GPR-noise-corr}
-    \Sigma_D(\mc T)^2 = \text{diag}(\Sigma_D(\tau_1)^2, \ldots, \Sigma_D(\tau_n)^2),
+    \Sigma^2_d(\mc T) = \text{diag}(\Sigma^2_d(\tau_1)^2, \ldots, \Sigma^2_d(\tau_n)),
 \end{equation}
 entailing uncorrelated noise terms.
 
@@ -135,9 +135,9 @@ Note that for $\gamma \rightarrow \infty$ the Matérn kernel converges to the RB
 The treatment of hyperparameters constitutes an estimation problem.
 For training data $D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n$, the distribution of the data given the hyperparameters $\Lambda = \lambda$ is given by
 \[
-    (Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda \sim \mc N \left( (m(p_1), \dots, m(p_n)), k_\Lambda(P,P) + \Sigma_D(\mc T)^2 \right)
+    (Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda \sim \mc N \left( (m(p_1), \dots, m(p_n)), k_\Lambda(P,P) + \Sigma^2_d(\mc T) \right)
 \]
-with $k(P,P)$ and $\Sigma_D(\mc T)$ as given in Theorem~\ref{thm:GP-posterior};
+with $k(P,P)$ and $\Sigma^2_d(\mc T)$ as given in Theorem~\ref{thm:GP-posterior};
 this results in the hyperparameters' likelihood given the data,
 \begin{equation} \label{eq:marginal-likelihood}
     L(\lambda) = \pi_{(Y_{p_1}, \dots, Y_{p_n}) \mid \Lambda} \big ( (y_1,\dots,y_n) \mid \Lambda = \lambda \big ).    
@@ -179,7 +179,7 @@ Given the structure of FE discretization errors and the nature of their estimato
 \pv{it may be not extremely clear why the below object is named a cone, and the whole proposition with proof may seem not super intuitive. if that's the case, I can add a figure depicting a 1d case which would make it much clearer.}
 For any $p,p'$ in $\Theta$, $v\in \mc Y$, $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)} ) \in \R^{\text{dim} \mc Y}$ let us write 
 \[
-        Cone_{p,v,\underline L}(p') = \bigotimes_{j=1}^{\text{dim} \mc Y} \left[ v^{(j)} - L^{(j)} \|p-p'\|_\Theta, v^{(j)} + L^{(j)} \|p-p'\|_\Theta \right]
+        Cone_{p,v,\underline L}(p') = \bigoplus_{j=1}^{\text{dim} \mc Y} \left[ v^{(j)} - L^{(j)} \|p-p'\|_\Theta, v^{(j)} + L^{(j)} \|p-p'\|_\Theta \right]
 \]
 for the projection in $p'$ of the cone in $\Omega \times \mc Y$ of vertex $(p,v)$ and directrix of slope $\underline L$.
 The following proposition allows us to define a predictive interval of possible values for the target function $y$ in a point $p$.
@@ -273,10 +273,10 @@ The Lipschitz Regression predictive distribution is then defined by taking a uni
 
 For noise terms $\nu_{D,i}$ with independent components, i.e. $I_{\tau_i}$ being an interval, the following proposition provides a simpler expression for $\mc PI_p$, which is the one usually given for the LR prediction.
 \begin{prp}\label{prp:LR-PI}
-    Let $I_{\tau_i} = \otimes_{j=1}^{\text{dim}\mc Y} [ -\tau_i^{(j)}, \tau_i^{(j)} ]$ for every $i = 1, \dots, n$.
+    Let $I_{\tau_i} = \oplus_{j=1}^{\text{dim}\mc Y} [ -\tau_i^{(j)}, \tau_i^{(j)} ]$ for every $i = 1, \dots, n$.
     Then the LR predictive interval $\mc PI_p$ is an interval given by
     \begin{equation}\label{eq:LR-PI}
-        \mc PI_p = \bigotimes_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right]
+        \mc PI_p = \bigoplus_{j=1}^{\text{dim}\mc Y} \left[ LB^{(j)}(p), UB^{(j)}(p)\right]
     \end{equation}
     with lower and upper bounds given for each component $j$ by
     \begin{equation} \label{eq:LR-bounds}

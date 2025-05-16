@@ -144,7 +144,7 @@ We see that, while \texttt{LHSGP} struggles to reduce the expected error and has
 Moreover we observe that in this case random selection of the candidates in \texttt{randGP} is as effective as the position-adaptive strategy \texttt{posAdGP}, resulting in a similar convergence velocity.
 
 \begin{table}[H]
-    \centering
+    \begin{centering}
     \begin{tabular}{cccc}
     \toprule
          & Iterations & Training points & Computational work \\
@@ -159,12 +159,15 @@ Moreover we observe that in this case random selection of the candidates in \tex
     \end{tabular}
     \caption{Average over the 25 runs of number of iterations, points in the training set and computational work required to reduce the expected error below $2 \cdot 10^{-3}$ for the GPR-based adaptive strategies.}
     \label{tab:3dGP-plateau}
+\end{centering}
 \end{table}
 
 As shown in Table~\ref{tab:3dGP-plateau}, while before the plateau \texttt{AGP} and the position-adaptive strategies achieve a similar performance in terms of expected error per budget, \texttt{AGP} uses a smaller number of iterations and training points as it adaptively reduces the default tolerance $\tau_d$ and optimizes work distribution.
 
 \begin{table}[H]
-    \centering
+    \begin{centering}
+        
+    
     \begin{tabular}{ccccccccccc}
     \toprule
         & Converged & $W$  & \multicolumn{4}{c}{Training points} & \multicolumn{4}{c}{Iterations} \\ 
@@ -185,6 +188,7 @@ As shown in Table~\ref{tab:3dGP-plateau}, while before the plateau \texttt{AGP} 
     \caption{Status of the training after the final iteration of different strategies and configurations for the GPR surrogate, 3d example. For the total computational work $W$ the average over the 25 runs is provided, while for the final number of points in the training set and the number of iterations necessary to terminate the training the average, the median, the minimum and the maximum are provided.
     }
     \label{tab:3dGP-recap}
+\end{centering}
 \end{table}
 
 The plateau phase motivates us to test the behavior of the fixed-tolerance strategies with a lower tolerance $\tau_d = 10^{-3}$: in this case \texttt{posAdGP} and \texttt{randGP} are able to reach the target threshold $\texttt{tol}$ as shown in Figure~\ref{fig:3dGP-other}, but they require a larger computational budget and a similar number of training points as \texttt{AGP} with the lower default tolerance $\tau_d =  3\cdot 10^{-2}$, see Table~\ref{tab:3dGP-recap}.
@@ -221,7 +225,8 @@ This fact, as well as the effectiveness of fixed-tolerance strategies, suggests 
 
 \begin{table}[H]
 
-    \centering
+    \begin{centering}
+        
     \hspace*{-1.5cm}
     \begin{tabular}{ccccccccccccc}
     \toprule
@@ -264,10 +269,12 @@ This fact, as well as the effectiveness of fixed-tolerance strategies, suggests 
         
     \bottomrule
     \end{tabular}
+
     \caption{Average, median, minimum and maximum of the absolute error on the MAP estimate, posterior mean and posterior standard deviation on each component over the 25 runs with default configuration.
     The analytical ground truth posterior and corresponding samples are utilized to compute the true MAP $p_\text{MAP}$, mean $p_\text{mean}$ and component-wise standard deviation $\text{diag}(\Sigma_P)$, while for each strategy the surrogate-based posteriors and samples are used to compute $\hat p_\text{MAP}$, $\hat p_\text{mean}$ and $\text{diag}(\hat \Sigma_P)$.
     }
     \label{tab:3d-comparison}
+    \end{centering}
     
     
 \end{table}
@@ -339,7 +346,7 @@ This can also be seen in the lower number of iterations where no new candidate i
 Another considerable difference is that \texttt{LHSGP} performs significantly worse than the other strategies, likely due to the higher dimensionality of the parameter space which makes evenly spaced sampling less effective.
 
 \begin{table}[H]
-    \centering
+    \begin{centering}
     \begin{tabular}{ccccc}
     \toprule
         & $E$   & $W$ & Training points    & Iterations \\ 
@@ -357,6 +364,7 @@ Another considerable difference is that \texttt{LHSGP} performs significantly wo
     \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, 6d example. The average values over the 12 runs for the final error level $E$, total computational work $W$, the final number of points in the training set and the number of iterations necessary to terminate the training are provided.
     }
     \label{tab:6dGP-recap}
+\end{centering}
 \end{table}
 
 For the LR we tried default configuration parameters similar to the previous one: after setting the halting threshold to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 0.6$, we sampled every $N_{\text{sample}} = 5 $ iterations and set the number of walkers to $n_w = 64$.
@@ -369,7 +377,7 @@ To try to improve the performance, we tried to lower the default tolerance $\tau
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d6/LR_res.png}
 \end{center}
-\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 6d example. The computational budget axis was truncated at 3500 as the budget spent by \texttt{ALR} far exceeds the ones from other strategies. }
+\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 6d example. The computational budget axis was truncated at 3300 as the budget spent by \texttt{ALR} far exceeds the ones from other strategies. }
     \label{fig:6dLRconv}
 \end{figure}
 
@@ -398,7 +406,9 @@ As the standard deviation error does not display such phenomenon, this indicates
 
 \begin{table}
 
-    \centering
+    \begin{centering}
+        
+    
     \hspace*{-1.5cm}
     \begin{tabular}{ccccccccccccc}
     \toprule
@@ -445,6 +455,7 @@ As the standard deviation error does not display such phenomenon, this indicates
     As for Table~\ref{tab:3d-comparison} the analytically available ground truth is used to compute the true quantities $p_\text{MAP}$, $p_\text{mean}$ and $\Sigma_P$, which are then compared with the surrogate-based estimates $\hat p_\text{MAP}$, $\hat p_\text{mean}$ and $\hat \Sigma_P$.
     }
     \label{tab:6d-comparison}
+\end{centering}
 \end{table}
 
 \subsection{2d Finite Element example - Elastomechanics}\label{sec:FEexp}

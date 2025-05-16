@@ -1,19 +1,25 @@
 \section{Appendix A: Derivatives for the GPR acquisition function}\label{app:derivatives} 
-\todo[inline]{update notation}
-We consider a design $\left( (p_i,\tau_i)\right)_{i=1,\dots,s}$ and a GP kernel $k$. Using the explicit formula for the predictive variance given in~\cite[equation 2.24]{RasmussenWilliams2006}, the derivative of $\Gamma(p)$ with respect to $\tau_i$ is given by \[
-    \frac{\partial \Gamma(p)}{\partial \tau_i} = 2\tau_i K_* (K + \mathfrak{T} ^2  )^{-1} (I_m \otimes \text{diag}(e_i))(K + \mathfrak{T} ^2  )^{-1} K_*^T,
-\] 
-where $\underline{e_1}, \dots,\underline{e_s}$ is the canonical basis of $\R^s$, and the kernel matrices are\[
-K = \begin{bmatrix} k(p_1,p_1) & \dots & k(p_1,p_s) \\
-    \vdots               & \ddots & \vdots \\
-    k(p_s,p_1) & \dots & k(p_s,p_s)
-\end{bmatrix} \ \text{ and } \
-K_* =  \begin{bmatrix}
-    k(p_1,p) \\
-    \vdots \\
-    k(p_s,p)
-\end{bmatrix}.
+
+To derive the desired derivative, we consider a design $\mc D\{(p_i, \tau_i)\}_{i=1}^n$ and we recall that $\Gamma(p,p',\tau)$ is defined as
+\[
+    \Gamma(p', p, \tau) = \text{Trace} \left( k_{D(\mc D \cup \{(p, \tau)\}) }(p',p') \right).
 \]
+As the trace of the derivative is equal to the derivative of the trace, we compute the derivative of the covariance matrix $ k_{D(\mc D \cup \{(p, \tau)\}) }$ with respect to the new tolerance $\tau$.
+Deriving Equation~\eqref{eq:GP-predictive} for the predictive variance, we have that 
+\[
+    \frac{\partial k_{D(\mc D \cup \{(p, \tau)\}) }(p',p')}{\partial \tau} = k(p', P) \left(k(P,P) + \Sigma_d^2(\mc T) \right)^{-1}\frac{\partial \Sigma_d^2(\mc T)}{\partial \tau}  \left(k(P,P) + \Sigma_d^2(\mc T) \right)^{-1} k(P, p')^T
+\]
+holds, with $P=(p_1,\dots,p_n, p)$ and $\mc T = (\tau_1, \dots, \tau_n,\tau)$.
+For bloc diagonal $\Sigma_d(\mc T)$ as in Equation~\eqref{eq:GPR-noise-corr} and $\Sigma_d^2(\tau_i)=\tau_i^2 \Sigma_d^2$ for some $\Sigma_d^2$ SPSD as assumed in Section~\ref{sec:GPAL},
+\[
+    \Sigma_d^2(\mc T) = \text{diag}\left(\tau_1^2\Sigma_d^2, \ldots, \tau_n^2 \Sigma_d^2, \tau^2 \Sigma_d^2\right) 
+\]  
+thus entailing
+\[
+    \frac{\partial \Sigma_d^2(\mc T)}{\partial \tau} = 2\tau \cdot \text{diag}(\underline O, \ldots,  \underline O, \Sigma_d^2),
+\]
+where $\underline O$ is the zero matrix.
+
 The derivative is obtained by considering the work model and inverting it:
 \[
 \frac{\partial \tau}{\partial W} = -\frac{r}{l} W^{-\frac{r}{l}-1}.

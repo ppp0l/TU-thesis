@@ -42,12 +42,25 @@ By Equations~\eqref{eq:LR-bounds} and by the fact that $D(p,\tau_p, Y_p + \nu ) 
 \]
 allowing us to write 
 \[
-    EUI^{(j)}(p,p') = \int_{LB^{(j)}_{D(\mc D)}(p)}^{UB^{(j)}_{D(\mc D)}(p)} \int_{-\tau_p}^{\tau_p} \max \left( 0, UB_{D(\mc D)}^{(j)}(p') - Y_p -n - \tau_p - L^{(j)} \|p'-p \|_\Theta \right) \,dn \, dy.
+    EUI^{(j)}(p,p') = \int_{LB^{(j)}_{D(\mc D)}(p)}^{UB^{(j)}_{D(\mc D)}(p)} \int_{-\tau_p}^{\tau_p} \max \left( 0, UB_{D(\mc D)}^{(j)}(p') - y -n - \tau_p - L^{(j)} \|p'-p \|_\Theta \right) \,dn \, dy.
 \]
+
+
 We collect the constant terms in the constant $c_1^j = UB^{(j)}_{D(\mc D)}(p') - \tau_p - L^{(j)} \|p'-p \|_\Theta$. 
-The treatment of the integral depends on the interplay between $c_1^j$, $UB^{(j)}_{D(\mc D)}(p)$, $LB^{(j)}_{D(\mc D)}(p)$ and $\tau_p$, as in certain cases it will be more convenient to integrate in one order than in the other; consequently, we treat the cases separately.
-Note that as $UB^{(j)}_{D(\mc D)}(p) \geq LB^{(j)}_{D(\mc D)}(p)$, some more inequalities will be left implicit.\medskip
-\pv{the intuition why these cases work is not explicit, a picture may be added}
+The treatment of the integral depends on the interplay between $c_1^j$, $UB^{(j)}_{D(\mc D)}(p)$, $LB^{(j)}_{D(\mc D)}(p)$ and $\tau_p$, as the integrand is $0$ whenever $y> c_1 -n$.
+As an integration order will be more convenient in some cases and less convenient in others, we treat the cases separately.
+Note that as $UB^{(j)}_{D(\mc D)}(p) \geq LB^{(j)}_{D(\mc D)}(p)$, some more inequalities will be left implicit.
+Pictures~\ref{fig:cases} depicts the considered cases, with each colored line representing an instance of the line $y = c_1^j - n$ in the case corresponding to the associated number.
+
+\begin{figure}[H]
+    \begin{centering}
+        \includesvg[width = 0.7\textwidth]{results/pictures/integration domain}
+    \caption{Example of the integration domain with the line $y = c_1^j - n$ above which the integrand is 0 for the cases 1-6 described below.} 
+    \label{fig:cases} 
+    \end{centering}
+\end{figure}  
+The cases considered are the following:\medskip
+
 \textbf{Case 1:} $UB^{(j)}(p) \leq c_1^j - \tau_p $. \smallskip \newline
 As $UB^{(j)}(p) +\tau_p \leq c_1^j$, we have \[
     \max \left( 0, c_1^j - y - n \right) = c_1^j - y - n \ \text{ for all } \ (y,n) \in \left[LB^{(j)}_{D(\mc D)}(p), UB^{(j)}_{D(\mc D)}(p)\right] \times [-\tau_p, \tau_p],
