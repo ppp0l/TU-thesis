@@ -391,6 +391,7 @@ Consequently, Young's modulus $E$ can be interpreted as the ratio between the st
 
 The Finite Element(FE) method is a numerical technique for solving PDEs which is based on the discretization of the domain $\mc X$ into a finite number of elements, which are usually polytopes such as triangles or tetrahedra.
 Its foundations lie in the weak formulation of PDEs and it belongs to the family of Galerkin methods, which approximate the infinite dimensional problem by a finite-dimensional one.
+While the FE method can be applied to time-dependent PDEs, we will restrict ourselves to the time-independent case for simplicity; the extension to time-dependent PDEs, for instance by the method of lines, can be found in~\cite[Chapter 9]{DeuflhardWeiser2012}. \newline
 For a time-independent linear PDE, one can derive its weak formulation by multiplying the PDE by a test function $v$ and then some integration steps: the weak solution $u$ of the PDE solves the weak problem 
 \begin{equation}\label{eq:weak-formulation}
     a(u,v) = f(v), \quad \forall v \in V,

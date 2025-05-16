@@ -63,7 +63,7 @@ LR.fit(np.reshape(x,(-1,1)),LR_y.reshape((-1,1)), noise=0.05*np.ones(len(x)))
 
 #### set up IP
 
-prior = GaussianPrior(mean = 0.4, std = 0.3, dom=param_space)
+prior = GaussianPrior(mean = 1/2, std = 1/3, dom=param_space)
 
 true_likelihood = base_likelihood(meas, eps_l, forward)
 GPR_likelihood = GP_likelihood(meas, eps_l, GP)
