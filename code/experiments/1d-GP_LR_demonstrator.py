@@ -63,7 +63,7 @@ LR.fit(np.reshape(x,(-1,1)),LR_y.reshape((-1,1)), noise=0.05*np.ones(len(x)))
 
 #### set up IP
 
-prior = GaussianPrior(mean = 1/2, std = 1/3, dom=param_space)
+prior = GaussianPrior(mean = 0.4, std = 0.3, dom=param_space)
 
 true_likelihood = base_likelihood(meas, eps_l, forward)
 GPR_likelihood = GP_likelihood(meas, eps_l, GP)
@@ -100,7 +100,7 @@ true_post = true_post / np.mean(true_post)
 
 
 #### GPR model plot
-plt.figure(figsize = (14,4), layout = 'tight')
+plt.figure(figsize = (10,3), layout = 'tight')
 plt.plot(test, gt_test, label="True model", linestyle="dotted")
 
 
@@ -138,11 +138,11 @@ class CustomHandler(HandlerBase):
     
 plt.legend(handler_map={line: CustomHandler()})
 
-plt.savefig(path+"/GP_model_comparison.png", format = 'png')
+plt.savefig(path+"/GP_model_comparison.png", format = 'png', dpi=500)
 plt.close()
 
 #### LR model plot
-plt.figure(figsize = (14,4), layout = 'tight')
+plt.figure(figsize = (10,3), layout = 'tight')
 plt.plot(test, gt_test, label="True model", linestyle="dotted")
 
 
@@ -165,24 +165,24 @@ plt.axhline(meas - 2 * eps_l, linestyle="dashdot")
     
 plt.legend(handler_map={line: CustomHandler()})
 
-plt.savefig(path+"/LR_model_comparison.png", format = 'png')
+plt.savefig(path+"/LR_model_comparison.png", format = 'png', dpi=500)
 plt.close()
 
 
-plt.figure(figsize = (14,4), layout = 'tight')
+plt.figure(figsize = (10,3), layout = 'tight')
 plt.plot(test, true_post, label='True')
 plt.plot(test, GP_marg_post, label='Marginal')
 plt.plot(test, GP_plug_post, label='Plug-in')
 plt.legend()
 plt.title('Posterior comparison for GPR')
-plt.savefig(path+"/GP_posterior_comparison.png", format = 'png')
+plt.savefig(path+"/GP_posterior_comparison.png", format = 'png', dpi=500)
 plt.close()
 
-plt.figure(figsize = (14,4), layout = 'tight')
+plt.figure(figsize = (10,3), layout = 'tight')
 plt.plot(test, true_post, label='True')
 plt.plot(test, LR_marg_post, label='Marginal')
 plt.plot(test, LR_plug_post, label='Plug-in')
 plt.legend()
 plt.title('Posterior comparison for LR')
-plt.savefig(path+"/LR_posterior_comparison.png", format = 'png')
+plt.savefig(path+"/LR_posterior_comparison.png", format = 'png', dpi=500)
 plt.close()

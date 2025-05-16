@@ -75,7 +75,7 @@ def corner_plot(
         plt.suptitle(title)
 
     if savepath is not None:
-        plt.savefig(savepath, format=saveformat, bbox_inches='tight')
+        plt.savefig(savepath, format=saveformat, bbox_inches='tight', dpi=500)
     
     #plt.close()
 
@@ -191,10 +191,10 @@ def plot_metric(path : str, type_surr : str) :
         if not os.path.exists(currpicpath):
             os.makedirs(currpicpath)
         
-        plt.savefig(currpicpath + os.sep + type_surr + "_res.png", format = 'png')
+        plt.savefig(currpicpath + os.sep + type_surr + "_res.png", format = 'png',dpi=500)
         # plt.savefig(currpicpath + os.sep + fname +".svg", format = 'svg')
 
-        plt.savefig( subdir + os.sep + type_surr + "_results.png", format = 'png')
+        plt.savefig( subdir + os.sep + type_surr + "_results.png", format = 'png',dpi=500)
         # plt.savefig( subdir + os.sep + "results.svg", format = 'svg')
         
 
