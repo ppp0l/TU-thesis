@@ -100,7 +100,7 @@ true_post = true_post / np.mean(true_post)
 
 
 #### GPR model plot
-plt.figure(figsize = (9,3))
+plt.figure(figsize = (14,4), layout = 'tight')
 plt.plot(test, gt_test, label="True model", linestyle="dotted")
 
 
@@ -142,7 +142,7 @@ plt.savefig(path+"/GP_model_comparison.png", format = 'png')
 plt.close()
 
 #### LR model plot
-plt.figure(figsize = (9,3))
+plt.figure(figsize = (14,4), layout = 'tight')
 plt.plot(test, gt_test, label="True model", linestyle="dotted")
 
 
@@ -169,7 +169,7 @@ plt.savefig(path+"/LR_model_comparison.png", format = 'png')
 plt.close()
 
 
-plt.figure(figsize = (9,3))
+plt.figure(figsize = (14,4), layout = 'tight')
 plt.plot(test, true_post, label='True')
 plt.plot(test, GP_marg_post, label='Marginal')
 plt.plot(test, GP_plug_post, label='Plug-in')
@@ -178,7 +178,7 @@ plt.title('Posterior comparison for GPR')
 plt.savefig(path+"/GP_posterior_comparison.png", format = 'png')
 plt.close()
 
-plt.figure(figsize = (9,3))
+plt.figure(figsize = (14,4), layout = 'tight')
 plt.plot(test, true_post, label='True')
 plt.plot(test, LR_marg_post, label='Marginal')
 plt.plot(test, LR_plug_post, label='Plug-in')
