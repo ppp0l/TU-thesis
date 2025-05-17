@@ -10,7 +10,11 @@ When a point estimate of the parameter is a sufficient solution for the IP, adop
 Instead, when aiming for a posterior representation through sampling, approaches such as Delayed Acceptance MCMC \cite{ChristenFox2005} are indifferent to the choice.
 For the approach presented in this work, a forward model representation will be obtained, as we will exploit the error estimators for FE models in the surrogate's training. \medbreak
 
-We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical forward model,\[ y_i = H(u_{\tau_i}(\cdot; p_i)). \]
+We will consider training data $ D =\{ (p_i, \tau_i, y_i) \}_{i=1}^n $, where $ p_i \in \Theta $ are the input parameters, $ \tau_i \in \R_+ $ are the tolerances of the model's evaluation, and $ y_i \in \mc Y $ are the output values of the numerical evaluations of the forward model
+\[ 
+y_i = H(u_{\tau_i}(\cdot; p_i)) \ \text{ for every }\ i \in \{1,\ldots,n\},
+\]
+with measurement operator $H$~\eqref{eq:measurement-operator} and $u_{\tau}(\cdot; p)$ being the FE discretization up to tolerance $\tau$ of the solution $u(\cdot; p)$ of some PDE.
 
 There exist different classes of surrogate models: an useful distinction is the one between deterministic and stochastic surrogate models.
 Deterministic surrogate models are based on deterministic functions, such as polynomial regression, neural networks, or support vector machines.
