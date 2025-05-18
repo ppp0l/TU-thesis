@@ -11,58 +11,65 @@ The considered regression techniques are Gaussian Process Regression (GPR), whic
 
 To understand the motivation behind this work, it is necessary to provide a brief introduction to the setting in which it is situated.
 
-\subsection{Context}\label{sec:context}
-\todo[inline]{aggiorna notazione}
+\subsection{Context and motivation}\label{sec:context}
 
 Inverse Problems (IP) involve the identification of some unidentified quantities in a model through a number of measurements.
 
-We consider a finite dimensional parameter space $\mc P$, a finite dimensional measurement space $ \mc Y$ and the parameter-to-observation map 
+We consider a finite dimensional parameter space $\Theta$, a finite dimensional measurement space $ \mc Y$ and the parameter-to-observation map 
 \[
- y : \mc P \longrightarrow \mc Y, 
+ y : \Theta \longrightarrow \mc Y, 
 \]
 which to each parameter value associates the corresponding measured quantity.
 
-The map implicitly depends on the associated model: in the case of complex models, only inexact evaluations $y_\tau (p) $ of $ y(p)$ up to some tolerance $\tau$ are available through a numerical procedure. 
-In this work, we assume the underlying model to be an adaptive Finite Element (FE) discretization of some Partial Differential Equation model. 
+The map implicitly depends on an associated model: we assume the underlying model to be a Partial Differential Equation (PDE) model, which can be evaluated through a Finite Element (FE) discretization.
+For a parametrized solution $u(\cdot;p)$ with $p\in \Theta$, some measurement operator $H$ projects the infinite dimensional solution $u$ into the finite dimensional measurement, 
+\[
+    y (p) = H(u(\cdot;p)) \in \mc Y.
+\]
+As the PDE solution $u$ is only available through an inexact numerical evaluation $u_\tau$ up to some tolerance $\tau$, the forward model can only be evaluated approximately, i.e.
+\[
+    y_\tau (p) = H(u_\tau(\cdot;p)) \approx y(p).
+\]
 
-In order to reduce computational costs, a surrogate model approximating $y$ is introduced.
-For a training set $D = \{(p_i,y_i,\tau_i)\}_{i=1}^n$, with $y_i = y_{\tau_i}(p_i)$, both GPR and LR can provide a mean prediction and some stochastic error bound. 
+FE simulations are often computationally expensive: in order to reduce computational costs, a surrogate model approximating $y$ is introduced.
+For a training set $D = \{(p_i,y_i,\tau_i)\}_{i=1}^n$, with $y_i = H(u_{\tau_i}(\cdot;p_i))$, both GPR and LR can provide a mean prediction and some stochastic error bound. 
 
 GPR assumes a Gaussian process prior $\mc{G} \mc P (\mu, k)$ for the unknown ground truth $y$, with $\mu : \mc P \rightarrow \mc Y$ being some mean function and $k: \mc P \times \mc P \rightarrow \mc Y^* $ being a covariance kernel.
 Moreover, it assumes that the error on the numerical evaluations $y_\tau$ is a realization of some normally distributed noise, i.e. 
 \begin{equation}\label{eq:GPR-noise}
-    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_D,  \ \text{ with } \ \nu_D \sim \mc N (0, \Sigma_D(\tau)^2),    
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_d,  \ \text{ with } \ \nu_d \sim \mc N (0, \Sigma_d^2(\tau)),    
 \end{equation}
-for some covariance matrix $\Sigma_D(\tau)^2$ which depends on the tolerance $\tau$, with a greater tolerance corresponding to larger variance components.
+for some covariance matrix $\Sigma_d^2(\tau)$ which depends on the tolerance $\tau$, with a greater tolerance corresponding to larger variance components.
 Thanks to this assumptions, it obtains a predictive Gaussian distribution for unseen values of $y$, and computable analytical formulas for the mean and the variance are given.
 
 LR does not need any prior distributional assumptions on $y$, but instead assumes that $y$ is a Lipschitz function.
 The Lipschitz constant can be assumed or estimated from data.
 Further, the numerical evaluation error is assumed to be the effect of uniformly distributed noise,  
 \begin{equation}\label{eq:LR-noise}
-    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_D,  \ \text{ with } \ \nu_D \sim U(S_\tau )    
+    y_\tau(p) \ \text{ is a realization of } \ y(p) + \nu_d,  \ \text{ with } \ \nu_d \sim U(I_\tau )    
 \end{equation}
-where $S_\tau$ is an open, connected and centered subset of $\mc Y$ which depends on $\tau$.
-With these assumptions, LR provides a predictive uniform distribution for unseen values of $y$, guaranteeing a mean prediction and hard bounds.
+where $I_\tau$ is an open, connected and centered subset of $\mc Y$ which depends on $\tau$.
+With these assumptions, LR provides a predictive uniform distribution for unseen values of $y$, guaranteeing a mean prediction and hard bounds.\medskip
 
-
-\subsection{Motivation}\label{sec:motivation}
-\todo[inline]{rileggi ed espandi (menziona DoE)}
-The motivation for this work lies precisely in the different assumptions on the evaluation noise, Assumptions~\ref{eq:GPR-noise} and~\ref{eq:LR-noise}, required by the two techniques.
-
+The motivation for considering LR lies precisely in the different assumptions on the evaluation noise, Assumptions~\ref{eq:GPR-noise} and~\ref{eq:LR-noise}, required by the two techniques.
 For an underlying FE model, the evaluation error depends mostly on the discretization error which results from the choice of a FE basis.
 For adaptive FE, the basis is refined until the prescribed tolerance $\tau$ is not met by an error indicator.
 The error indicator often guarantees an hard bound on the discretization error: while this is compatible with Assumption~\ref{eq:LR-noise}, it is incompatible with Assumption~\ref{eq:GPR-noise}, which requires an unbounded support for the evaluation error. 
-The greater fitness of Assumption~\ref{eq:LR-noise} is the motivation for considering LR, examining different approaches to it and tailoring some of its component to an IP setting.
 
-Additionally, in Assumption~\ref{eq:GPR-noise} the covariance matrix $\Sigma_D(\tau)^2$ is often assumed to be diagonal, resulting in independent noise components. 
+Additionally, in Assumption~\ref{eq:GPR-noise} the covariance matrix $\Sigma_d(\tau)^2$ is often assumed to be diagonal, resulting in independent noise components. 
 This ignores any correlation between error components, while the discretization error has some structure due to the underlying FE system.
-Techniques to recover this structure are investigated and utilized to improve the prediction of GPR.
+A technique \todo{which?} to recover this structure is adapted to the given context and utilized to improve the prediction of GPR. \medskip
 
+For surrogates of both kinds, the IP is reformulated in order to account for the uncertainty introduced by the surrogate model.
+A marginal likelihood is derived for both GPR and LR surrogates, and a surrogate-based posterior distribution is obtained.
+To select training points, we consider an adaptive training strategy which aims at spending the least computational budget possible in order to obtain a surrogate model with a given accuracy under a certain metric.
+We adopt a sequential Design of Experiments (DoE) approach, where the training set is iteratively updated by adding new training points $(p,\tau,y)$, with $p$ being the position of the training point, $\tau$ being the evaluation tolerance and $y$ being the corresponding numerical evaluation.
+The considered strategy is goal-oriented, meaning that the training set is adapted to the IP task at hand; it is adaptive, in the sense that not only the position $p$ of the training points $(p,\tau,y)$ is optimized but also the evaluation tolerance $\tau$; and it inverleaves the selection of the training points and updating of the model with the sampling of the posterior distribution over $\Theta$, thus providing a solution to the IP task at hand at the same time as the surrogate model is trained. \medskip
+\todo[inline]{esperimenti, sommario con i contributi originali chiaramente esplicitati}
 It is not clear a priori if the methods whose assumptions which are closer to what is known about the target offer a considerable practical improvement.
 Consequently, in the experimental part we aim at comparing the performance of the different methods both on a fixed training set and in an Active Learning setting, where GPR is already commonly used. 
 
 %Summarizing, the scope of this thesis is to investigate the relation between the assumptions required by regression-based surrogate models, and shape and structure of the discretization error. A theoretical introduction to the context is given, then the proposed techniques are elaborated and tested.
 
-\subsection{Literature and related works}\label{sec:literature}
+\subsection{Related work}\label{sec:literature}
 \todo[inline]{avoja s'ha da scrivere qua}

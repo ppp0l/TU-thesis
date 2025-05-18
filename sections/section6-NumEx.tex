@@ -135,7 +135,7 @@ We begin with an initial design of $5$ points selected through LHS and with defa
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d3/GP_res.png}
 \end{center}
-\caption{Convergence rates for the GPR expected error over computational budget for the four considered strategies on the 3d example and default configuration.}
+\caption{Convergence rates for the GPR expected error over computational budget for the four considered strategies on the 3d example and default configuration. The thinner lines represent a single run, the lines of median thickness represent the average over the 5 random seed for each measurement and the thickest lines represent the average over the whole 25 runs.}
 \label{fig:3dGPconv}
 \end{figure}
 
@@ -200,7 +200,7 @@ As the computational costs of GPR scale with the number of training points, a re
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d3/config_dtol0.001/GP_res.png}
 \end{center}
-\caption{Convergence rates for the GP expected error over computational budget for the fixed-tolerance strategies, default tolerance $\tau_d = 10^{-3}$.}
+\caption{Convergence rates for the GP expected error over computational budget for the fixed-tolerance strategies, default tolerance $\tau_d = 10^{-3}$. The thinner lines represent a single run, the lines of median thickness represent the average over the 5 random seed for each measurement and the thickest lines represent the average over the whole 25 runs.}
 \label{fig:3dGP-other}
 \end{figure}
 
@@ -213,7 +213,7 @@ The different choices regarding configuration parameters as compared to GPR are 
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d3/LR_res.png}
 \end{center}
-\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies.}
+\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies. The thinner lines represent a single run, the lines of median thickness represent the average over the 5 random seed for each measurement and the thickest lines represent the average over the whole 25 runs.}
 \label{fig:3dLRconv}
 \end{figure}
 
@@ -335,7 +335,7 @@ The initial design consists of 13 points selected through LHS with default toler
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d6/GP_res.png}
 \end{center}
-\caption{Convergence rates for the GP expected error over computational budget for the four considered strategies on the 6d example.}
+\caption{Convergence rates for the GP expected error over computational budget for the four considered strategies on the 6d example. The thinner lines represent a single run, the lines of median thickness represent the average over the 4 random seed for each measurement and the thickest lines represent the average over the whole 12 runs.}
     \label{fig:6dGPconv}
 \end{figure}
 
@@ -377,7 +377,7 @@ To try to improve the performance, we tried to lower the default tolerance $\tau
 \begin{center}
     \includegraphics[width=0.8\textwidth]{results/pictures/d6/LR_res.png}
 \end{center}
-\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 6d example. The computational budget axis was truncated at 3300 as the budget spent by \texttt{ALR} far exceeds the ones from other strategies. }
+\caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 6d example. The thinner lines represent a single run, the lines of median thickness represent the average over the 4 random seed for each measurement and the thickest lines represent the average over the whole 12 runs. The computational budget axis was truncated at 3300 as the budget spent by \texttt{ALR} far exceeds the ones from other strategies. }
     \label{fig:6dLRconv}
 \end{figure}
 
@@ -512,7 +512,15 @@ We set the halting threshold to $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} 
 For each strategy, the initial design comprises of $3$ points selected through LHS and evaluated with the default tolerance corresponding to the strategy; we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}} = 20 $ iterations.
 For the tolerance problem in \texttt{AGP}, we assign the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ using the default value $\tau= \tau_{d,a}$ for the first $2\cdot N_{\text{samples}} = 4$ iterations and then every $N_{\text{sample}}$ iterations we have $\tau$ if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.\medskip
 
-Picture~\todo{fig:FE-GP-convegence} depicts the convergence curves for the GPR expected error over computational budget for the different strategies, while Table~\ref{tab:FE-GP-recap} summarizes the status of the training after the final iteration of the different strategies.
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{results/pictures/d6/GP_res.png}
+    \end{center}
+    \caption{Convergence rates for the GP expected error over computational budget for the four considered strategies on the 2d FE example. A single line is plotted as a single measurement with a single random seed is used for each strategy.}
+        \label{fig:FE-GP-convergence}
+\end{figure}
+
+Picture~\ref{fig:FE-GP-convergence} depicts the convergence curves for the GPR expected error over computational budget for the different strategies, while Table~\ref{tab:FE-GP-recap} summarizes the status of the training after the final iteration of the different strategies.
 We observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSGP}; this success from the LHS-based strategy is likely due to the low dimensionality of the parameter space, which allows for a good coverage of the parameter space with relatively few points.
 Moreover, we can see that \texttt{AGP} is able to reach the halting threshold with a significantly lower computational budget and similar number of points than the fixed-tolerance strategies.
 Finally, we note that \texttt{randGP} performs worse than the other adaptive strategies, almost on the level of \texttt{LHSGP}.
@@ -523,16 +531,16 @@ Finally, we note that \texttt{randGP} performs worse than the other adaptive str
         & converged   & $W$ & Training points    & Iterations \\ 
         \midrule
         \texttt{AGP}  
-        & yes & 252823 &  17   &  8  \\
+        & yes & 252823 &  17   &  16  \\
         \texttt{posAdGP}
-        & yes & 442719 &  15   &  6  \\
+        & yes & 442719 &  15   &  11  \\
         \texttt{randGP}
-        & yes & 600833 &  19   &  8  \\
+        & yes & 600833 &  19   &  16  \\
         \texttt{LHSGP}
-        & yes & 727324 &  21   &  9  \\
+        & yes & 727324 &  21   &  18  \\
     \bottomrule
     \end{tabular}
-    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example.
+    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example. For the single run performed the convergence status, total computational work $W$, the final number of points in the training set and the number of iterations necessary to terminate the training are provided.
     }
     \label{tab:FE-GP-recap}
 \end{centering}
@@ -540,11 +548,41 @@ Finally, we note that \texttt{randGP} performs worse than the other adaptive str
 Picture~\todo{fig:FE-GP-samples} shows the samples gathered from the different strategies as well as the ground truth value utilized to generate the measurements.\medskip
 
 For the LR surrogate we do similarly as done for the GPR surrogate, utilizing diffrent tolerances for the fully-adaptive strategy \texttt{ALR} and the fixed-tolerance strategies \texttt{posAdLR}, \texttt{randLR} and \texttt{LHSLR}; we use a default tolerance $\tau_{d,a}= 10^{-2}$ for \texttt{ALR} and a default tolerance $\tau_{d,f} = 10^{-3}$ for the others.
-The halting threshold is set to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 6.\bar 6 \cdot 10^{-3}$, we sample every $N_{\text{sample}} = 3$ iterations and set the number of walkers to $n_w = 16$.
+The halting threshold is set to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 2.\bar 6 \cdot 10^{-2}$, we sample every $N_{\text{sample}} = 3$ iterations and set the number of walkers to $n_w = 16$.
 The initial design consists of $5$ points selected through LHS with the default tolerance corresponding to the strategy; we perform a maximum of $J_{\max} = 7 \cdot N_{\text{samples}} = 21 $ iterations and for the tolerance problem at Step 3 of the algorithm for \texttt{ALR} we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ using the default value $\tau= \tau_{d,a}$ for the first $2\cdot N_{\text{samples}} = 6$ iterations and then every $N_{\text{sample}}$ iterations we have $\tau$ if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.\medskip
 
-The expected error over computational budget curves for the LR surrogate are shown in Picture~\todo{fig:FE-LR-convergence}; like for the GPR-based strategies we observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSLR}.
-Table~\todo{tab:FE-LR-recap} summarizes the status of the training after the final iteration of the different strategies.
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{results/pictures/d6/LR_res.png}
+    \end{center}
+    \caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 2d FE example. A single line is plotted as a single measurement with a single random seed is used for each strategy.}
+        \label{fig:FE-LR-convergence}
+\end{figure}
+
+The expected error over computational budget curves for the LR surrogate are shown in Picture~\ref{fig:FE-LR-convergence}; like for the GPR-based strategies we observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSLR}.
+Table~\ref{tab:FE-LR-recap} summarizes the status of the training after the final iteration of the different strategies.
+\begin{table}[H]
+    \begin{centering}
+    \begin{tabular}{cccccc}
+    \toprule
+        & converged   & E & $W$ & Training points    & Iterations \\ 
+        \midrule
+        \texttt{AGP}  
+        & no & 0.0857 & 846425 &  25   &  21  \\
+        \texttt{posAdGP}
+        & no & 0.1092 & 822192 &  26   &  21 \\
+        \texttt{randGP}
+        & no & 0.1777 & 822192 &  26   &  21 \\
+        \texttt{LHSGP}
+        & no & 0.4887 & 822192 &  26   &  21 \\
+    \bottomrule
+    \end{tabular}
+    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example.
+    }
+    \label{tab:FE-LR-recap}
+\end{centering}
+\end{table} 
+
 Finally, Picture~\todo{fig:FE-LR-samples} shows the samples gathered from the different strategies and the groung truth value $p$ employed to generate the measurements.
 
 
