@@ -510,12 +510,34 @@ Unlike the analytical examples, where we performed multiple runs in order to ave
 For the GPR surrogate we consider a default configuration similar to the one of the preceding examples, with the difference that we consider a default tolerance $\tau_{d,a}= 10^{-2}$ for the fully-adaptive \texttt{AGP} strategy and a default tolerance $\tau_{d,f} = 10^{-3}$ for the fixed-tolerance strategies.
 We set the halting threshold to $\texttt{tol} = \sigma^2 \cdot \frac{\text{dim} \mc Y }{20} = 2\cdot 10^{-5}$, while sampling every $N_{\text{sample}} = 2$ iterations with an ensemble composed of $n_w = 16$ walkers.
 For each strategy, the initial design comprises of $3$ points selected through LHS and evaluated with the default tolerance corresponding to the strategy; we perform a maximum of $J_{\max} = 10 \cdot N_{\text{samples}} = 20 $ iterations.
-For the tolerance problem in \texttt{AGP}, we assign the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ using the default value $\tau= \tau_{d,a}$ for the first $2\cdot N_{\text{samples}} = 4$ iterations and then every $N_{\text{sample}}$ iterations we hakve $\tau$ if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.\medskip
+For the tolerance problem in \texttt{AGP}, we assign the budget $\Delta W_j = \tau ^{-\frac{l}{r}}$ using the default value $\tau= \tau_{d,a}$ for the first $2\cdot N_{\text{samples}} = 4$ iterations and then every $N_{\text{sample}}$ iterations we have $\tau$ if the expected error has not reduced by a factor 4 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{4}$.\medskip
 
-Picture~\todo{fig:FE-AGP-convegence} depicts the convergence curves for the GPR expected error over computational budget for the different strategies.
+Picture~\todo{fig:FE-GP-convegence} depicts the convergence curves for the GPR expected error over computational budget for the different strategies, while Table~\ref{tab:FE-GP-recap} summarizes the status of the training after the final iteration of the different strategies.
 We observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSGP}; this success from the LHS-based strategy is likely due to the low dimensionality of the parameter space, which allows for a good coverage of the parameter space with relatively few points.
-Table~\todo{tab:FE-AGP-recap} summarizes the status of the training after the final iteration of the different strategies; we note that, despite requiring more iterations, \texttt{AGP} manages to obtain an accuracy level similar to the fixed-tolerance strategies with a similar number of points and significantly less computational budget. 
-Picture~\todo{fig:FE-AGP-samples} shows the samples gathered from the different strategies as well as the ground truth value utilized to generate the measurements.\medskip
+Moreover, we can see that \texttt{AGP} is able to reach the halting threshold with a significantly lower computational budget and similar number of points than the fixed-tolerance strategies.
+Finally, we note that \texttt{randGP} performs worse than the other adaptive strategies, almost on the level of \texttt{LHSGP}.
+\begin{table}[H]
+    \begin{centering}
+    \begin{tabular}{ccccc}
+    \toprule
+        & converged   & $W$ & Training points    & Iterations \\ 
+        \midrule
+        \texttt{AGP}  
+        & yes & 252823 &  17   &  8  \\
+        \texttt{posAdGP}
+        & yes & 442719 &  15   &  6  \\
+        \texttt{randGP}
+        & yes & 600833 &  19   &  8  \\
+        \texttt{LHSGP}
+        & yes & 727324 &  21   &  9  \\
+    \bottomrule
+    \end{tabular}
+    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example.
+    }
+    \label{tab:FE-GP-recap}
+\end{centering}
+\end{table} 
+Picture~\todo{fig:FE-GP-samples} shows the samples gathered from the different strategies as well as the ground truth value utilized to generate the measurements.\medskip
 
 For the LR surrogate we do similarly as done for the GPR surrogate, utilizing diffrent tolerances for the fully-adaptive strategy \texttt{ALR} and the fixed-tolerance strategies \texttt{posAdLR}, \texttt{randLR} and \texttt{LHSLR}; we use a default tolerance $\tau_{d,a}= 10^{-2}$ for \texttt{ALR} and a default tolerance $\tau_{d,f} = 10^{-3}$ for the others.
 The halting threshold is set to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 6.\bar 6 \cdot 10^{-3}$, we sample every $N_{\text{sample}} = 3$ iterations and set the number of walkers to $n_w = 16$.

@@ -1,1 +1,16 @@
 \section{Conclusions}\label{sec:conclusions}
+This work has presented two different regression techniques, the established Gaussian Process Regression (GPR) and the less common Lipschitz Regression (LR), and applied them in the context of Inverse Problems with forward models involving Finite Element (FE) simulations. 
+The LR framework has been developed in a general form, formalizing the presentation of the method, explicitly stating the assumptions made on the data and the model and allowing for different data models.
+The marginal likelihood, already established for GPR surrogates, has been derived for LR-based surrogates.
+For both techniques a goal-oriented adaptive training strategy with interleaved sampling and evaluation-tolerance optimization has been proposed and tested through different experiments.
+Moreover, for GPR surrogates a technique to estimate the covariance matrix of the discretization error under certain assumption regarding the underlying FE model has been proposed and tested. \medskip
+
+The numerical results have shown that the proposed adaptive training strategy can be effective in reducing the computational costs and the number of training points while maintaining the accuracy of the surrogate model; furthermore, the interleaved sampling of the posterior provides a faithful representation of the posterior distribution of the unknown parameters at the same time as the surrogate model is trained.
+However, the effectiveness of LR as a surrogating technique has been shown to depend strongly on the properties of the forward model, with performances which oscillate between being comparable to the ones of GPR-based surrogates to being significantly worse.
+Moreover, LR-based surrogates seem to be less sensitive to the optimization of the evaluation tolerances, which instead seem to have a considerable impact in improving the performance of GPR-based surrogates.
+Finally, while the estimation of the covariance matrix of the discretization error has been shown to be potentially successful, its impact in the context of IP-oriented adaptive training will likely still be limited as other sources factors, such as the kernel structure, dominate in determining the behavior of the surrogate model.\medskip
+
+Future work can be directed towards improving the performance of LR-based surrogates, for example by subdividing the domain and considering different Lipschitz constants for different subdomains or by using an estimate of a local Lipschitz constant instead of a global one. 
+Regarding the adaptive strategy different error estimates and acquisition functions can be considered, potentially improving the performance of the adaptive training strategy both in tolerance-adaptive and in fixed-tolerance versions.
+Finally, while the ground-truth errors for the proposed strategy have been consistent with the expected error metric across all experiments, the convergence of a GPR-based surrogate to a wrong solution has been observed in Experiment~\ref{sec:6dexp} for the benchmark strategy \texttt{randGP}.
+As this failure went unnoticed under the error estimates, techniques to detect this kind of behavior as well as techniques to improve the robustness of the adaptive training strategy are needed.
