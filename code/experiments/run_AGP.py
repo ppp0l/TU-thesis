@@ -67,7 +67,10 @@ training_config = configuration["training_config"]
 
 n_init = training_config["n_init"]
 
-default_tol = training_config["default_tol"]
+try :
+    default_tol = training_config["default_tol_ada"]
+except :
+    default_tol = training_config["default_tol"]
 
 # create forward model,  sets noise type
 if dim == 2 :
