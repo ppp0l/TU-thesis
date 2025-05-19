@@ -57,7 +57,7 @@ def corner_plot(
             corner.corner(chain, fig=fig, color = colors[i], weights= weights[i] * np.ones(len(chain)), **kwargs)
 
     for i, points_set in enumerate(points):
-        corner.overplot_points(fig,points_set, markersize = 2, color = points_colors[i], )
+        corner.overplot_points(fig,points_set, markersize = 15, color = points_colors[i], )
     
     if domain is not None:
         for i, ax in enumerate(fig.axes):
@@ -70,7 +70,8 @@ def corner_plot(
 
     if labels is not None:
         lines = [ mlines.Line2D([],[], color=colors[i], label=labels[i]) for i in range(len(labels)) ]
-        plt.legend(handles=lines, loc = 7,bbox_to_anchor=(0., 1.9, 0.8, 1.0) )
+        #lines.append(mlines.Line2D([0], [0], marker='o', color='w', lw=0,markersize=8,markerfacecolor='k', label='Ground truth'))
+        plt.legend(handles=lines, loc = 7,bbox_to_anchor=(0., 1.0, 0.8, 1.0) )
     if title is not None:
         plt.suptitle(title)
 

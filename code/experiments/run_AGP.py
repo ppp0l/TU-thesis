@@ -77,7 +77,7 @@ if dim == 2 :
     forward = Adaptive_beam(path + "/data/d2/kaskade", adaptive = True, default_tol= default_tol)
     forward.dom = param_space
 else :
-    forward = fm(dim, noise, dom = param_space)
+    forward = fm(dim, noise, dom = param_space, corr = True)
 
 # create surrogate
 surrogate = MTModel(num_tasks = forward.dout)
