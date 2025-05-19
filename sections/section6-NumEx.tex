@@ -521,9 +521,9 @@ For the tolerance problem in \texttt{AGP}, we assign the budget $\Delta W_j = \t
 \end{figure}
 
 Picture~\ref{fig:FE-GP-convergence} depicts the convergence curves for the GPR expected error over computational budget for the different strategies, while Table~\ref{tab:FE-GP-recap} summarizes the status of the training after the final iteration of the different strategies.
-We observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSGP}; this success from the LHS-based strategy is likely due to the low dimensionality of the parameter space, which allows for a good coverage of the parameter space with relatively few points.
-Moreover, we can see that \texttt{AGP} is able to reach the halting threshold with a significantly lower computational budget and similar number of points than the fixed-tolerance strategies.
-Finally, we note that \texttt{randGP} performs worse than the other adaptive strategies, almost on the level of \texttt{LHSGP}.
+We observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSGP}, with the high accuracy strategies converging extremely rapidly; this success is likely due to the low dimensionality of the parameter space, which allows for a good coverage of the parameter space with relatively few high-accuracy points.
+Moreover, we can see that \texttt{AGP} is able to reach the halting threshold with a significantly lower computational budget but higher number of points than the fixed-tolerance strategies.
+Finally, we note that \texttt{randGP} performs worse than \texttt{posAdGP}, around at the level of \texttt{LHSGP}.
 \begin{table}[H]
     \begin{centering}
     \begin{tabular}{ccccc}
@@ -531,13 +531,13 @@ Finally, we note that \texttt{randGP} performs worse than the other adaptive str
         & converged   & $W$ & Training points    & Iterations \\ 
         \midrule
         \texttt{AGP}  
-        & yes & 252823 &  17   &  16  \\
+        & yes & 118196 &  15   &  16  \\
         \texttt{posAdGP}
-        & yes & 442719 &  15   &  11  \\
+        & yes & 252982 &  8   &  5  \\
         \texttt{randGP}
-        & yes & 600833 &  19   &  16  \\
+        & yes & 347851 &  11   &  8  \\
         \texttt{LHSGP}
-        & yes & 727324 &  21   &  18  \\
+        & yes & 411096 &  13   &  10  \\
     \bottomrule
     \end{tabular}
     \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example. For the single run performed the convergence status, total computational work $W$, the final number of points in the training set and the number of iterations necessary to terminate the training are provided.
@@ -545,7 +545,6 @@ Finally, we note that \texttt{randGP} performs worse than the other adaptive str
     \label{tab:FE-GP-recap}
 \end{centering}
 \end{table} 
-Picture~\todo{fig:FE-GP-samples} shows the samples gathered from the different strategies as well as the ground truth value utilized to generate the measurements.\medskip
 
 For the LR surrogate we do similarly as done for the GPR surrogate, utilizing diffrent tolerances for the fully-adaptive strategy \texttt{ALR} and the fixed-tolerance strategies \texttt{posAdLR}, \texttt{randLR} and \texttt{LHSLR}; we use a default tolerance $\tau_{d,a}= 10^{-2}$ for \texttt{ALR} and a default tolerance $\tau_{d,f} = 10^{-3}$ for the others.
 The halting threshold is set to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 2.\bar 6 \cdot 10^{-2}$, we sample every $N_{\text{sample}} = 3$ iterations and set the number of walkers to $n_w = 16$.
@@ -559,8 +558,10 @@ The initial design consists of $5$ points selected through LHS with the default 
         \label{fig:FE-LR-convergence}
 \end{figure}
 
-The expected error over computational budget curves for the LR surrogate are shown in Picture~\ref{fig:FE-LR-convergence}; like for the GPR-based strategies we observe that all strategies reach the halting threshold before the maximum number of iterations, included \texttt{LHSLR}.
-Table~\ref{tab:FE-LR-recap} summarizes the status of the training after the final iteration of the different strategies.
+The expected error over computational budget curves for the LR surrogate are shown in Picture~\ref{fig:FE-LR-convergence}, while Table~\ref{tab:FE-LR-recap} summarizes the status of the training after the final iteration of the different LR-based strategies. 
+Unlike for the GPR-based strategies we observe that all strategies do not reach the halting threshold before the maximum number of iterations, included \texttt{ALR}; the error level remains high for all strategies, with \texttt{LHSLR} in particular struggling to reduce the expected error at all and \texttt{randLR} performing significantly worse than the other adaptive strategies.
+In this example, the performance of \texttt{ALR} and \texttt{posAdLR} is not totally unsatisfying, as they are able to reduce the expected error to an order of $10^{-2}$, but the computational cost is considerably higher than the one of the GPR-based strategies without meeting the halting threshold.
+
 \begin{table}[H]
     \begin{centering}
     \begin{tabular}{cccccc}
@@ -568,22 +569,24 @@ Table~\ref{tab:FE-LR-recap} summarizes the status of the training after the fina
         & converged   & E & $W$ & Training points    & Iterations \\ 
         \midrule
         \texttt{AGP}  
-        & no & 0.0857 & 846425 &  25   &  21  \\
+        & no & 0.0457 & 846425 &  25   &  21  \\
         \texttt{posAdGP}
-        & no & 0.1092 & 822192 &  26   &  21 \\
+        & no & 0.0609 & 822192 &  26   &  21 \\
         \texttt{randGP}
-        & no & 0.1777 & 822192 &  26   &  21 \\
+        & no & 0.1019 & 822192 &  26   &  21 \\
         \texttt{LHSGP}
-        & no & 0.4887 & 822192 &  26   &  21 \\
+        & no & 0.2043 & 822192 &  26   &  21 \\
     \bottomrule
     \end{tabular}
-    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example.
+    \caption{Status of the training after the final iteration of different strategies for the GPR surrogate, FE example. For the single run performed the convergence status, final error level $E$, total computational work $W$, the final number of points in the training set and the number of iterations necessary to terminate the training are provided.
     }
     \label{tab:FE-LR-recap}
 \end{centering}
 \end{table} 
 
-Finally, Picture~\todo{fig:FE-LR-samples} shows the samples gathered from the different strategies and the groung truth value $p$ employed to generate the measurements.
+Finally, Picture~\todo{fig:FE-samples} shows the samples gathered from the different strategies for both the GPR and the LR-based strategies.
+We see that, while all strategies correctly identify the region of the parameter space where the ground truth is located, the GPR-based strategies provide a considerably more precise posterior distribution, with the samples being more concentrated around the ground truth and with a lower variance.
+Among the LR-based strategies, \texttt{ALR} and \texttt{posAdLR} display lower variance than \texttt{randLR} and \texttt{LHSLR}, but the samples are still more spread out than all of the GPR-based strategies.
 
 
 
@@ -591,7 +594,60 @@ Finally, Picture~\todo{fig:FE-LR-samples} shows the samples gathered from the di
 \subsection[Effects of covariance estimation]{Effects of the discretization noise covariance's estimation}\label{sec:cov-est}
 
 To test the impact of the estimation of the discretization noise covariance $\Sigma_D^2$ on the performance of the surrogate, we utilize the data from the 3-d and 6-d analytical examples, where the discretization noise covariance is known.
-First we test the absolute error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_D^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_D^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with the two covariances and then comparing the predictive variance of the surrogates over the parameter space and he resulting MAP and mean estimates as well as the corresponding posteriors standard deviation.
+First we test the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_d^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with $\hat Sigma_d^2$ and $I_{\text{dim} \mc Y}$ as data noise covariances, and then comparing the resulting MAP estimates resulting from the surrogate-based posteriors.\medskip
 
+\begin{table}[H]
 
+    \begin{centering}
+        
+    
+    \hspace*{-1.5cm}
+    \begin{tabular}{cccccc}
+    \toprule
+        & \multicolumn{4}{c}{Covariance estimate relative error}  & Identity relative error \\ 
+        & \multicolumn{4}{c}{$ \|\hat \Sigma_d^2 - \Sigma_d^2\|_2 / \|\Sigma_d^2\|_2 $}  & $ \|I_{\text{dim} \mc Y} - \Sigma_d^2\|_2 / \|\Sigma_d^2\|_2 $ \\ 
+        & avg   & med   & min   & max   &  \\
+        \midrule
+        3d example
+        & 0.253 & 0.252 & 0.229 & 0.279
+        & 0.344 \\
+        6d example
+        & 0.449 & 0.446 & 0.415 & 0.495 
+        & 0.746 \\
+        
+    \bottomrule
+    \end{tabular}
+    \caption{Average, median, minimum and maximum of the relative error on the covariance estimate for the 3-d and 6-d examples, and relative distance of the identity matrix from the covariance estimate for comparison.
+    }
+    \label{tab:cov_est_err}
+\end{centering}
+\end{table}
 
+To test the error on the covariance matrix $\Sigma_d^2$, we consider the covariance estimate $\hat \Sigma_d^2$ resulting from the final GPR surrogate trained with the \texttt{AGP} strategy for both the 3-d and 6-d examples, comparing the results with the true covariance $\Sigma_d^2$ over each run.
+Table~\ref{tab:cov_est_err} summarizes the results of the covariance estimation for the two examples, showing the average, median, minimum and maximum of the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ over the 25 runs for the 3-d example and the 12 runs for the 6-d example. \newline
+The results show that, despite the high dimensionality of the covariance matrix $\Sigma_d^2$, being a $14\times 14$ matrix for the 3-d example and a $30 \times 30$ matrix for the 6-d example, the shrinkage covariance is able to estimate the covariance with a relative error of around 25\% for the 3-d example and 45\% for the 6-d example, in both cases providing a better estimate than the identity matrix $I_{\text{dim} \mc Y}$. \medskip
+
+We then test the effect of utilizing the covariance estimate $\hat \Sigma_d^2$ instead of the identity matrix $I_{\text{dim} \mc Y}$ for the GPR surrogate in an IP setting.
+We train two GPR surrogates over the \texttt{AGP} training data gathered in Experiments~\ref{sec:3dexp} and~\ref{sec:6dexp}, one with the identity matrix and one with the covariance estimate $\hat \Sigma_d^2$, as discretization noise covariance, and then we compare the error on the MAP estimate given by the posteriors corresponding to the two surrogates.
+The errors using $\hat \Sigma_d^2$ are the ones already reported in Table~\ref{tab:3d-comparison} and Table~\ref{tab:6d-comparison} for the 3-d and 6-d examples, respectively.
+We compare them with the errors obtained using the identity matrix $I_{\text{dim} \mc Y } $ as noise covariance in Table~\ref{tab:cov_est_map}.
+
+\begin{table}[H]
+    \begin{centering}
+        
+    
+    \begin{tabular}{ccccccccc}
+    \toprule
+        & \multicolumn{4}{c}{MAP error, $\hat \Sigma_d^2$} & \multicolumn{4}{c}{MAP error, $I_{\text{dim} \mc Y }$} \\ 
+        & avg   & med   & min   & max   & avg   & med   & min   & max \\
+        \midrule
+        \texttt{AGP}, $\tau_d = 3 \cdot 10 ^{-2}$    
+        &always  &  15   &  12   &  20   &  20.6 &  21   &   16  & 23   \\
+        Others, $\tau_d = 3 \cdot 10 ^{-2}$    
+        & never   &  35   &  35   &   35  &   30  &  30   &   30  & 30   \\
+    \bottomrule
+    \end{tabular}
+    \caption{}
+    \label{tab:cov_est_map}
+\end{centering}
+\end{table}

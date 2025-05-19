@@ -180,7 +180,6 @@ In the context of this work, \textit{(LR-data)} entails that the discretization 
 with numerical evaluations of $y$ falling in a bounded convex region of $\mc Y$ centered around $y(p)$. \newline
 Given the structure of FE discretization errors and the nature of their estimators described in Section~\ref{sec:AdaFE}, this assumption is more realistic than the one of GPR, and it is the main motivation for considering LR in this work. \medbreak
 
-\pv{it may be not extremely clear why the below object is named a cone, and the whole proposition with proof may seem not super intuitive. if that's the case, I can add a figure depicting a 1d case which would make it much clearer.}
 For any $p,p'$ in $\Theta$, $v\in \mc Y$, $\underline{L} = (L^{(1)},\dots L^{(\text{dim}\mc Y)} ) \in \R^{\text{dim} \mc Y}$ let us write 
 \[
         Cone_{p,v,\underline L}(p') = \bigoplus_{j=1}^{\text{dim} \mc Y} \left[ v^{(j)} - L^{(j)} \|p-p'\|_\Theta, v^{(j)} + L^{(j)} \|p-p'\|_\Theta \right]
