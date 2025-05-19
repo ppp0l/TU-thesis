@@ -514,7 +514,7 @@ For the tolerance problem in \texttt{AGP}, we assign the budget $\Delta W_j = \t
 
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{results/pictures/d6/GP_res.png}
+        \includegraphics[width=0.8\textwidth]{results/pictures/d2/GP_res.png}
     \end{center}
     \caption{Convergence rates for the GP expected error over computational budget for the four considered strategies on the 2d FE example. A single line is plotted as a single measurement with a single random seed is used for each strategy.}
         \label{fig:FE-GP-convergence}
@@ -552,7 +552,7 @@ The initial design consists of $5$ points selected through LHS with the default 
 
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{results/pictures/d6/LR_res.png}
+        \includegraphics[width=0.8\textwidth]{results/pictures/d2/LR_res.png}
     \end{center}
     \caption{Convergence rates for the LR expected error over computational budget for the four considered strategies on the 2d FE example. A single line is plotted as a single measurement with a single random seed is used for each strategy.}
         \label{fig:FE-LR-convergence}
@@ -584,17 +584,33 @@ In this example, the performance of \texttt{ALR} and \texttt{posAdLR} is not tot
 \end{centering}
 \end{table} 
 
-Finally, Picture~\todo{fig:FE-samples} shows the samples gathered from the different strategies for both the GPR and the LR-based strategies.
+Finally, Picture~\ref{fig:FE-samples} shows the samples gathered from the different strategies for both the GPR and the LR-based strategies.
 We see that, while all strategies correctly identify the region of the parameter space where the ground truth is located, the GPR-based strategies provide a considerably more precise posterior distribution, with the samples being more concentrated around the ground truth and with a lower variance.
-Among the LR-based strategies, \texttt{ALR} and \texttt{posAdLR} display lower variance than \texttt{randLR} and \texttt{LHSLR}, but the samples are still more spread out than all of the GPR-based strategies.
+Among the LR-based strategies, \texttt{ALR} and \texttt{posAdLR} offer a better posterior representation than \texttt{randLR} and \texttt{LHSLR}, which provide an approximated posterior with high variance and multiple modes. 
+\texttt{ALR} is rather close to the GPR-based strategies, but still displays an higher variance.
 
-
+\begin{figure}[H]
+    \begin{subfigure}[h]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{results/pictures/d2/GP_corner.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[h]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{results/pictures/d2/LR_corner.png}
+    \end{subfigure}%
+    \caption{Gathered samples and ground truth $p$ on the scaled parameter space $\Theta$ for the GPR-based strategies (left) and the LR-based strategies (right), 2d FE example.}
+    \label{fig:FE-samples}
+\end{figure}
 
 
 \subsection[Effects of covariance estimation]{Effects of the discretization noise covariance's estimation}\label{sec:cov-est}
 
-To test the impact of the estimation of the discretization noise covariance $\Sigma_D^2$ on the performance of the surrogate, we utilize the data from the 3-d and 6-d analytical examples, where the discretization noise covariance is known.
-First we test the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_d^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with $\hat Sigma_d^2$ and $I_{\text{dim} \mc Y}$ as data noise covariances, and then comparing the resulting MAP estimates resulting from the surrogate-based posteriors.\medskip
+To test the impact of the estimation of the discretization noise covariance $\Sigma_D^2$ on the performance of the surrogate, we utilize the data from the 3d and 6d analytical examples, where the discretization noise covariance is known.
+First we test the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_d^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with $\hat \Sigma_d^2$ and $I_{\text{dim} \mc Y}$ as data noise covariances, and then comparing the resulting MAP estimates resulting from the surrogate-based posteriors.\medskip
+
+
+To test the error on the covariance matrix $\Sigma_d^2$, we consider the covariance estimate $\hat \Sigma_d^2$ resulting from the final GPR surrogate trained with the \texttt{AGP} strategy for both the 3d and 6d examples, comparing the results with the true covariance $\Sigma_d^2$ over each run.
+Table~\ref{tab:cov_est_err} summarizes the results of the covariance estimation for the two examples, showing the average, median, minimum and maximum of the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ over the 25 runs for the 3d example and the 12 runs for the 6d example. \newline
+The results show that, despite the high dimensionality of the covariance matrix $\Sigma_d^2$, being a $14\times 14$ matrix for the 3d example and a $30 \times 30$ matrix for the 6d example, the shrinkage covariance is able to estimate the covariance with a relative error of around 25\% for the 3d example and 45\% for the 6d example, in both cases providing a better estimate than the identity matrix $I_{\text{dim} \mc Y}$. \medskip
 
 \begin{table}[H]
 
@@ -617,19 +633,15 @@ First we test the error on the matrix 2-norm of the shrinkage covariance estimat
         
     \bottomrule
     \end{tabular}
-    \caption{Average, median, minimum and maximum of the relative error on the covariance estimate for the 3-d and 6-d examples, and relative distance of the identity matrix from the covariance estimate for comparison.
+    \caption{Average, median, minimum and maximum of the relative error on the covariance estimate for the 3d and 6d examples, and relative distance of the identity matrix from the covariance estimate for comparison.
     }
     \label{tab:cov_est_err}
 \end{centering}
 \end{table}
 
-To test the error on the covariance matrix $\Sigma_d^2$, we consider the covariance estimate $\hat \Sigma_d^2$ resulting from the final GPR surrogate trained with the \texttt{AGP} strategy for both the 3-d and 6-d examples, comparing the results with the true covariance $\Sigma_d^2$ over each run.
-Table~\ref{tab:cov_est_err} summarizes the results of the covariance estimation for the two examples, showing the average, median, minimum and maximum of the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ over the 25 runs for the 3-d example and the 12 runs for the 6-d example. \newline
-The results show that, despite the high dimensionality of the covariance matrix $\Sigma_d^2$, being a $14\times 14$ matrix for the 3-d example and a $30 \times 30$ matrix for the 6-d example, the shrinkage covariance is able to estimate the covariance with a relative error of around 25\% for the 3-d example and 45\% for the 6-d example, in both cases providing a better estimate than the identity matrix $I_{\text{dim} \mc Y}$. \medskip
-
 We then test the effect of utilizing the covariance estimate $\hat \Sigma_d^2$ instead of the identity matrix $I_{\text{dim} \mc Y}$ for the GPR surrogate in an IP setting.
 We train two GPR surrogates over the \texttt{AGP} training data gathered in Experiments~\ref{sec:3dexp} and~\ref{sec:6dexp}, one with the identity matrix and one with the covariance estimate $\hat \Sigma_d^2$, as discretization noise covariance, and then we compare the error on the MAP estimate given by the posteriors corresponding to the two surrogates.
-The errors using $\hat \Sigma_d^2$ are the ones already reported in Table~\ref{tab:3d-comparison} and Table~\ref{tab:6d-comparison} for the 3-d and 6-d examples, respectively.
+The errors using $\hat \Sigma_d^2$ are the ones already reported in Table~\ref{tab:3d-comparison} and Table~\ref{tab:6d-comparison} for the 3d and 6d examples, respectively.
 We compare them with the errors obtained using the identity matrix $I_{\text{dim} \mc Y } $ as noise covariance in Table~\ref{tab:cov_est_map}.
 
 \begin{table}[H]
@@ -641,13 +653,18 @@ We compare them with the errors obtained using the identity matrix $I_{\text{dim
         & \multicolumn{4}{c}{MAP error, $\hat \Sigma_d^2$} & \multicolumn{4}{c}{MAP error, $I_{\text{dim} \mc Y }$} \\ 
         & avg   & med   & min   & max   & avg   & med   & min   & max \\
         \midrule
-        \texttt{AGP}, $\tau_d = 3 \cdot 10 ^{-2}$    
-        &always  &  15   &  12   &  20   &  20.6 &  21   &   16  & 23   \\
-        Others, $\tau_d = 3 \cdot 10 ^{-2}$    
-        & never   &  35   &  35   &   35  &   30  &  30   &   30  & 30   \\
+        3d example   
+        &0.0046 & 0.0039 & 0.0011 & 0.0086  &  0.0048 &  0.0042   &  0.0012  & 0.0091   \\
+        6d example
+        & 0.0086 & 0.0075 & 0.0029 & 0.0219  & 0.0091 &  0.0086   &  0.0028  & 0.0236   \\
     \bottomrule
     \end{tabular}
-    \caption{}
+    \caption{Average, median, minimum and maximum of the absolute error on the MAP estimate using the covariance estimate $\hat \Sigma_d^2$ and the identity matrix $I_{\text{dim} \mc Y}$ as discretization noise covariance for the 3d and 6d examples, using the \texttt{AGP} training sets.
+    }
     \label{tab:cov_est_map}
-\end{centering}
+    \end{centering}
 \end{table}
+
+We can notice that the results using the covariance estimate $\hat \Sigma_d^2$ are slightly better than the ones using the identity matrix $I_{\text{dim} \mc Y}$ in both examples, but the difference does not significantly alter the performance of the surrogate.
+This is likely due to the fact that the identity matrix $I_{\text{dim} \mc Y}$ is a good approximation of the discretization noise covariance $\Sigma_d^2$ as shown in Table~\ref{tab:cov_est_err}, in particular for the 3d example; moreover, the behavior of the GPR surrogate depends on a number of other factors, such as the kernel's structure and hyperparameters, which are likely to have a greater impact on the surrogate's performance than the choice of the discretization noise covariance.
+However it is worth noticing that computing the covariance estimate $\hat \Sigma_d^2$ is computationally inexpensive whenever residuals estimates are available, rendering it potentially useful in contexts where the identity matrix is not a good approximation of the discretization noise covariance.
