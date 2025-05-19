@@ -8,12 +8,12 @@ model_path = "/home/numerik/pvillani/Project/lipschitz/code/kaskade/beam"
 
 def_scaling = {
     "out" : {
-        "sum" : [0.015, 0.015, -1.e-7, 1.e-7],
-        "scale" : [-200/3, -200/3, 1.3e6, -2.e6]
+        "sum" : [0.06, 0.06, -5.e-7, 5.e-7],
+        "scale" : [-100/6, -100/6, 4.e5, -4.e5]
     },
     "in" : {
-        "sum" : [-2.e11, -0.1],
-        "scale" : [0.5e-11, 20/7]
+        "sum" : [-0.9e11, -0.1],
+        "scale" : [5.e-12, 20/7]
     }
 }
 
@@ -152,7 +152,7 @@ class Adaptive_beam :
             responses[i], error_levels[i] = self.run(runflags, out_path, tolerance[i])
 
             
-        return responses, error_levels
+        return responses, tolerance
 
         
     def run(self, flags: str, out_path: str, default_tol: float) -> tuple:

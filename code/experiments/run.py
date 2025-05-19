@@ -101,7 +101,11 @@ def run_adaptive(training_set : dict, surrogate : Surrogate, fm : forward_model,
     threshold = training_config["threshold"]
     conv_ratio = training_config["conv_ratio"]
 
-    default_tol = training_config["default_tol"]
+    try :
+        default_tol = training_config["default_tol_ada"]
+    except :
+        default_tol = training_config["default_tol"]
+        
     tol = default_tol
     FE_cost = configuration["forward_model_config"]["FE_cost"]
     budget_next_it = points_per_it * tol**(-FE_cost)

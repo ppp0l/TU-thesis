@@ -37,7 +37,7 @@ prior_mean = np.ones(dim)/2
 prior_std = 1/6
 
 n_meas = 1
-gt = np.array([ [2.9e11, 0.3]])
+gt = np.array([ [2e11, 0.25]])
 
     
 if args.eval_model:
@@ -52,9 +52,10 @@ sample_every = 3
 points_per_it = 1
 n_init = 5
 default_tol = 0.001
-threshold = meas_std * fm.dout / 3
+default_tol_ada = 0.01
+threshold = meas_std * fm.dout / 1.5
 conv_ratio = 1/2
-max_iter = 5
+max_iter = 7
 FE_cost = 1.5
 
 configurations = []
@@ -75,6 +76,7 @@ for i in range(n_meas):
             "n_init": n_init,
             "points_per_it": points_per_it,
             "default_tol": default_tol,
+            "default_tol_ada": default_tol_ada,
             "max_iter": max_iter * sample_every,
             "threshold": threshold,
             "conv_ratio": conv_ratio,
