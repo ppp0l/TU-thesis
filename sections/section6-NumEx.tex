@@ -79,7 +79,7 @@ We consider non uniform budget fractionating, adapting the computational budget 
 Finally, the tolerance level \texttt{tol} is selected to be proportional to the measurement's covariance for the GPR surrogate and to the measurement's standard deviation for the LR surrogate, as the error estimates are related to the surrogate's covariance and standard deviation respectively.\medskip
 
 \subsection{Implementation details}\label{sec:implementation}
-A Python implementation of~\ref{algo:AL}, available at (...) along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
+A Python implementation of~\ref{algo:AL}, available at \footnote{\url{git.zib.de/pvillani/thesis}} along with the results, has been developed to conduct the experiments on an Intel Core i7-9700T × 8 CPU. \medskip
 
 The Gaussian process surrogate model uses a GPyTorch~\cite{GPyTorchPaper} base model, set to work with double-precision floating-point numbers.
 GPyTorch's Adam is employed to optimize the hyperparameters on the marginal likelihood~\eqref{eq:marginal-likelihood}. \medskip

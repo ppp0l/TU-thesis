@@ -1,13 +1,13 @@
 \begin{abstractBox}[colbacktitle=black]{Abstract (EN)}{
     For many real-world applications, a system of interest can be represented via a mathematical model which depends on a set of parameters. 
     In order to identify the parameters, a set of observations is available and an Inverse Problem is formulated. 
-    Often, identifying the parameters from the observations is often a challenging task, especially when the model is expensive to evaluate. 
+    Identifying the parameters from the observations is often a challenging task, especially when the model is expensive to evaluate. 
     This is the case of Partial Differential Equations models, where numerical simulations which are both inexact and computationally expensive are required to obtain the model output. 
-    To ease the computational costs, surrogate models can be used to approximate the model output. 
+    To ease the computational costs, surrogate models can be used to approximate the forward model. 
     In this work, we present two different regression techniques, Gaussian Process Regression and Lipschitz Regression. 
     After reformulating the Inverse Problem to account for the surrogate model, we develope an adaptive training strategy to train the surrogate model. 
     The proposed training strategy aims at optimizing not only the training points' positions but also their evaluation accuracies.
-    Moreover, interleaved sampling of the posterior distribution of the unknown parameters is performed while the surrogate model is trained, providing a solution to the Inverse Problem.
+    Moreover, interleaved sampling of the posterior distribution of the unknown parameters is performed while the surrogate model is trained, providing a solution for the Inverse Problem.
     The quality of the surrogating techniques as well as the effectiveness of the adaptive training strategy are tested through different numerical experiments.
 }
 \end{abstractBox}

@@ -81,3 +81,29 @@ In Section~\ref{sec:exp} three different numerical experiments are presented, ev
 Finally, in Section~\ref{sec:conclusions} conclusions are drawn and future work is discussed.
 
 \subsection{Related work}\label{sec:literature}
+
+Inverse problems and parameter identification tasks are widely studied in the literature, as they are ubiquitous across the most diverse fields of science and engineering~\cite{KaipioSomersalo2005}.
+A variety of approaches to the solution of inverse problems exist, ranging from classical optimization techniques to Bayesian approaches~\cite{Tarantola2005}.
+While point estimates of the parameters can be obtained by solving a minimization problem, often related to a least squares formulation with some regularization term~\cite{EngelHankeNeubauer1996}, for a Bayesian formulation sampling techniques are attractive due to their comprehensive representation of the uncertainty in the parameters posterior distribution~\cite{Sullivan2015}.
+Markov Chain Monte Carlo (MCMC) methods are widely used for sampling from the posterior distribution, and a number of different techniques exist, ranging from the classical Metropolis-Hastings algorithm~\cite{MetropolisRosenbluthRosenbluthTellerTeller1953,Hastings1970} to successively developed techniques such as the Metropolis-adjusted Langevin algorithm~\cite{RobertsTweedie1996}, Ensemble Sampling~\cite{GoodmanWeare} and Differential Evolution MCMC~\cite{TerBraak}.\medskip
+
+The advantages of sampling the posterior come at a price: in fact, sampling techniques usually require a significantly higher number of evaluations of the forward model than optimization techniques.
+If the forward model is computationally expensive, this can render the direct adoption of sampling techniques impractical or even impossible.
+To overcome this issue, a number of techniques have been proposed, often relying on the use of less expensive but less accurate models to substitute the forward model.
+While approaches such as Delayed-acceptance MCMC~\cite{ChristenFox2005} and Multilevel MCMC~\cite{DodwellKetelsenScheichlTeckentrup2015} consider a hierarchy of models, utilizing the cheaper model to preselect promising candidates during the MCMC sampling, other approaches rely on the use of a surrogate model to replace the forward model entirely.
+Asides from classical model reduction techniques~\cite{Schilders2008} such as Proper Orthogonal Decomposition~\cite{PateraRozza2007} and other Reduced Basis methods, most surrogate models are based on approximation techniques which do not relate directly to the underlying model.
+There exists a vast literature on surrogate modeling in IPs, with a great variety of approaches including Polynomial chaos expansions~\cite{MarzoukNajmRahn2007}, sparse grid collocation~\cite{XiangZabaras2009}, Neural Networks~\cite{ZhouTartakovsky2021} and Gaussian process regression~\cite{Rasmussen2003}. \medskip
+
+While its efficiency decreases with the dimensionality of the parameter space, Gaussian process regression (GPR)~\cite{RasmussenWilliams2006} is an attractive surrogate modeling technique for low to moderate-dimensional problems, as it does not require restrictions on the model form and quantifies the uncertainty in the prediction by definition.
+The possibility of estimating the covariance structure of the forward model evaluation error via linear shrinkage estimators~\cite{LedoitWolf2004b} has not been considered in the context of GPR for IPs before; however, GPR has vastly been used in the context of IPs and the matter of the selection of training points has been widely studied.
+Non-adaptive space-filling designs such as Latin Hypercube Sampling~\cite{McKayBeckmanConover1979} are available~\cite{Giunta}, but adaptive strategies can be considerably more efficient~\cite{Crombecq}.
+If measurements are available before training, the surrogate can be trained to be more accurate in the region of interest while avoiding to spend computational resources in less relevant regions~\cite{SinsbeckNowak2017, WangBroccardo2020}.
+Lipschitz regression (LR)~\cite{ZabinskySmithKristinsdottir2003,Calliess2017} has not been utilized in the context of IPs, but its features make it an interesting alternative to GPR.
+In fact, LR does not require any prior distributional assumption on the data, and it is able to provide both a still stochastic prediction and hard bounds on the prediction error.\medskip
+
+In this work, we consider the problem of adaptive training of both GPR and LR surrogate models.
+Following preceding works~\cite{VillaniUngerWeiser2024,VillaniArconesUngerWeiser2025}, the sequential design of experiments approach is taylored towards a representation of the target posterior distribution, which is sampled during the training process. 
+The training points are not selected at a fixed tolerance, but the forward model's evaluation tolerance is optimized as well. 
+Such a tolerance optimization has been proposed for classical GPR~\cite{SemlerWeiser2023} and for gradient-enhanced GPR~\cite{SemlerWeiser2024}, delivering significant savings in computational costs without sacrificing the accuracy of the surrogate model.
+The work of~\cite{Dinkel2024} aims at surrogating not the forward model but the likelihood function via GPR, and it interleaves the training of the surrogate with sampling of the posterior; the new points are selected randomly among the available samples. 
+As such a training point selection strategy is similar to the one proposed in this work and can easily be adapted to the case of LR, we will use it as a benchmark for the performance of the proposed training strategy in the experiments of Section~\ref{sec:exp}.
