@@ -69,7 +69,7 @@ Adopting the marginal likelihood includes more information about the forward mod
     \includegraphics[width = 360pt]{results/pictures/d1/GP_posterior_comparison.png}
     \end{center}
     
-    \caption{Impact of the plug-in likelihood~\eqref{eq:plug-in-likelihood} and GPR-based marginal likelihood~\eqref{eq:GPR-likelihood} on the posterior for an illustrative inverse problem problem with forward model $y(p) = p +\frac{1}{4} sin(\pi \cdot p)$ and Gaussian prior $\mc N(\frac{1}{2}, \frac{1}{3})$ on the parameter space $[0,1]$. The orizontal line in the first picture represents the measurement $y^m$ with the confidence interval of width $4 \cdot \sigma$, where $\sigma = 0.05$ is the measurement's standard deviation. The marginal likelihood~\eqref{eq:GPR-likelihood} is wider due to including the GP variance, and avoids an overconfident posteriors.} 
+    \caption{Impact of the plug-in likelihood~\eqref{eq:plug-in-likelihood} and GPR-based marginal likelihood~\eqref{eq:GPR-likelihood} on the posterior for an illustrative inverse problem problem with forward model $y(p) = p +\frac{1}{4} sin(\pi \cdot p)$ and Gaussian prior $\mc N(\frac{1}{2}, \frac{1}{3})$ on the parameter space $[0,1]$. The horizontal line in the first picture represents the measurement $y^m$ with the confidence interval of width $4 \cdot \sigma$, where $\sigma = 0.05$ is the measurement's standard deviation. The marginal likelihood~\eqref{eq:GPR-likelihood} is wider due to including the GP variance, and avoids an overconfident posteriors.} 
     \label{fig:GP-likelihoods}
 \end{figure}  
 Picture~\ref{fig:GP-likelihoods} compares the plug-in and the marginalized likelihoods for a simple one-dimensional case.

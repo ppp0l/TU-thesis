@@ -22,10 +22,10 @@ Consequently for point 2, we will exploit the available ground-truth in the anal
 Unlike the experiments in~\cite{VillaniArconesUngerWeiser2025}, where various setups for the budget fractionating and the FE cost depending on the fraction $\frac{l}{r}$ were considered, in this work we fix them and do not investigate their effect on the performance of the algorithm.
 Previous works~\cite{SemlerWeiser2023,VillaniArconesUngerWeiser2025,VillaniUngerWeiser2024} have shown that the effect of an higher FE cost is to reduce the effectiveness of tolerance optimization, resulting in performances similar to those of a fixed tolerance strategy.
 
-As a benchmark, we consider the non-adaptive space-filling approach given by Latin Hypercube Sampling (LHS)~\cite{McKayBeckmanConover1979}, the approach proposed in~\cite{Dinkel2024}, which also relies on interleaved sampling but selects the candidates randomly from the current posterior approximation, both using fixed tolerances.
+As a benchmark, we consider the non-adaptive space-filling approach given by Latin Hypercube Sampling (LHS)~\cite{McKayBeckmanConover1979} and an approach similar to the one proposed in~\cite{Dinkel2024}, which also relies on interleaved sampling but selects the candidates randomly from the current posterior approximation, both using fixed tolerances.
 Moreover, we also consider the fixed tolerance version of the proposed strategy, which is given by~\ref{algo:AL} without the tolerance optimization step. 
-For the GPR surrogate, we name the strategy of~\ref{algo:AL} \texttt{AGP} for adaptive Gaussian process, the fixed tolerance version \texttt{posAdGP} for position-adaptive Gaussian process, the strategy proposed in~\cite{Dinkel2024} \texttt{randGP} and the LHS strategy \texttt{LHSGP}.
-Similarly, we will refer to the LR surrogate strategy of~\ref{algo:AL} as \texttt{ALR}, the fixed tolerance version as \texttt{posAdLR}, the LR version of the strategy proposed in~\cite{Dinkel2024} as \texttt{randLR} and the LHS version as \texttt{LHSLR}. \medskip
+For the GPR surrogate, we name the strategy of~\ref{algo:AL} \texttt{AGP} for adaptive Gaussian process, the fixed tolerance version \texttt{posAdGP} for position-adaptive Gaussian process, the strategy randomly drawing new points from the posterior \texttt{randGP} and the LHS strategy \texttt{LHSGP}.
+Similarly, we will refer to the LR surrogate training strategy of~\ref{algo:AL} as \texttt{ALR}, to the fixed tolerance version as \texttt{posAdLR}, to the LR-based version of the strategy randomly drawing from the posterior as \texttt{randLR} and to the LR-based LHS approach as \texttt{LHSLR}. \medskip
 
 In all experiments, the measured quantity is directly obtained from point-wise evaluations $u(\theta;p)$ of the equation's solution $u$, for $\theta$ in a set of sensors $\mc S$; consequently, the measurement operator $H$ is given by
 \[
@@ -547,7 +547,7 @@ Finally, we note that \texttt{randGP} performs worse than \texttt{posAdGP}, arou
 \end{centering}
 \end{table} 
 
-For the LR surrogate we do similarly as done for the GPR surrogate, utilizing diffrent tolerances for the fully-adaptive strategy \texttt{ALR} and the fixed-tolerance strategies \texttt{posAdLR}, \texttt{randLR} and \texttt{LHSLR}; we use a default tolerance $\tau_{d,a}= 10^{-2}$ for \texttt{ALR} and a default tolerance $\tau_{d,f} = 10^{-3}$ for the others.
+For the LR surrogate we do similarly as done for the GPR surrogate, utilizing different tolerances for the fully-adaptive strategy \texttt{ALR} and the fixed-tolerance strategies \texttt{posAdLR}, \texttt{randLR} and \texttt{LHSLR}; we use a default tolerance $\tau_{d,a}= 10^{-2}$ for \texttt{ALR} and a default tolerance $\tau_{d,f} = 10^{-3}$ for the others.
 The halting threshold is set to $\texttt{tol} = \sigma \cdot \frac{\text{dim} \mc Y }{1.5} = 2.\bar 6 \cdot 10^{-2}$, we sample every $N_{\text{sample}} = 3$ iterations and set the number of walkers to $n_w = 16$.
 The initial design consists of $5$ points selected through LHS with the default tolerance corresponding to the strategy; we perform a maximum of $J_{\max} = 7 \cdot N_{\text{samples}} = 21 $ iterations and for the tolerance problem at Step 3 of the algorithm for \texttt{ALR} we assign $\Delta W_j = \tau ^{-\frac{l}{r}}$ using the default value $\tau= \tau_{d,a}$ for the first $2\cdot N_{\text{samples}} = 6$ iterations and then every $N_{\text{sample}}$ iterations we have $\tau$ if the expected error has not reduced by a factor 2 compared to the $N_{\text{sample}}$-th latest iteration, i.e. if $\frac{E(D(\mc D_j))}{E(D(\mc D_{j-N_{\text{sample}}}))} > \frac{1}{2}$.\medskip
 
@@ -603,7 +603,7 @@ Among the LR-based strategies, \texttt{ALR} and \texttt{posAdLR} offer a better 
 \end{figure}
 
 
-\subsection[Effects of covariance estimation]{Effects of the discretization noise covariance's estimation}\label{sec:cov-est}
+\subsection[Effects of covariance estimation]{Effects of the discretization noise's covariance estimation}\label{sec:cov-est}
 
 To test the impact of the estimation of the discretization noise covariance $\Sigma_D^2$ on the performance of the surrogate, we utilize the data from the 3d and 6d analytical examples, where the discretization noise covariance is known.
 First we test the error on the matrix 2-norm of the shrinkage covariance estimate $\hat \Sigma_d^2$ defined in Equation~\eqref{eq:shrinkage-estimator}; second, we test the effect of considering $\tau \hat \Sigma_d^2$ instead of diagonal noise $\tau I_{\text{dim}\mc Y}$ in GPR~\eqref{eq:GP-predictive} by training two GPR surrogates with $\hat \Sigma_d^2$ and $I_{\text{dim} \mc Y}$ as data noise covariances, and then comparing the resulting MAP estimates resulting from the surrogate-based posteriors.\medskip
