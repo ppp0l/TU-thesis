@@ -35,7 +35,7 @@ Incorporating this into the Relation~\eqref{eq:par-to-obs} leads to a different 
 Under normality and independence assumptions this results in a different likelihood, as stated in the following proposition.
 
 \begin{prp}
-    Let Relation~\eqref{eq:GPR-par-to-obs} hold with Gaussian noise $N \sim \mc N (0, \Sigma_N^2)$, let $y^m$ be a realization of $Y^m$ and let $y_{D, \text{GP}}$ be a GPR surrogate model describing the posterior distribution of $Y_p \sim \mc N( m_D(p), k_D(p,p) )$ given training data $D = \{ (p_i, y_i) \}_{i=1}^n$.
+    Let Relation~\eqref{eq:GPR-par-to-obs} hold with Gaussian noise $N \sim \mc N (0, \Sigma_N^2)$, let $y^m$ be a realization of $Y^m$ and let $y_{D, \text{GP}}$ be a GPR surrogate model describing the posterior distribution of $Y_p \sim \mc N( m_D(p), k_D(p,p) )$ given training data $D = \{ (p_i, \tau_i, y_i) \}_{i=1}^n$.
 
     Under the hypothesis that the GP prediction $Y_p$ is independent from the measurement noise $N$, Relation~\eqref{eq:GPR-par-to-obs} yields that $Y^m$ is normally distributed,
     \[
@@ -61,7 +61,8 @@ Under normality and independence assumptions this results in a different likelih
 
 As the prediction of GPR is stochastic, it is reasonable that likelihood of observing $y^m$ depends not only on the mean $m_D$, but also on the variance $k_D$. 
 This is reflected in the surrogate-informed likelihood~\eqref{eq:GPR-likelihood}, which by having an higher variance is less prone to produce an overconfident posterior.
-Adopting the marginal likelihood includes more information about the forward model, but results in a more complicated likelihood function when compared to the plug-in likelihood~\eqref{eq:plug-in-likelihood}; as the covariance of the marginal likelihood depends on $p$, the posterior~\ref{eq:surr-posterior} can present more local minima and non-convex behavior.
+Adopting the marginal likelihood includes more information about the forward model, but results in a more complicated likelihood function when compared to the plug-in likelihood~\eqref{eq:plug-in-likelihood}; as the covariance of the marginal likelihood depends on $p$, the posterior~\ref{eq:surr-posterior} can present more local minima and non-convex behavior. \newline
+Picture~\ref{fig:GP-likelihoods} compares the plug-in and the marginalized likelihoods for a simple one-dimensional case.
 \begin{figure}[H] 
 
     \begin{center}
@@ -72,7 +73,6 @@ Adopting the marginal likelihood includes more information about the forward mod
     \caption{Impact of the plug-in likelihood~\eqref{eq:plug-in-likelihood} and GPR-based marginal likelihood~\eqref{eq:GPR-likelihood} on the posterior for an illustrative inverse problem problem with forward model $y(p) = p +\frac{1}{4} sin(\pi \cdot p)$ and Gaussian prior $\mc N(\frac{1}{2}, \frac{1}{3})$ on the parameter space $[0,1]$. The horizontal line in the first picture represents the measurement $y^m$ with the confidence interval of width $4 \cdot \sigma$, where $\sigma = 0.05$ is the measurement's standard deviation. The marginal likelihood~\eqref{eq:GPR-likelihood} is wider due to including the GP variance, and avoids an overconfident posteriors.} 
     \label{fig:GP-likelihoods}
 \end{figure}  
-Picture~\ref{fig:GP-likelihoods} compares the plug-in and the marginalized likelihoods for a simple one-dimensional case.
 
 
 \subsection{LR-based likelihood}\label{sec:LRlike}

@@ -1,6 +1,6 @@
 \section{Preliminaries} \label{sec:preliminaries}
 
-In the remainder of this section Section~\ref{sec:BIP} first introduces the basic concepts of Inverse Problems and then presents the Bayesian approach to IP, providing a general framework for the formulation of Bayesian Inverse Problems (BIPs) and the derivation of the posterior distribution of the unknown given the observations; Section~\ref{sec:IP-sol} presents some key techniques for the solution of IPs and their numerical treatment, with a focus on the Bayesian approach; Section~\ref{sec:PDE} introduces the basic concepts of Partial Differential Equation (PDE) models, with a focus on the Laplace equation, the diffusion equation and elastomechanic equations as they are the PDEs used in the numerical experiments of Section~\ref{sec:exp}; finally, Section~\ref{sec:AdaFE} presents the Finite Element (FE) method and its adaptive version, which is the solution method for PDEs considered throughout this work.
+In this section, Section~\ref{sec:BIP} first introduces the basic concepts of Inverse Problems and then presents the Bayesian approach to IP, providing a general framework for the formulation of Bayesian Inverse Problems (BIPs) and the derivation of the posterior distribution of the unknown given the observations; Section~\ref{sec:IP-sol} presents some key techniques for the solution of IPs and their numerical treatment, with a focus on the Bayesian approach; Section~\ref{sec:PDE} introduces the basic concepts of Partial Differential Equation (PDE) models, with a focus on the Laplace equation, the diffusion equation and elastomechanic equations as they are the PDEs used in the numerical experiments of Section~\ref{sec:exp}; finally, Section~\ref{sec:AdaFE} presents the Finite Element (FE) method and its adaptive version, which is the solution method for PDEs considered throughout this work.
 
 \subsection{Bayesian Inverse Problems}\label{sec:BIP}
 
@@ -52,7 +52,7 @@ The likelihood of a problem is a crucial element in statistical IPs. \medskip
 A natural development of the statistical approach to Inverse Problems are Bayesian Inverse Problems (BIPs). 
 In the Bayesian setting, the unknown solution $p*$ of the IP is treated as a random variable $P$ and the solution of the IP then becomes the conditional distribution $\bb P_{P \mid Y^m=y^m} $ of $P$ given $Y^m=y^m$.
 
-In full generality, the following result guarantees the possibility of formulating BIPs for arbitrary dimensionality:
+In full generality, the following result from~\cite[Theorem 8.1]{Kallenberg2021} guarantees the possibility of formulating BIPs for arbitrary dimensionality:
 \begin{thm} [Regular conditional probability]
     Let $ (\Omega, \mc F , \bb P) $ be a probability space, $\Theta$ be a separable Banach space equipped with the Borel $\sigma$-algebra $\mc B (\Theta)$, $(\mc Y, \tilde{\mc F})$ be a measurable space.
     Further, let $Y^m:\Omega \rightarrow \mc Y$ and $P : \Omega \rightarrow \Theta$ be random variables with $P \in L^1(\Omega, \bb P; \Theta) $. \newline
@@ -180,7 +180,7 @@ Third, convergence diagnostics can be performed to assess the state of the chain
 A commonly employed diagnostic is the Gelman-Rubin potential scale reduction $\hat R$ introduced by~\cite{GelmanRubin1992}, which utilizes multiple independent chains by computing the variance within each chain and the variance between all chains.
 For $i =1, \dots, M$, let $\{ \theta_{j}^i \}_{j=1}^{N} \subseteq \R $ be independent chains of length $N$ and let the mean of each chain and overall mean be 
 \[
-    \bar \theta^i = \frac{1}{N} \sum_{j=1}^{N} \theta_{j}^i, \quad \text{and} \quad \bar \theta = \frac{1}{M} \sum_{i=1}^{M} \bar \theta^ii.
+    \bar \theta^i = \frac{1}{N} \sum_{j=1}^{N} \theta_{j}^i, \quad \text{and} \quad \bar \theta = \frac{1}{M} \sum_{i=1}^{M} \bar \theta^i.
 \]
 Then, the between chain variance is given by
 \[
@@ -188,7 +188,7 @@ Then, the between chain variance is given by
 \]
 while the within chain variance is given by
 \[
-    W = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{N-1} \sum_{j=1}^{N} (\theta_{j}^i - \bar \theta^ii)^2.
+    W = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{N-1} \sum_{j=1}^{N} (\theta_{j}^i - \bar \theta^i)^2.
 \]
 An unbiased estimator of the variance of the target distribution is then given by
 \[
@@ -212,9 +212,9 @@ and the chain's autocorrelation time as
 \[
     \tau_f = 1 + 2 \sum_{k=1}^{\infty} \rho_k.
 \]
-Under the hypothesis that the finite-dimensional version of the Central Limit Theorem proved by~\cite{KipnisVaradhan1986} guarantees that 
+Under non-restrictive hypothesis the finite-dimensional version of the Central Limit Theorem proved by~\cite{KipnisVaradhan1986} guarantees that 
 \[
-    \sqrt{\frac{\tau_f}{N}} \left(  \bb E_\pi [f(X(0))] - \frac{1}{N} \sum_{j=1}^{N} f(X(j)) \right) \xrightarrow{d} \mc N(0, \text{Var}[X(0)]).
+    \sqrt{\frac{\tau_f}{N}} \left(  \bb E_\pi [f(X(0))] - \frac{1}{N} \sum_{j=1}^{N} f(X(j)) \right) \xrightarrow{d} \mc N(0, \text{Var}[f(X(0))]).
 \]
 In particular this implies that, for a finite realization $\{ \theta_j\}_{j=1}^N$ of the$X$, the variance of the mean estimator $\frac{1}{N} \sum_{j=1}^{N} f(\theta_j)$ is not given by $\frac{1}{N} \text{Var}[f(X_1)]$ as in the i.i.d. case, but by $\frac{\tau_f}{N} \text{Var}[f(X(0))]$.
 This motivates the introduction of the effective sample size (ESS) of the estimator of $f$ for the samples $\{\theta_j\}_{j=1}^N$ of the chain $X$
@@ -225,13 +225,13 @@ where equality holds if and only if the samples are uncorrelated.
 The ESS can be understood as the number of independent samples that would provide an estimator for $\bb E[f(X_1)]$ with the same variance as the correlated samples $\{\theta_j\}_{j=1}^N$, and can be used to assess the quality of the samples generated by the chain.
 The larger the autocorrelation time $\tau_f$ the smaller the ESS, requiring more samples achieve a desired certainty level.
 In practice, the ESS can be estimated via a batch estimate of the autocorrelation of the samples $\{f(\theta_j)\}_{j=1}^N$ with a truncation the sum at a certain lag $k$; this is often used in practice to estimate the ESS~\cite{Geyer1992}.
-If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $h$-th sample, i.e. to consider the samples $\{\theta_{h \cdot l}\}_{l=1}^{N/k}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
+If the autocorrelation time is significant, Monte Carlo integration can be rendered more computationally efficient by thinning the chain and keeping only every $h$-th sample, i.e. to consider the samples $\{\theta_{h \cdot l}\}_{l=1}^{N/h}$ instead of $\{\theta_j\}_{j=1}^N$.\medskip
 
 Among MCMC techniques, we mention Ensemble Sampling, whose implementation we will use in the numerical experiments of Section~\ref{sec:exp}.
 Ensemble Sampling is introduced by~\cite{GoodmanWeare} as an MCMC technique which guarantees invariance with respect to affine transformation of the parameter space and later generalized.
 Ensemble Sampling utilizes an ensemble 
 \[
-X =(X^1(t), \dots , X^M(t))
+X =\left(X^1(t), \dots , X^M(t)\right)
 \] 
 comprising of multiple correlated chains $X^i(t)$ known as walkers.
 At step $j$ the walkers are updated sequentially; each walker $X^i$ is updated by drawing a proposal $x^i_P(j+1)$ from a distribution, in this context known as move, which depends on the current state of the ensemble 
@@ -274,7 +274,7 @@ For the rest of this chapter and the following, $D$ will indicate a generic doma
 A second distinction is that between linear and non-linear PDEs: a PDE is linear if the function $F$ is affine with respect to the unknown function $u$ and its derivatives.
 We will only deal with linear PDEs: non linear PDEs are usually more difficult to treat  than linear PDEs, and in many cases they can be approximated by linear PDEs.
 
-Like in ODEs, the solution of a PDE is in usually non unique unless additional information is provided; this information is usually provided in the form of boundary conditions on $\mc X$, which lead to a boundary value problem, in the form of initial conditions on $\mc T$, which lead to an initial value problem, or combining the two.
+Like in ODEs, the solution of a PDE is usually non unique unless additional information is provided; this information is usually provided in the form of boundary conditions on $\mc X$, which lead to a boundary value problem, in the form of initial conditions on $\mc T$, which lead to an initial value problem, or combining the two.
 Unlike ODEs, where the existence and uniqueness of the solution depends on the regularity of the function $f$ around the initial condition, in PDEs the existence of a solution can be more complicated and issues of compatibility between the boundary conditions and the equation can arise.
 Moreover, for a PDE different kinds of boundary conditions can be imposed, and we consider three main types of boundary conditions: Dirichlet, Neumann and Robin boundary conditions.
 For a subset $B \subseteq \bar D$ of the domain, Dirichlet boundary conditions impose the value of the solution on $B$, i.e.
@@ -284,7 +284,7 @@ For a subset $B \subseteq \bar D$ of the domain, Dirichlet boundary conditions i
 for some function $g: B \rightarrow \R^o$;
 Neumann boundary conditions impose the value of the normal derivative of the solution on $B$, i.e.
 \[
-    \partial_{\hat{n}} u(x)= \hat n \nabla u(x) = g(x), \quad \forall x \in B,
+    \partial_{\hat{n}} u(x)= \hat n \cdot \nabla u(x) = g(x), \quad \forall x \in B,
 \]
 where $\hat n$ is the unit normal vector on the boundary $B$; 
 finally, Robin boundary conditions impose a linear combination of the value of the solution and its normal derivative on $B$, i.e.
@@ -302,7 +302,7 @@ Being $V$ the function space where the solutions $u(\cdot;p)$ live for every $p 
     \end{gathered}
 \end{equation}
 which maps the solution $u(\cdot;p)$ into the corresponding measurement $y(p)$.
-While we can assume that the measurement operator can be evaluated exactly, for instance being pointwise evaluations of the solution, in practice solutions of PDEs are available only through a discretization $u_\tau$ up to some tolerance $\tau$.
+While we can assume that the measurement operator can be evaluated exactly, for instance through pointwise evaluations of the solution, in practice solutions of PDEs are available only through a discretization $u_\tau$ up to some tolerance $\tau$.
 By this, the actual evaluation of the forward model $y$ are only approximate, resulting in some
 \[
     H(u_\tau(\cdot;p)) \approx H(u(\cdot;p)) = y(p) .
@@ -317,7 +317,7 @@ over a domain $\mc X \subseteq \R^l$, where $\Delta$ is the Laplace operator, de
 \[
     \Delta u(x) = \nabla \cdot \nabla u(x) = \sum_{i=1}^{l} \partial^2_{x_i} u(x), 
 \] and $f$ is a given scalar function on $\mc X$.
-The Poisson equation is a second-order linear PDE and is the simplest representative of elliptic PDEs and is used to model a variety of phenomena, such as heat conduction, electrostatics and fluid flow; its homogeneous version, i.e. with $f=0$, is known as Laplace equation and the solutions of the Laplace equation are known as harmonic functions.
+The Poisson equation is a second-order linear PDE, is the simplest representative of elliptic PDEs and is used to model a variety of phenomena, such as heat conduction, electrostatics and fluid flow; its homogeneous version, i.e. with $f=0$, is known as Laplace equation and the solutions of the Laplace equation are known as harmonic functions.
 
 A general solution for the Poisson equation can be derived by the method of Green's functions, which consists in representing the solution as the sum of the convolution of the right-hand side $f$ with a Green's function $G(x,y)$ plus a boundary term~\cite[Chapter 2.2, Theorem 12]{Evans2010}.
 Obtaining Green's function is usually a non-trivial task, as it depends on the domain $\mc X$ and the boundary conditions imposed on it.
@@ -465,7 +465,7 @@ This results in a number $N$ of degrees of freedom which is equal to the number 
 For higher order FE, there are more non-zero basis functions on each subdomain and they need to be fixed by assigning the values of the basis function in other points of the subdomain; by this, the number of degrees of freedom will be higher than in the linear case, with the advantage of a higher accuracy of the approximation. \medskip
 
 The version of the FE method we will adopt in this work is the Adaptive Finite Element method, which introduces adaptive refinement steps of the mesh in order to improve the solution quality.
-The idea behind the adaptive refinement is to refine the mesh in regions where the solution is expected to be more complex, while leaving coarser meshes in regions where the solution is expected to be smoother.
+The idea behind the adaptive refinement is to refine the mesh in regions where the solution is expected to be more complex, while leaving coarser meshes in regions where the solution is expected to be flatter.
 In order to do so, we need to introduce a refinement criterion, which is a measure of the quality of the approximation of the solution in a given subdomain $\mc E$ of the mesh.
 This is done by a posteriori error estimates, which indicate regions of the mesh where the approximation error between the exact solution and the approximate solution is expected to be significant.
 Having retrieved a local error estimate for the approximation, the subdomains with error level exceeding a certain threshold are marked for refinement.

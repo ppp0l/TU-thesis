@@ -3,7 +3,7 @@
 In this section, we present numerical experiments to demonstrate the performance of~\ref{algo:AL} under different conditions. 
 Among the three presented experiment, the first two use an analytical solution of the underlying PDE, while the third one is based on actual FE simulations of a PDE.
 The choice of analytical forward models allows to evaluate the actual error and compare convergence rates and reduces the time required by realizations of~\ref{algo:AL}. 
-At the end of the section, we will use the setup and data from the experiments to evaluate the influence of the estimation of the discretization noise's covariance on the quality of the GPR surrogate and of the GPR-based solution of the IP.  \medskip 
+At the end of the section, we will use the setup and data from the analytical experiments to evaluate the influence of the estimation of the discretization noise's covariance on the quality of the GPR-based solution of the IP.  \medskip 
 
 The remainder of this section is organized as follows: in Section~\ref{sec:setup}, we describe the objectives of the experiments and general setup across them; Section~\ref{sec:implementation} provides implementation details; in Section~\ref{sec:3dexp}, we present an analytical example with 3d parameter space based on the Poisson equation; in Section~\ref{sec:6dexp}, we present an analytical example with 6d parameter space based on the diffusion equation; in Section~\ref{sec:FEexp}, we present a FE example based on elastomechanics with 2d parameter space; finally, in Section~\ref{sec:cov-est}, we elaborate data from the previous experiments to assess the impact of noise covariance estimation.
 
@@ -480,6 +480,8 @@ for Lamè parameters $\lambda, \mu$; the boundary conditions are given by
     \end{cases}
 \]
 where $F = -5\cdot 10^6$ is a dimensionless quantity corresponding to a uniform load on the top.
+The FE discretization considers quadratic finite elements with adaptive mesh refinement based on the embedded error estimator given by the difference of the considered solution with the one obtained from linear elements.\medskip
+
 We aim at identifying the Young's modulus $E$ and the Poisson's ratio $\nu$ of the material as given by Equation~\eqref{eq:material-parameters}.
 We consider sensors placed in the center of the beam on the different sides, one at the top, one at the bottom, one on the left and one on the right
 \[
